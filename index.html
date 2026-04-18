@@ -4028,7 +4028,7 @@
         Back
       </button>
       <div class="edit-sheet-title">Edit Post</div>
-      <button class="edit-save-btn ready" id="editSaveBtn" onclick="saveEditPost()">Save</button>
+      <button class="edit-save-btn ready" id="editSaveBtn" onclick="epOpenTopicModal()">Save</button>
     </div>
 
   <!-- Edit 툴바 -->
@@ -4608,6 +4608,36 @@
       <button class="fe-pm-confirm" id="fePmConfirmBtn" onclick="feConfirmPublish()">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 9l4.5 4.5L14 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Confirm & Publish
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EDIT POST — 토픽 변경 모달 ══ -->
+<div class="fe-publish-overlay" id="epTopicOverlay" onclick="epCloseTopicModal(event)">
+  <div class="fe-publish-modal">
+    <div class="fe-pm-header">
+      <div class="fe-pm-title">Change topic</div>
+      <div class="fe-pm-sub">Choose the topic that best fits your post</div>
+    </div>
+    <div class="fe-pm-topics">
+      <div class="fe-pm-chip" onclick="epPickTopic(this,'visa')"><span class="fe-pm-chip-icon">🛂</span> Visa</div>
+      <div class="fe-pm-chip" onclick="epPickTopic(this,'jobs')"><span class="fe-pm-chip-icon">💼</span> Jobs</div>
+      <div class="fe-pm-chip" onclick="epPickTopic(this,'housing')"><span class="fe-pm-chip-icon">🏠</span> Housing</div>
+      <div class="fe-pm-chip" onclick="epPickTopic(this,'tips')"><span class="fe-pm-chip-icon">💡</span> Tips</div>
+      <div class="fe-pm-chip" onclick="epPickTopic(this,'questions')"><span class="fe-pm-chip-icon">❓</span> Questions</div>
+      <div class="fe-pm-chip" onclick="epPickTopic(this,'travel')"><span class="fe-pm-chip-icon">✈️</span> Travel</div>
+      <div class="fe-pm-chip" onclick="epPickTopic(this,'beauty')"><span class="fe-pm-chip-icon">💄</span> Beauty</div>
+      <div class="fe-pm-chip" onclick="epPickTopic(this,'social')"><span class="fe-pm-chip-icon">🎉</span> Social</div>
+    </div>
+    <div id="epTopicError" style="display:none;color:#E53935;font-size:12px;text-align:center;margin-top:-4px">
+      Please select a topic to continue.
+    </div>
+    <div class="fe-pm-actions">
+      <button class="fe-pm-cancel" onclick="epCloseTopicModal()">Cancel</button>
+      <button class="fe-pm-confirm" id="epTopicConfirmBtn" onclick="epConfirmSave()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 9l4.5 4.5L14 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Save changes
       </button>
     </div>
   </div>
@@ -7743,7 +7773,56 @@ window.checkEditReady = function() {
   document.getElementById('editSaveBtn').classList.toggle('ready', t.length > 0 && b.length > 0);
 }
 
-window.saveEditPost = async function() {
+// ── Edit Post 토픽 모달 ──
+let epSelectedTopic = null;
+
+window.epOpenTopicModal = function() {
+  const t = document.getElementById('editTitleInput')?.value.trim() || '';
+  const editor = document.getElementById('editBodyEditor');
+  const b = editor ? (editor.innerText || '').trim() : '';
+  if (!t) { showToast('Please add a title', 'error'); return; }
+  if (!b) { showToast('Please add some content', 'error'); return; }
+
+  // 현재 포스트의 토픽 미리 선택
+  const post = POSTS.find(p => String(p.id) === String(editingPostId));
+  epSelectedTopic = post?.topic || null;
+
+  // 칩 초기화 + 현재 토픽 선택 표시
+  document.querySelectorAll('#epTopicOverlay .fe-pm-chip').forEach(c => c.classList.remove('selected'));
+  if (epSelectedTopic) {
+    const chip = document.querySelector(`#epTopicOverlay .fe-pm-chip[onclick*="'${epSelectedTopic}'"]`);
+    if (chip) chip.classList.add('selected');
+  }
+  const confirmBtn = document.getElementById('epTopicConfirmBtn');
+  if (confirmBtn) confirmBtn.classList.toggle('ready', !!epSelectedTopic);
+  document.getElementById('epTopicError').style.display = 'none';
+  document.getElementById('epTopicOverlay').classList.add('open');
+}
+
+window.epCloseTopicModal = function(e) {
+  if (e && e.target !== document.getElementById('epTopicOverlay')) return;
+  document.getElementById('epTopicOverlay').classList.remove('open');
+}
+
+window.epPickTopic = function(el, topic) {
+  document.querySelectorAll('#epTopicOverlay .fe-pm-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  epSelectedTopic = topic;
+  const btn = document.getElementById('epTopicConfirmBtn');
+  if (btn) btn.classList.add('ready');
+  document.getElementById('epTopicError').style.display = 'none';
+}
+
+window.epConfirmSave = function() {
+  if (!epSelectedTopic) {
+    document.getElementById('epTopicError').style.display = 'block';
+    return;
+  }
+  document.getElementById('epTopicOverlay').classList.remove('open');
+  saveEditPost(epSelectedTopic);
+}
+
+window.saveEditPost = async function(newTopic) {
   if (!editingPostId || !currentUser) return;
   const post = POSTS.find(p => String(p.id) === String(editingPostId));
   if (!post || post.authorId !== currentUser.uid) {
@@ -7754,16 +7833,19 @@ window.saveEditPost = async function() {
   const newBody  = editor ? (editor.innerText || '').trim() : '';
   if (!newTitle || !newBody) return;
 
+  const topic = newTopic || post.topic || 'social';
+
   const btn = document.getElementById('editSaveBtn');
   btn.textContent = 'Saving...';
   btn.classList.remove('ready');
 
   post.title   = newTitle;
   post.preview = newBody;
+  post.topic   = topic;
 
   if (firebaseOk && !String(editingPostId).startsWith('seed_') && !String(editingPostId).startsWith('local_')) {
     try {
-      await updateDoc(doc(db, 'posts', editingPostId), { title: newTitle, preview: newBody });
+      await updateDoc(doc(db, 'posts', editingPostId), { title: newTitle, preview: newBody, topic });
       showToast('Post updated! ✓', 'success');
     } catch(e) {
       console.error('Update failed:', e);

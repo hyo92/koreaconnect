@@ -1609,220 +1609,224 @@
 
   /* ── WRITE MODAL & ALERTS MODAL ── */
   /* ══════════════════════════════════════
-     FULL-SCREEN BLOG EDITOR — Paper Style
+     FULL-SCREEN BLOG EDITOR — Pro Style
   ══════════════════════════════════════ */
 
   #fullEditorOverlay {
-    display: none;
-    position: fixed; inset: 0; z-index: 900;
-    background: #F0F0F0;
-    flex-direction: column;
-    overflow: hidden;
+    display: none; position: fixed; inset: 0; z-index: 900;
+    background: #F0F0EE; flex-direction: column; overflow: hidden;
   }
   #fullEditorOverlay.open { display: flex; }
 
-  /* ── 상단 헤더 바 (Sticky) ── */
+  /* ── 헤더 바 ── */
   .fe-topbar {
-    height: 52px; flex-shrink: 0;
-    background: #fff;
+    height: 52px; flex-shrink: 0; background: #fff;
     border-bottom: 1px solid #EEEEEE;
-    display: flex; align-items: center;
-    padding: 0 24px;
-    position: relative;
-    z-index: 10;
+    display: flex; align-items: center; padding: 0 20px;
+    position: relative; z-index: 10;
   }
   .fe-cancel-btn {
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 5px;
     background: none; border: none; cursor: pointer;
     font-size: 14px; font-weight: 500; color: #555;
-    font-family: var(--font); padding: 8px 10px;
-    border-radius: 8px; transition: background 0.12s;
-    white-space: nowrap;
+    font-family: var(--font); padding: 7px 10px; border-radius: 8px;
+    transition: background 0.12s; white-space: nowrap;
   }
   .fe-cancel-btn:hover { background: #F5F5F5; color: #111; }
   .fe-topbar-title {
     position: absolute; left: 50%; transform: translateX(-50%);
-    font-size: 14px; font-weight: 600; color: #666;
-    pointer-events: none; letter-spacing: 0.2px;
+    font-size: 14px; font-weight: 600; color: #888;
+    pointer-events: none;
   }
   .fe-publish-btn {
-    margin-left: auto;
-    background: var(--green); color: #fff;
-    border: none; border-radius: 999px;
-    padding: 8px 22px; font-size: 14px; font-weight: 700;
-    cursor: pointer; font-family: var(--font);
-    transition: background 0.15s, opacity 0.15s;
-    white-space: nowrap; opacity: 0.45;
-    pointer-events: none;
+    margin-left: auto; background: var(--green); color: #fff;
+    border: none; border-radius: 999px; padding: 8px 22px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: var(--font); transition: background 0.15s, opacity 0.15s;
+    white-space: nowrap; opacity: 0.4; pointer-events: none;
   }
   .fe-publish-btn.ready { opacity: 1; pointer-events: auto; }
   .fe-publish-btn.ready:hover { background: var(--green-dark); }
 
   /* ── 스크롤 영역 ── */
-  .fe-scroll {
-    flex: 1; overflow-y: auto;
-    background: #F0F0F0;
-    padding: 32px 16px 100px;
-  }
+  .fe-scroll { flex: 1; overflow-y: auto; padding: 28px 20px 80px; background: #F0F0EE; }
 
-  /* ── 종이 컨테이너 — 흰 박스 가운데 정렬 ── */
+  /* ── 종이 박스 ── */
   .fe-container {
-    max-width: 860px;
-    margin: 0 auto;
-    background: #ffffff;
+    max-width: 860px; margin: 0 auto; background: #fff;
     border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.06);
-    padding: 48px 56px 80px;
-    min-height: calc(100vh - 200px);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.05);
+    padding: 40px 52px 60px; min-height: calc(100vh - 200px);
+  }
+  @media (min-width: 1024px) {
+    .fe-scroll { padding: 32px 40px 80px; }
+    .fe-container { padding: 48px 60px 80px; }
+    .fe-topbar { padding: 0 32px; }
   }
 
-  /* ── Topic 선택 ── */
-  .fe-topic-row {
-    display: flex; flex-wrap: wrap; gap: 7px;
-    margin-bottom: 28px;
-  }
+  /* ── Topic 칩 ── */
+  .fe-topic-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px; }
   .fe-chip {
     padding: 5px 13px; border-radius: 999px;
-    border: 1.5px solid #E0E0E0;
-    font-size: 12px; font-weight: 500; color: #888;
-    cursor: pointer; transition: all 0.15s;
+    border: 1.5px solid #E5E5E5; font-size: 12px; font-weight: 500;
+    color: #888; cursor: pointer; transition: all 0.15s;
     font-family: var(--font); background: #fff;
-    white-space: nowrap;
   }
-  .fe-chip:hover { border-color: var(--green-mid); color: var(--green-deeper); background: var(--green-light); }
-  .fe-chip.selected {
-    background: var(--green-light); color: var(--green-deeper);
-    border-color: var(--green); font-weight: 700;
-  }
+  .fe-chip:hover { border-color: var(--green); color: var(--green-deeper); background: var(--green-light); }
+  .fe-chip.selected { background: var(--green-light); color: var(--green-deeper); border-color: var(--green); font-weight: 700; }
 
-  /* ── 제목 입력 — 테두리 없이 크게 ── */
+  /* ── 제목 ── */
   .fe-title-input {
     width: 100%; border: none; outline: none;
-    font-size: 32px; font-weight: 700;
-    color: #111; background: transparent;
-    font-family: var(--font); line-height: 1.3;
-    resize: none; overflow: hidden;
-    min-height: 48px; padding: 0;
-    letter-spacing: -0.5px;
+    font-size: 30px; font-weight: 700; color: #111;
+    background: transparent; font-family: var(--font);
+    line-height: 1.3; resize: none; overflow: hidden; padding: 0;
+    letter-spacing: -0.3px;
   }
-  .fe-title-input::placeholder { color: #D0D0D0; font-weight: 400; }
-  .fe-title-divider {
-    height: 1px; background: #EEEEEE;
-    margin: 16px 0 20px;
+  .fe-title-input::placeholder { color: #D8D8D8; font-weight: 400; }
+  .fe-title-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 6px; margin-bottom: 0;
   }
-  .fe-char-count {
-    font-size: 11px; color: #BDBDBD;
-    text-align: right; margin-top: 6px; margin-bottom: 0;
-  }
+  .fe-char-count { font-size: 11px; color: #C0C0C0; }
+  .fe-title-divider { height: 1px; background: #EFEFEF; margin: 14px 0; }
 
-  /* ── 본문 에디터 ── */
-  .fe-editor {
-    min-height: 320px;
-    font-size: 18px; line-height: 1.8;
-    color: #222; outline: none;
+  /* ── 인라인 툴바 ── */
+  .fe-inline-toolbar {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 1px;
+    padding: 6px 10px;
+    background: #FAFAFA;
+    border: 1px solid #EBEBEB;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .fe-tb-btn {
+    display: flex; align-items: center; gap: 5px;
+    height: 32px; min-width: 32px; padding: 0 8px;
+    border: none; background: none; cursor: pointer;
+    border-radius: 6px; color: #555; font-size: 13px;
+    font-family: var(--font); transition: background 0.1s, color 0.1s;
+    flex-shrink: 0; white-space: nowrap;
+  }
+  .fe-tb-btn:hover { background: #EDEDED; color: #111; }
+  .fe-tb-btn.active { background: #E5F5EE; color: var(--green-deeper); }
+  .fe-tb-sep { width: 1px; height: 18px; background: #E0E0E0; margin: 0 4px; flex-shrink: 0; }
+  .fe-tb-dropdown { gap: 4px; padding: 0 8px; }
+  .fe-tb-dropdown span { font-size: 12px; font-weight: 500; }
+  .fe-tb-photo {
+    background: var(--green-light); color: var(--green-deeper);
+    font-weight: 600; font-size: 12px; padding: 0 12px; border-radius: 6px;
+  }
+  .fe-tb-photo:hover { background: #c8ede3; color: var(--green-deeper); }
+
+  /* ── 드롭다운 ── */
+  .fe-dropdown-wrap { position: relative; }
+  .fe-dropdown {
+    display: none; position: absolute; top: calc(100% + 6px); left: 0;
+    background: #fff; border: 1px solid #E8E8E8;
+    border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 200; min-width: 160px; overflow: hidden;
+    animation: dropIn 0.14s ease;
+  }
+  .fe-dropdown.open { display: block; }
+  @keyframes dropIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+  .fe-dd-item {
+    padding: 10px 14px; cursor: pointer; transition: background 0.1s;
     font-family: var(--font);
-    word-break: break-word;
-    caret-color: var(--green);
+  }
+  .fe-dd-item:hover { background: #F5F5F5; }
+  .fe-dd-sep { height: 1px; background: #F0F0F0; }
+
+  /* ── 컬러 팔레트 ── */
+  .fe-color-drop { min-width: auto; padding: 10px; }
+  .fe-color-grid { display: grid; grid-template-columns: repeat(4, 26px); gap: 6px; }
+  .fe-color-dot {
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent;
+    cursor: pointer; transition: transform 0.1s, border-color 0.1s;
+  }
+  .fe-color-dot:hover { transform: scale(1.2); border-color: rgba(0,0,0,0.2); }
+
+  /* ── 에디터 본문 ── */
+  .fe-editor {
+    min-height: 300px; font-size: 17px; line-height: 1.8;
+    color: #222; outline: none; font-family: var(--font);
+    word-break: break-word; caret-color: var(--green);
   }
   .fe-editor:empty::before {
-    content: attr(data-placeholder);
-    color: #C8C8C8; pointer-events: none;
+    content: attr(data-placeholder); color: #C8C8C8; pointer-events: none;
   }
+  .fe-editor h1 { font-size: 26px; font-weight: 700; margin: 20px 0 8px; line-height: 1.3; }
+  .fe-editor h2 { font-size: 20px; font-weight: 700; margin: 18px 0 6px; line-height: 1.3; }
+  .fe-editor h3 { font-size: 16px; font-weight: 700; margin: 14px 0 4px; }
   .fe-editor p { margin: 0 0 4px; }
-  .fe-editor b, .fe-editor strong { font-weight: 700; }
+  .fe-editor ul, .fe-editor ol { padding-left: 24px; margin: 8px 0; }
+  .fe-editor li { margin-bottom: 4px; }
+  .fe-editor a { color: var(--green); text-decoration: underline; }
+  .fe-editor hr { border: none; border-top: 2px solid #EEEEEE; margin: 28px 0; }
+  .fe-editor strong { font-weight: 700; }
+  .fe-editor em { font-style: italic; }
+  .fe-editor u { text-decoration: underline; }
 
-  /* ── 에디터 내 이미지 블록 ── */
+  /* ── 이미지 블록 ── */
   .fe-img-block {
-    position: relative;
-    margin: 28px -56px; /* 종이 좌우 패딩 밖으로 꽉 차게 */
-    overflow: hidden;
-    background: #F5F5F5;
+    position: relative; margin: 24px -52px;
+    overflow: hidden; background: #F5F5F5;
   }
   .fe-img-block img {
     width: 100%; display: block;
-    object-fit: contain;
-    max-height: 600px;
+    object-fit: contain; max-height: 560px;
   }
   .fe-img-remove {
-    position: absolute; top: 12px; right: 12px;
-    width: 32px; height: 32px; border-radius: 50%;
-    background: rgba(0,0,0,0.55); color: #fff;
-    border: none; cursor: pointer; font-size: 16px;
+    position: absolute; top: 10px; right: 10px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(0,0,0,0.55); color: #fff; border: none;
+    cursor: pointer; font-size: 14px;
     display: flex; align-items: center; justify-content: center;
-    transition: background 0.12s; backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px); transition: background 0.12s;
   }
   .fe-img-remove:hover { background: rgba(0,0,0,0.8); }
-  .fe-editor hr {
-    border: none; border-top: 2px solid #EEEEEE;
-    margin: 32px 0;
-  }
 
-  /* ── 하단 고정 툴바 ── */
-  .fe-toolbar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: 52px;
-    background: #fff;
-    border-top: 1px solid #EEEEEE;
-    display: none;
-    align-items: center;
-    padding: 0 16px; gap: 2px;
-    z-index: 901;
+  /* ── 링크 팝업 ── */
+  .fe-link-popup {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff; border: 1px solid #E8E8E8;
+    border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+    padding: 14px 14px; display: flex; align-items: center; gap: 8px;
+    z-index: 1000; min-width: 320px;
   }
-  .fe-toolbar.open { display: flex; }
+  .fe-link-input {
+    flex: 1; border: 1px solid #E0E0E0; border-radius: 8px;
+    padding: 8px 12px; font-size: 14px; outline: none;
+    font-family: var(--font); color: #111;
+  }
+  .fe-link-input:focus { border-color: var(--green); }
+  .fe-link-ok {
+    background: var(--green); color: #fff; border: none;
+    border-radius: 8px; padding: 8px 16px; font-size: 13px;
+    font-weight: 700; cursor: pointer; font-family: var(--font);
+  }
+  .fe-link-cancel {
+    background: none; border: none; cursor: pointer;
+    color: #999; font-size: 16px; padding: 4px; border-radius: 6px;
+    transition: background 0.1s;
+  }
+  .fe-link-cancel:hover { background: #F5F5F5; }
 
-  /* PC: 툴바 내용도 종이 너비에 맞춰 가운데 정렬 */
-  @media (min-width: 1024px) {
-    .fe-toolbar {
-      padding: 0 calc((100vw - 860px) / 2 + 16px);
-    }
-  }
-
-  .fe-tool {
-    min-width: 40px; height: 40px;
-    border: none; background: none; cursor: pointer;
-    border-radius: 8px; color: #666;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font); font-size: 14px;
-    transition: background 0.12s; flex-shrink: 0;
-  }
-  .fe-tool:hover { background: #F5F5F5; color: #111; }
-  .fe-tool-sep {
-    width: 1px; height: 20px; background: #E8E8E8;
-    margin: 0 6px; flex-shrink: 0;
-  }
-  .fe-tool-img {
-    display: flex; align-items: center; gap: 6px;
-    padding: 0 14px; font-size: 13px; font-weight: 600;
-    color: var(--green-deeper); background: var(--green-light);
-    border-radius: 8px; min-width: auto; height: 36px;
-  }
-  .fe-tool-img:hover { background: #c8ede3; }
-  .fe-autosave {
-    margin-left: auto; font-size: 11px; color: #BDBDBD;
-    white-space: nowrap;
-  }
+  /* ── 자동저장 ── */
+  .fe-autosave { font-size: 11px; color: #BDBDBD; }
 
   /* ── 모바일 ── */
   @media (max-width: 1023px) {
-    .fe-container {
-      padding: 28px 20px 60px;
-      border-radius: 0;
-      box-shadow: none;
-      min-height: auto;
-    }
-    .fe-scroll { padding: 0 0 100px; background: #fff; }
-    .fe-title-input { font-size: 24px; }
-    .fe-editor { font-size: 16px; line-height: 1.75; }
-    .fe-img-block { margin: 20px -20px; }
-    .fe-topbar { padding: 0 16px; }
-    .fe-toolbar {
-      padding: 0 12px;
-      padding-bottom: env(safe-area-inset-bottom);
-      height: calc(52px + env(safe-area-inset-bottom));
-    }
+    .fe-scroll { padding: 0 0 60px; background: #fff; }
+    .fe-container { padding: 20px 16px 40px; box-shadow: none; border-radius: 0; min-height: auto; }
+    .fe-img-block { margin: 20px -16px; }
+    .fe-title-input { font-size: 22px; }
+    .fe-editor { font-size: 16px; }
+    .fe-inline-toolbar { border-radius: 8px; padding: 4px 6px; gap: 0; }
+    .fe-tb-btn { min-width: 36px; height: 36px; }
+    .fe-topbar { padding: 0 14px; }
   }
-
   /* 기존 kc-modal은 알림 모달 등에서만 사용 */
   .kc-modal-overlay {
     display: none;
@@ -4042,15 +4046,14 @@
 
 <!-- ══════════════════════════════════
      FULL-SCREEN BLOG EDITOR
-     PC/모바일 공통 전체화면 글쓰기
 ══════════════════════════════════ -->
 <div id="fullEditorOverlay">
 
-  <!-- 상단 헤더 바 (Sticky) -->
+  <!-- ① 상단 헤더 바 -->
   <div class="fe-topbar">
     <button class="fe-cancel-btn" onclick="closeFullEditor()">
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-        <path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       Back
     </button>
@@ -4058,7 +4061,7 @@
     <button class="fe-publish-btn" id="fePublishBtn" onclick="publishFromEditor()">Publish</button>
   </div>
 
-  <!-- 스크롤 영역 -->
+  <!-- ② 스크롤 영역 -->
   <div class="fe-scroll" id="feScroll">
     <div class="fe-container">
 
@@ -4074,57 +4077,130 @@
         <div class="fe-chip" onclick="fePickTopic(this,'social')">Social</div>
       </div>
 
-      <!-- 제목 — 테두리 없이 큰 폰트 -->
+      <!-- 제목 입력 -->
       <textarea class="fe-title-input" id="feTitleInput"
         placeholder="Title"
-        rows="1"
-        maxlength="120"
+        rows="1" maxlength="120"
         oninput="feOnTitleInput()"></textarea>
-      <div class="fe-char-count"><span id="feTitleLen">0</span> / 120</div>
+      <div class="fe-title-meta">
+        <span class="fe-autosave" id="feAutosaveLabel"></span>
+        <span class="fe-char-count"><span id="feTitleLen">0</span>/120</span>
+      </div>
       <div class="fe-title-divider"></div>
 
-      <!-- 본문 에디터 -->
+      <!-- ③ 인라인 툴바 (제목 아래, 에디터 위) -->
+      <div class="fe-inline-toolbar" id="feInlineToolbar">
+
+        <!-- 폰트 크기 드롭다운 -->
+        <div class="fe-dropdown-wrap">
+          <button class="fe-tb-btn fe-tb-dropdown" id="feFontSizeBtn" onclick="feToggleDropdown('feFontSizeDrop')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 13L6 3l4 10M3.5 10h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M10 10l2-4 2 4M10.7 8.5h2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <span id="feFontSizeLabel">Normal</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </button>
+          <div class="fe-dropdown" id="feFontSizeDrop">
+            <div class="fe-dd-item" onclick="feSetBlock('h1','Heading 1')"><span style="font-size:18px;font-weight:700">Heading 1</span></div>
+            <div class="fe-dd-item" onclick="feSetBlock('h2','Heading 2')"><span style="font-size:15px;font-weight:600">Heading 2</span></div>
+            <div class="fe-dd-item" onclick="feSetBlock('h3','Heading 3')"><span style="font-size:13px;font-weight:600">Heading 3</span></div>
+            <div class="fe-dd-sep"></div>
+            <div class="fe-dd-item" onclick="feSetBlock('p','Normal')"><span style="font-size:14px">Normal text</span></div>
+          </div>
+        </div>
+
+        <div class="fe-tb-sep"></div>
+
+        <!-- Bold -->
+        <button class="fe-tb-btn" onclick="feCmd('bold')" title="Bold" id="feBoldBtn">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 3h5a3 3 0 010 6H4V3z" stroke="currentColor" stroke-width="1.6"/><path d="M4 9h5.5a3.5 3.5 0 010 7H4V9z" stroke="currentColor" stroke-width="1.6"/></svg>
+        </button>
+
+        <!-- Italic -->
+        <button class="fe-tb-btn" onclick="feCmd('italic')" title="Italic" id="feItalicBtn">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3H7M9 13H6M8 3l-2 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+
+        <!-- Underline -->
+        <button class="fe-tb-btn" onclick="feCmd('underline')" title="Underline">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 3v5a4 4 0 008 0V3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 13h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+
+        <div class="fe-tb-sep"></div>
+
+        <!-- 글자 색상 -->
+        <div class="fe-dropdown-wrap">
+          <button class="fe-tb-btn" onclick="feToggleDropdown('feColorDrop')" title="Text color">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M3 13L7 3l4 10M4.5 10h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <rect x="2" y="13.5" width="12" height="2" rx="1" id="feColorBar" fill="#1A1A18"/>
+            </svg>
+          </button>
+          <div class="fe-dropdown fe-color-drop" id="feColorDrop">
+            <div class="fe-color-grid">
+              <button class="fe-color-dot" style="background:#1A1A18" onclick="feSetColor('#1A1A18')" title="Black"></button>
+              <button class="fe-color-dot" style="background:#E53935" onclick="feSetColor('#E53935')" title="Red"></button>
+              <button class="fe-color-dot" style="background:#F57C00" onclick="feSetColor('#F57C00')" title="Orange"></button>
+              <button class="fe-color-dot" style="background:#F9A825" onclick="feSetColor('#F9A825')" title="Yellow"></button>
+              <button class="fe-color-dot" style="background:#1D9E75" onclick="feSetColor('#1D9E75')" title="Green"></button>
+              <button class="fe-color-dot" style="background:#1565C0" onclick="feSetColor('#1565C0')" title="Blue"></button>
+              <button class="fe-color-dot" style="background:#6A1B9A" onclick="feSetColor('#6A1B9A')" title="Purple"></button>
+              <button class="fe-color-dot" style="background:#757575" onclick="feSetColor('#757575')" title="Gray"></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="fe-tb-sep"></div>
+
+        <!-- 글머리 기호 -->
+        <button class="fe-tb-btn" onclick="feCmd('insertUnorderedList')" title="Bullet list">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="2.5" cy="4" r="1.2" fill="currentColor"/><circle cx="2.5" cy="8" r="1.2" fill="currentColor"/><circle cx="2.5" cy="12" r="1.2" fill="currentColor"/><path d="M6 4h9M6 8h9M6 12h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </button>
+
+        <!-- 번호 목록 -->
+        <button class="fe-tb-btn" onclick="feCmd('insertOrderedList')" title="Numbered list">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3h1.5v4M2 7h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M2 10c1-1 2 0 2 1s-2 2-2 2h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M7 4h9M7 8h9M7 12h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </button>
+
+        <div class="fe-tb-sep"></div>
+
+        <!-- 링크 삽입 -->
+        <button class="fe-tb-btn" onclick="feInsertLink()" title="Insert link" id="feLinkBtn">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6.5 9.5a4 4 0 005.7 0l1.5-1.5a4 4 0 00-5.7-5.7L7 3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9.5 6.5a4 4 0 00-5.7 0L2.3 8a4 4 0 005.7 5.7l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+
+        <!-- 구분선 삽입 -->
+        <button class="fe-tb-btn" onclick="feInsertDivider()" title="Horizontal rule">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 4h4M10 4h4M2 12h4M10 12h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/></svg>
+        </button>
+
+        <div class="fe-tb-sep"></div>
+
+        <!-- 사진 추가 -->
+        <button class="fe-tb-btn fe-tb-photo" onclick="document.getElementById('feImgInput').click()" title="Add photo">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="6.5" r="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 11.5l3.5-3.5 2.5 2.5 2-2 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Photo
+        </button>
+        <input type="file" id="feImgInput" accept="image/*" style="display:none" onchange="feInsertImage(event)">
+
+      </div><!-- /fe-inline-toolbar -->
+
+      <!-- ④ 본문 에디터 (contenteditable) -->
       <div class="fe-editor" id="feEditor"
         contenteditable="true"
         data-placeholder="Share what you know — visa tips, neighborhood guides, restaurant finds, life hacks for living in Korea..."
         oninput="feOnBodyInput()"
-        onkeydown="feOnKeydown(event)">
+        onkeydown="feOnKeydown(event)"
+        onmouseup="feUpdateToolbarState()"
+        onkeyup="feUpdateToolbarState()">
       </div>
 
     </div>
   </div>
 
-  <!-- 하단 고정 툴바 -->
-  <div class="fe-toolbar open" id="feToolbar">
-
-    <!-- 📷 사진 추가 -->
-    <button class="fe-tool fe-tool-img" onclick="document.getElementById('feImgInput').click()">
-      <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-        <rect x="1.5" y="2.5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/>
-        <circle cx="5.5" cy="6.5" r="1.2" stroke="currentColor" stroke-width="1.2"/>
-        <path d="M1.5 11.5l3.5-3.5 2.5 2.5 2-2 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-      </svg>
-      Photo
-    </button>
-    <input type="file" id="feImgInput" accept="image/*" style="display:none" onchange="feInsertImage(event)">
-
-    <div class="fe-tool-sep"></div>
-
-    <!-- — 구분선 -->
-    <button class="fe-tool" onclick="feInsertDivider()" title="Insert divider">
-      <svg width="16" height="3" viewBox="0 0 16 3" fill="none">
-        <rect width="16" height="2" rx="1" fill="currentColor" opacity="0.5"/>
-      </svg>
-    </button>
-
-    <!-- B Bold -->
-    <button class="fe-tool" onclick="feCmd('bold')" title="Bold" style="font-weight:800;font-size:15px;color:#333">B</button>
-
-    <!-- I Italic -->
-    <button class="fe-tool" onclick="feCmd('italic')" title="Italic" style="font-style:italic;font-size:15px">I</button>
-
-    <!-- 자동저장 표시 -->
-    <span class="fe-autosave" id="feAutosaveLabel"></span>
+  <!-- 링크 입력 팝업 -->
+  <div class="fe-link-popup" id="feLinkPopup" style="display:none">
+    <input class="fe-link-input" id="feLinkInput" type="url" placeholder="https://...">
+    <button class="fe-link-ok" onclick="feConfirmLink()">OK</button>
+    <button class="fe-link-cancel" onclick="feCloseLinkPopup()">✕</button>
   </div>
 
 </div>
@@ -7333,10 +7409,101 @@ function feCheckReady() {
   if (btn) btn.classList.toggle('ready', !!ready);
 }
 
-// ── 툴바 기능 ──
+// ── 에디터 기본 커맨드 ──
 window.feCmd = function(cmd) {
   document.getElementById('feEditor')?.focus();
   document.execCommand(cmd);
+  feUpdateToolbarState();
+}
+
+// ── 드롭다운 토글 ──
+window.feToggleDropdown = function(id) {
+  // 다른 드롭다운 닫기
+  document.querySelectorAll('.fe-dropdown').forEach(d => {
+    if (d.id !== id) d.classList.remove('open');
+  });
+  document.getElementById(id)?.classList.toggle('open');
+}
+
+// 에디터 외 클릭 시 드롭다운 닫기
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.fe-dropdown-wrap') && !e.target.closest('.fe-dropdown')) {
+    document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
+  }
+});
+
+// ── 블록 서식 (H1/H2/H3/P) ──
+window.feSetBlock = function(tag, label) {
+  document.getElementById('feEditor')?.focus();
+  document.execCommand('formatBlock', false, tag);
+  const lbl = document.getElementById('feFontSizeLabel');
+  if (lbl) lbl.textContent = label;
+  document.getElementById('feFontSizeDrop')?.classList.remove('open');
+}
+
+// ── 글자 색상 ──
+window.feSetColor = function(color) {
+  document.getElementById('feEditor')?.focus();
+  document.execCommand('foreColor', false, color);
+  // 컬러바 아이콘 업데이트
+  const bar = document.getElementById('feColorBar');
+  if (bar) bar.setAttribute('fill', color);
+  document.getElementById('feColorDrop')?.classList.remove('open');
+}
+
+// ── 링크 삽입 ──
+let feSavedRange = null;
+window.feInsertLink = function() {
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount) feSavedRange = sel.getRangeAt(0).cloneRange();
+  const popup = document.getElementById('feLinkPopup');
+  const input = document.getElementById('feLinkInput');
+  if (popup) popup.style.display = 'flex';
+  if (input) { input.value = ''; input.focus(); }
+}
+
+window.feConfirmLink = function() {
+  const input = document.getElementById('feLinkInput');
+  let url = (input?.value || '').trim();
+  if (!url) { feCloseLinkPopup(); return; }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  const editor = document.getElementById('feEditor');
+  if (editor && feSavedRange) {
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(feSavedRange);
+    editor.focus();
+    document.execCommand('createLink', false, url);
+  }
+  feCloseLinkPopup();
+}
+
+window.feCloseLinkPopup = function() {
+  const popup = document.getElementById('feLinkPopup');
+  if (popup) popup.style.display = 'none';
+  feSavedRange = null;
+}
+
+// Enter로 팝업 확인
+document.addEventListener('keydown', function(e) {
+  const popup = document.getElementById('feLinkPopup');
+  if (popup?.style.display === 'flex') {
+    if (e.key === 'Enter') { e.preventDefault(); feConfirmLink(); }
+    if (e.key === 'Escape') feCloseLinkPopup();
+  }
+});
+
+// ── 툴바 상태 업데이트 (Bold/Italic active 표시) ──
+window.feUpdateToolbarState = function() {
+  const boldBtn   = document.getElementById('feBoldBtn');
+  const italicBtn = document.getElementById('feItalicBtn');
+  if (boldBtn)   boldBtn.classList.toggle('active',   document.queryCommandState('bold'));
+  if (italicBtn) italicBtn.classList.toggle('active', document.queryCommandState('italic'));
+  // 현재 블록 서식 표시
+  const block = document.queryCommandValue('formatBlock');
+  const labelMap = { h1:'Heading 1', h2:'Heading 2', h3:'Heading 3', p:'Normal', div:'Normal' };
+  const lbl = document.getElementById('feFontSizeLabel');
+  if (lbl && block) lbl.textContent = labelMap[block.toLowerCase()] || 'Normal';
 }
 
 window.feInsertDivider = function() {

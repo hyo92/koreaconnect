@@ -1608,6 +1608,206 @@
   }
 
   /* ── WRITE MODAL & ALERTS MODAL ── */
+  /* ══════════════════════════════════════
+     FULL-SCREEN BLOG EDITOR
+  ══════════════════════════════════════ */
+
+  /* 전체화면 에디터 오버레이 */
+  #fullEditorOverlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 900;
+    background: #F7F7F5; /* 메인과 살짝 다른 배경 */
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #fullEditorOverlay.open { display: flex; }
+
+  /* ── 상단 바 ── */
+  .fe-topbar {
+    height: 56px; flex-shrink: 0;
+    background: #fff;
+    border-bottom: 1px solid #EBEBEB;
+    display: flex; align-items: center;
+    padding: 0 20px; gap: 12px;
+    position: relative;
+  }
+  .fe-cancel-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 500; color: var(--text-2);
+    font-family: var(--font); padding: 8px 12px;
+    border-radius: 8px; transition: background 0.12s;
+    white-space: nowrap;
+  }
+  .fe-cancel-btn:hover { background: #F5F5F5; }
+  .fe-topbar-title {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: 15px; font-weight: 700; color: var(--text);
+    pointer-events: none;
+  }
+  .fe-publish-btn {
+    margin-left: auto;
+    background: var(--green); color: #fff;
+    border: none; border-radius: 999px;
+    padding: 9px 22px; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: var(--font);
+    transition: background 0.15s, opacity 0.15s;
+    white-space: nowrap; opacity: 0.5;
+    pointer-events: none;
+  }
+  .fe-publish-btn.ready { opacity: 1; pointer-events: auto; }
+  .fe-publish-btn.ready:hover { background: var(--green-dark); }
+
+  /* ── 에디터 스크롤 영역 ── */
+  .fe-scroll {
+    flex: 1; overflow-y: auto;
+    padding: 0 16px 120px; /* 하단 툴바 공간 */
+  }
+
+  /* ── 에디터 컨테이너 (가운데 정렬) ── */
+  .fe-container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 0 40px;
+  }
+
+  /* ── Topic 선택 ── */
+  .fe-topic-row {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 20px;
+  }
+  .fe-chip {
+    padding: 6px 14px; border-radius: 999px;
+    border: 1.5px solid var(--border);
+    font-size: 13px; font-weight: 500; color: var(--text-2);
+    cursor: pointer; transition: all 0.15s;
+    font-family: var(--font); background: var(--surface);
+    white-space: nowrap;
+  }
+  .fe-chip:hover { border-color: var(--green-mid); color: var(--green-deeper); }
+  .fe-chip.selected {
+    background: var(--green-light); color: var(--green-deeper);
+    border-color: var(--green-mid); font-weight: 700;
+  }
+
+  /* ── 제목 입력 ── */
+  .fe-title-input {
+    width: 100%; border: none; outline: none;
+    font-size: 28px; font-weight: 800;
+    color: var(--text); background: transparent;
+    font-family: var(--font); line-height: 1.3;
+    resize: none; overflow: hidden;
+    min-height: 44px; margin-bottom: 4px;
+  }
+  .fe-title-input::placeholder { color: #CCC; }
+  .fe-title-divider {
+    height: 1px; background: var(--border);
+    margin: 12px 0;
+  }
+  .fe-char-count {
+    font-size: 11px; color: var(--text-3);
+    text-align: right; margin-bottom: 16px;
+  }
+
+  /* ── 블로그 에디터 본문 ── */
+  .fe-editor {
+    min-height: 280px;
+    font-size: 16px; line-height: 1.8;
+    color: var(--text); outline: none;
+    font-family: var(--font);
+    word-break: break-word;
+    caret-color: var(--green);
+  }
+  .fe-editor:empty::before {
+    content: attr(data-placeholder);
+    color: #BDBDBD; pointer-events: none;
+  }
+  /* 에디터 내 이미지 */
+  .fe-img-block {
+    position: relative; margin: 20px 0;
+    border-radius: 12px; overflow: hidden;
+    background: var(--bg);
+  }
+  .fe-img-block img {
+    width: 100%; display: block;
+    object-fit: contain; max-height: 520px;
+    border-radius: 12px;
+  }
+  .fe-img-remove {
+    position: absolute; top: 10px; right: 10px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(0,0,0,0.6); color: #fff;
+    border: none; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s;
+  }
+  .fe-img-remove:hover { background: rgba(0,0,0,0.8); }
+  .fe-editor hr {
+    border: none; border-top: 2px solid var(--border);
+    margin: 28px 0;
+  }
+
+  /* ── 하단 고정 툴바 ── */
+  .fe-toolbar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 56px;
+    background: #fff;
+    border-top: 1px solid #EBEBEB;
+    display: none; /* JS로 open 시 표시 */
+    align-items: center;
+    padding: 0 16px; gap: 4px;
+    z-index: 901;
+  }
+  .fe-toolbar.open { display: flex; }
+  .fe-tool {
+    min-width: 44px; height: 44px;
+    border: none; background: none; cursor: pointer;
+    border-radius: 8px; color: var(--text-2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font); font-size: 14px;
+    transition: background 0.12s; flex-shrink: 0;
+  }
+  .fe-tool:hover { background: var(--bg); color: var(--text); }
+  .fe-tool-sep {
+    width: 1px; height: 24px; background: var(--border);
+    margin: 0 4px; flex-shrink: 0;
+  }
+  .fe-tool-img {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 14px; font-size: 13px; font-weight: 600;
+    color: var(--green-deeper); background: var(--green-light);
+    border-radius: 8px; min-width: auto;
+  }
+  .fe-tool-img:hover { background: var(--green-mid); }
+  .fe-autosave {
+    margin-left: auto; font-size: 11px; color: var(--text-3);
+    white-space: nowrap;
+  }
+
+  /* ── PC 전용: 더 여유있는 레이아웃 ── */
+  @media (min-width: 1024px) {
+    .fe-container { max-width: 820px; padding: 40px 0 60px; }
+    .fe-topbar { padding: 0 40px; height: 60px; }
+    .fe-cancel-btn { font-size: 15px; }
+    .fe-topbar-title { font-size: 16px; }
+    .fe-publish-btn { font-size: 15px; padding: 10px 28px; }
+    .fe-title-input { font-size: 32px; }
+    .fe-editor { font-size: 17px; line-height: 1.85; }
+    .fe-toolbar { padding: 0 calc((100% - 820px) / 2 + 16px); }
+    .fe-scroll { padding: 0 40px 80px; }
+    /* PC에서는 env(safe-area) 불필요 */
+  }
+
+  /* ── 모바일 안전 영역 ── */
+  @media (max-width: 1023px) {
+    .fe-toolbar {
+      padding-bottom: env(safe-area-inset-bottom);
+      height: calc(56px + env(safe-area-inset-bottom));
+    }
+    .fe-scroll { padding: 0 16px calc(80px + env(safe-area-inset-bottom)); }
+  }
+
+  /* 기존 kc-modal은 알림 모달 등에서만 사용 */
   .kc-modal-overlay {
     display: none;
     position: fixed; inset: 0; z-index: 600;
@@ -1625,12 +1825,15 @@
     overflow: hidden;
     animation: modalIn 0.22s ease;
   }
-  /* PC: Write 모달을 화면의 80% 크기로 */
-  @media (min-width: 1024px) {
-    .kc-modal-overlay.write-open .kc-modal,
-    #writeModal {
-      max-width: min(860px, 82vw);
-      max-height: min(90vh, 900px);
+  @media (max-width: 640px) {
+    .kc-modal-overlay { align-items: flex-end; padding: 0; }
+    .kc-modal {
+      border-radius: 20px 20px 0 0; max-width: 100%; max-height: 92vh;
+      animation: mobileModalIn 0.25s ease;
+    }
+    @keyframes mobileModalIn {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
     }
   }
 
@@ -3822,6 +4025,83 @@
 </div><!-- /.desktop-layout -->
 
 <!-- ══════════════════════════════════
+     FULL-SCREEN BLOG EDITOR
+     PC/모바일 공통 전체화면 글쓰기
+══════════════════════════════════ -->
+<div id="fullEditorOverlay">
+
+  <!-- 상단 바 -->
+  <div class="fe-topbar">
+    <button class="fe-cancel-btn" onclick="closeFullEditor()">← Cancel</button>
+    <span class="fe-topbar-title">Write a Post</span>
+    <button class="fe-publish-btn" id="fePublishBtn" onclick="publishFromEditor()">Publish</button>
+  </div>
+
+  <!-- 스크롤 영역 -->
+  <div class="fe-scroll" id="feScroll">
+    <div class="fe-container">
+
+      <!-- Topic 선택 -->
+      <div class="fe-topic-row" id="feTopicRow">
+        <div class="fe-chip" onclick="fePickTopic(this,'visa')">Visa</div>
+        <div class="fe-chip" onclick="fePickTopic(this,'jobs')">Jobs</div>
+        <div class="fe-chip" onclick="fePickTopic(this,'housing')">Housing</div>
+        <div class="fe-chip" onclick="fePickTopic(this,'tips')">Tips</div>
+        <div class="fe-chip" onclick="fePickTopic(this,'questions')">Questions</div>
+        <div class="fe-chip" onclick="fePickTopic(this,'travel')">Travel</div>
+        <div class="fe-chip" onclick="fePickTopic(this,'beauty')">Beauty</div>
+        <div class="fe-chip" onclick="fePickTopic(this,'social')">Social</div>
+      </div>
+
+      <!-- 제목 -->
+      <textarea class="fe-title-input" id="feTitleInput"
+        placeholder="Title..."
+        rows="1"
+        maxlength="120"
+        oninput="feOnTitleInput()"></textarea>
+      <div class="fe-char-count"><span id="feTitleLen">0</span>/120</div>
+      <div class="fe-title-divider"></div>
+
+      <!-- 블로그 에디터 본문 -->
+      <div class="fe-editor" id="feEditor"
+        contenteditable="true"
+        data-placeholder="Share what you know..."
+        oninput="feOnBodyInput()"
+        onkeydown="feOnKeydown(event)">
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 하단 고정 툴바 -->
+  <div class="fe-toolbar open" id="feToolbar">
+    <!-- 이미지 추가 -->
+    <button class="fe-tool fe-tool-img" onclick="document.getElementById('feImgInput').click()">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="6.5" r="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 11.5l3.5-3.5 2.5 2.5 2-2 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Photo
+    </button>
+    <input type="file" id="feImgInput" accept="image/*" style="display:none" onchange="feInsertImage(event)">
+
+    <div class="fe-tool-sep"></div>
+
+    <!-- 구분선 -->
+    <button class="fe-tool" onclick="feInsertDivider()" title="Divider">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+
+    <!-- Bold -->
+    <button class="fe-tool" onclick="feCmd('bold')" title="Bold" style="font-weight:800;font-size:15px">B</button>
+
+    <!-- Italic -->
+    <button class="fe-tool" onclick="feCmd('italic')" title="Italic" style="font-style:italic;font-size:15px">I</button>
+
+    <!-- 자동저장 표시 -->
+    <span class="fe-autosave" id="feAutosaveLabel"></span>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════
      SCREEN: HOT DEALS (전체 화면 — desktop-layout 밖)
      goTo('deals') 시 fixed 오버레이로 전체 덮음
 ══════════════════════════════════ -->
@@ -4827,9 +5107,10 @@ async function savePostToFirebase(postData) {
 }
 // ── NAVIGATION ──
 window.goTo = function(screen) {
-  // PC에서 write/notifications는 모달로 처리
+  // write → 항상 전체화면 에디터로 (PC/모바일 공통)
+  if (screen === 'write') { openFullEditor(); return; }
+  // PC에서 notifications는 모달로 처리
   if (isDesktopMode()) {
-    if (screen === 'write') { openWriteModal(); return; }
     if (screen === 'notifications') { openAlertsModal(); return; }
   }
 
@@ -4841,21 +5122,12 @@ window.goTo = function(screen) {
   const navEl = document.getElementById('nav-' + screen);
   if (navEl) navEl.classList.add('active');
 
-  // 데스크탑에서 screen-feed 명시적 제어
-  // (CSS display:block 고정 때문에 screen-feed는 active 없이도 보임)
   const feedEl = document.getElementById('screen-feed');
   if (feedEl) {
     feedEl.style.display = screen === 'feed' ? '' : 'none';
   }
 
   if (screen === 'chat') closeChat();
-  if (screen === 'write') {
-    updateWriteScreen(currentUser);
-    const sf = document.getElementById('writeForm');
-    if (sf) sf.style.display = '';
-    const ss = document.getElementById('successScreen');
-    if (ss) ss.classList.remove('show');
-  }
   if (screen === 'profile' && currentUser && activeProfileTab === 'myposts') {
     renderMyPosts();
   }
@@ -6905,8 +7177,274 @@ window.executeDeletePost = async function() {
 }
 
 // ══════════════════════════════════════
-// 블로그형 에디터
+// FULL-SCREEN BLOG EDITOR
 // ══════════════════════════════════════
+let feImages = [];       // { localUrl, file }
+let feTopic  = null;
+let feAutosaveTimer = null;
+const FE_DRAFT_KEY = 'kc_draft_v1';
+
+// ── 열기 ──
+window.openFullEditor = function() {
+  if (!currentUser) { openLoginGate(); return; }
+  const overlay = document.getElementById('fullEditorOverlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // 네비바 숨기기
+  const navbar = document.querySelector('.navbar');
+  if (navbar) navbar.style.display = 'none';
+
+  // 임시저장 불러오기
+  feLoadDraft();
+  feCheckReady();
+
+  // 제목에 포커스
+  setTimeout(() => {
+    const t = document.getElementById('feTitleInput');
+    if (t) { t.focus(); feAutoResize(t); }
+  }, 100);
+}
+
+// ── 닫기 ──
+window.closeFullEditor = function() {
+  const overlay = document.getElementById('fullEditorOverlay');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  const navbar = document.querySelector('.navbar');
+  if (navbar) navbar.style.display = '';
+  clearTimeout(feAutosaveTimer);
+}
+
+// ── Topic 선택 ──
+window.fePickTopic = function(el, topic) {
+  document.querySelectorAll('.fe-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  feTopic = topic;
+  // selectedFlair 공유변수도 업데이트 (publishPost 로직과 호환)
+  selectedFlair = topic;
+  feCheckReady();
+  feScheduleAutosave();
+}
+
+// ── 제목 자동 높이 + 카운터 ──
+window.feOnTitleInput = function() {
+  const t = document.getElementById('feTitleInput');
+  feAutoResize(t);
+  const len = t.value.length;
+  const el = document.getElementById('feTitleLen');
+  if (el) el.textContent = len;
+  feCheckReady();
+  feScheduleAutosave();
+}
+
+function feAutoResize(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// ── 본문 입력 ──
+window.feOnBodyInput = function() {
+  feCheckReady();
+  feScheduleAutosave();
+}
+
+// ── Enter로 이미지 뒤에서 텍스트 계속 쓰기 ──
+window.feOnKeydown = function(e) {
+  // 기본 동작 유지
+}
+
+// ── 발행 버튼 활성화 체크 ──
+function feCheckReady() {
+  const title = (document.getElementById('feTitleInput')?.value || '').trim();
+  const editor = document.getElementById('feEditor');
+  const clone = editor?.cloneNode(true);
+  clone?.querySelectorAll('.fe-img-block').forEach(el => el.remove());
+  const body = clone?.innerText.trim() || '';
+  const hasImg = (feImages.length > 0) || (editor?.querySelector('.fe-img-block') !== null);
+  const ready = title.length >= 4 && (body.length >= 10 || hasImg) && feTopic;
+  const btn = document.getElementById('fePublishBtn');
+  if (btn) btn.classList.toggle('ready', !!ready);
+}
+
+// ── 툴바 기능 ──
+window.feCmd = function(cmd) {
+  document.getElementById('feEditor')?.focus();
+  document.execCommand(cmd);
+}
+
+window.feInsertDivider = function() {
+  document.getElementById('feEditor')?.focus();
+  document.execCommand('insertHTML', false, '<hr contenteditable="false"><p><br></p>');
+}
+
+// ── 이미지 삽입 ──
+window.feInsertImage = function(e) {
+  const files = Array.from(e.target.files || []);
+  e.target.value = '';
+  if (!files.length) return;
+  if (feImages.length + files.length > 5) {
+    showToast('Maximum 5 images', 'error'); return;
+  }
+  files.forEach(file => {
+    if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB per image', 'error'); return; }
+    const localUrl = URL.createObjectURL(file);
+    feImages.push({ localUrl, file });
+    const editor = document.getElementById('feEditor');
+    if (!editor) return;
+    editor.focus();
+    const html = `<div class="fe-img-block" contenteditable="false" data-local="${localUrl}">
+      <img src="${localUrl}" alt="">
+      <button class="fe-img-remove" onclick="feRemoveImage(this,'${localUrl}')" type="button">✕</button>
+    </div><p><br></p>`;
+    document.execCommand('insertHTML', false, html);
+    feCheckReady();
+    feScheduleAutosave();
+  });
+}
+
+window.feRemoveImage = function(btn, localUrl) {
+  btn.closest('.fe-img-block')?.remove();
+  feImages = feImages.filter(img => img.localUrl !== localUrl);
+  URL.revokeObjectURL(localUrl);
+  feCheckReady();
+}
+
+// ── 에디터 내용 추출 ──
+function feGetContent() {
+  const editor = document.getElementById('feEditor');
+  if (!editor) return { text: '', imageFiles: [] };
+  const clone = editor.cloneNode(true);
+  clone.querySelectorAll('.fe-img-block').forEach(el => el.remove());
+  const text = clone.innerText.trim();
+  const imageFiles = [];
+  editor.querySelectorAll('.fe-img-block').forEach(block => {
+    const localUrl = block.getAttribute('data-local');
+    const match = feImages.find(img => img.localUrl === localUrl);
+    if (match) imageFiles.push(match.file);
+  });
+  return { text, imageFiles };
+}
+
+// ── 발행 ──
+window.publishFromEditor = async function() {
+  if (!currentUser) { openLoginGate(); return; }
+  const title = document.getElementById('feTitleInput')?.value.trim();
+  const { text: body, imageFiles } = feGetContent();
+  const topic = feTopic || 'social';
+
+  if (!title || title.length < 4) { showToast('Title must be at least 4 characters', 'error'); return; }
+  if (body.length < 10 && imageFiles.length === 0) { showToast('Add some content or a photo', 'error'); return; }
+
+  const btn = document.getElementById('fePublishBtn');
+  if (btn) { btn.textContent = imageFiles.length ? 'Uploading...' : 'Publishing...'; btn.classList.remove('ready'); }
+
+  const authorName = currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonymous';
+  const tempId = 'post_' + Date.now() + '_' + currentUser.uid.slice(0,6);
+  const locationStr = userDistrict && userCity ? `${userDistrict}, ${userCity}` : userDistrict || userCity || null;
+
+  // 이미지 업로드
+  let imageURL = null, imageURLs = [];
+  if (imageFiles.length > 0) {
+    try {
+      const uploads = await Promise.all(imageFiles.map(async (f, i) => {
+        const compressed = await compressImage(f);
+        return uploadImageToStorage(compressed, `${tempId}_${i}`);
+      }));
+      imageURLs = uploads.filter(Boolean);
+      imageURL = imageURLs[0] || null;
+    } catch(err) {
+      showToast('Image upload failed, posting without images', 'error');
+    }
+  }
+  if (btn) btn.textContent = 'Publishing...';
+
+  const newPost = {
+    comm: selectedComm || 'KoreaConnect',
+    author: authorName, authorId: currentUser.uid,
+    authorPhoto: currentUser.photoURL || null,
+    topic, title, preview: body, votes: 1, commentCount: 0,
+    ...(userDistrict ? { district: userDistrict } : {}),
+    ...(userCity     ? { city: userCity }         : {}),
+    ...(locationStr  ? { location: locationStr }  : {}),
+    ...(imageURL     ? { imageURL }               : {}),
+    ...(imageURLs.length > 1 ? { imageURLs }      : {}),
+  };
+
+  if (firebaseOk) {
+    try {
+      const docRef = await savePostToFirebase(newPost);
+      newPost.id = docRef.id;
+    } catch(e) { console.error('Publish failed:', e); }
+  }
+  newPost.id = newPost.id || tempId;
+  newPost.time = 'Just now';
+  POSTS.unshift(newPost);
+  dbPostIds.add(newPost.id);
+
+  // 임시저장 삭제
+  localStorage.removeItem(FE_DRAFT_KEY);
+  feResetEditor();
+  closeFullEditor();
+
+  renderFeed();
+  showToast('Post published! 🎉', 'success');
+}
+
+// ── 에디터 초기화 ──
+function feResetEditor() {
+  const t = document.getElementById('feTitleInput');
+  if (t) { t.value = ''; feAutoResize(t); }
+  const e = document.getElementById('feEditor');
+  if (e) e.innerHTML = '';
+  const lc = document.getElementById('feTitleLen');
+  if (lc) lc.textContent = '0';
+  document.querySelectorAll('.fe-chip').forEach(c => c.classList.remove('selected'));
+  feImages.forEach(img => URL.revokeObjectURL(img.localUrl));
+  feImages = []; feTopic = null; selectedFlair = null;
+  const btn = document.getElementById('fePublishBtn');
+  if (btn) { btn.textContent = 'Publish'; btn.classList.remove('ready'); }
+  const lbl = document.getElementById('feAutosaveLabel');
+  if (lbl) lbl.textContent = '';
+}
+
+// ── 자동저장 ──
+function feScheduleAutosave() {
+  clearTimeout(feAutosaveTimer);
+  feAutosaveTimer = setTimeout(() => {
+    const title = document.getElementById('feTitleInput')?.value || '';
+    const editor = document.getElementById('feEditor');
+    const body = editor?.innerHTML || '';
+    if (!title && !body) return;
+    localStorage.setItem(FE_DRAFT_KEY, JSON.stringify({ title, body, topic: feTopic, ts: Date.now() }));
+    const lbl = document.getElementById('feAutosaveLabel');
+    if (lbl) { lbl.textContent = 'Saved'; setTimeout(() => { if(lbl) lbl.textContent = ''; }, 2000); }
+  }, 1500);
+}
+
+function feLoadDraft() {
+  try {
+    const raw = localStorage.getItem(FE_DRAFT_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    // 1시간 이내 임시저장만 불러오기
+    if (Date.now() - draft.ts > 3600000) { localStorage.removeItem(FE_DRAFT_KEY); return; }
+    const t = document.getElementById('feTitleInput');
+    if (t && draft.title) { t.value = draft.title; feAutoResize(t); const lc = document.getElementById('feTitleLen'); if(lc) lc.textContent = draft.title.length; }
+    const e = document.getElementById('feEditor');
+    if (e && draft.body) e.innerHTML = draft.body;
+    if (draft.topic) {
+      feTopic = draft.topic; selectedFlair = draft.topic;
+      document.querySelectorAll('.fe-chip').forEach(c => {
+        if (c.getAttribute('onclick')?.includes(`'${draft.topic}'`)) c.classList.add('selected');
+      });
+    }
+    const lbl = document.getElementById('feAutosaveLabel');
+    if (lbl) { lbl.textContent = 'Draft restored'; setTimeout(() => { if(lbl) lbl.textContent=''; }, 3000); }
+  } catch(e) {}
+}
 let blogEditorImages = []; // { localUrl, file, serverId? }
 
 // contenteditable 포커스 끝으로
@@ -8277,37 +8815,12 @@ window.handleSearchOverlayClick = function(e) {
 function isDesktopMode() { return window.innerWidth >= 1024; }
 
 window.openWriteModal = function() {
-  const overlay = document.getElementById('writeModalOverlay');
-  if (!overlay) return;
-  overlay.classList.add('open');
-  document.body.style.overflow = 'hidden';
-
-  // 성공화면 리셋
-  const succ = document.getElementById('successScreenModal');
-  const form = document.getElementById('writeFormModal');
-  if (succ) { succ.classList.remove('show'); succ.style.display = 'none'; }
-  if (form) form.style.display = '';
-
-  // auth 상태에 따라 gate/form 표시
-  const gate = document.getElementById('writeAuthGateModal');
-  const wrap = document.getElementById('writeFormWrapperModal');
-  if (currentUser) {
-    if (gate) gate.style.display = 'none';
-    if (wrap) wrap.style.display = '';
-  } else {
-    if (gate) gate.style.display = '';
-    if (wrap) wrap.style.display = 'none';
-  }
-
-  // postBtn 연동 (모달용 버튼 ID 참조)
-  syncModalIds();
+  // 전체화면 에디터로 대체
+  openFullEditor();
 }
 
 window.closeWriteModal = function() {
-  const overlay = document.getElementById('writeModalOverlay');
-  if (overlay) overlay.classList.remove('open');
-  document.body.style.overflow = '';
-  resetWriteForm();
+  closeFullEditor();
 }
 
 window.handleWriteModalOverlayClick = function(e) {

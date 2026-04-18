@@ -828,49 +828,88 @@
     .wt-desc, .wt-aqi, .wt-wear { font-size: 11px; color: #3a6a9a; }
     .wt-arrow { color: #6a9fc0; flex-shrink: 0; }
 
-    /* 핫딜 그리드 */
+    /* 핫딜 슬라이더 */
     .mobile-deals-section {
       display: block;
-      padding: 12px 14px 4px;
+      padding: 10px 0 0;
       background: var(--surface);
     }
     .mobile-deals-header {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 10px;
+      padding: 0 14px; margin-bottom: 8px;
     }
-    .mobile-deals-title {
-      font-size: 13px; font-weight: 700; color: var(--text);
+    .mobile-deals-title { font-size: 13px; font-weight: 700; color: var(--text); }
+    .mobile-deals-more  { font-size: 12px; color: var(--green); font-weight: 600; cursor: pointer; }
+
+    /* 가로 스크롤 컨테이너 */
+    .mobile-deals-slider {
+      display: flex;
+      gap: 10px;
+      padding: 2px 14px 10px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
-    .mobile-deals-more {
-      font-size: 12px; color: var(--green); font-weight: 600; cursor: pointer;
-    }
-    .mobile-deals-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .mdeal-card {
-      display: flex; flex-direction: column;
-      background: var(--bg);
+    .mobile-deals-slider::-webkit-scrollbar { display: none; }
+
+    /* 각 카드 — 화면의 42~45% 너비 */
+    .mds-card {
+      flex: 0 0 42vw;
+      max-width: 160px;
+      border-radius: 12px;
       border: 0.5px solid var(--border);
-      border-radius: 10px; overflow: hidden;
+      background: var(--bg);
       text-decoration: none; color: inherit;
+      overflow: hidden;
+      scroll-snap-align: start;
       transition: transform 0.15s;
     }
-    .mdeal-card:active { transform: scale(0.97); }
-    .mdeal-thumb {
-      height: 72px;
+    .mds-card:active { transform: scale(0.97); }
+
+    /* 이미지 영역 */
+    .mds-thumb {
+      height: 88px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 28px;
+      font-size: 32px;
     }
-    .mdeal-body { padding: 7px 8px 8px; }
-    .mdeal-platform { font-size: 9px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
-    .mdeal-name { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 4px; }
-    .mdeal-badge {
+
+    /* 텍스트 영역 */
+    .mds-body { padding: 7px 8px 9px; }
+    .mds-platform {
+      font-size: 9px; font-weight: 700; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px;
+    }
+    .mds-name {
+      font-size: 11px; font-weight: 600; color: var(--text);
+      line-height: 1.35; margin-bottom: 5px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .mds-badge {
       display: inline-block;
       font-size: 10px; font-weight: 700;
       background: var(--green-light); color: var(--green-deeper);
       border-radius: 4px; padding: 1px 5px;
+    }
+
+    /* See All 카드 */
+    .mds-see-all {
+      background: var(--green-light);
+      border-color: var(--green-mid);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mds-see-all-inner {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 6px; padding: 12px 8px;
+      font-size: 11px; font-weight: 600; color: var(--green-deeper); text-align: center;
+    }
+
+    /* 힌트 텍스트 */
+    .mds-hint {
+      font-size: 10px; color: var(--text-3);
+      text-align: center; padding: 2px 0 8px;
+      margin: 0;
     }
   }
   @media (max-width: 1023px) {
@@ -3453,46 +3492,63 @@
     </svg>
   </div>
 
-  <!-- 핫딜 그리드 (모바일 전용 2열) -->
+  <!-- 핫딜 가로 스크롤 슬라이더 (모바일 전용) -->
   <div class="mobile-deals-section">
     <div class="mobile-deals-header">
       <span class="mobile-deals-title">🔥 Hot Deals</span>
       <span class="mobile-deals-more" onclick="goDeals('beauty')">See all →</span>
     </div>
-    <div class="mobile-deals-grid">
-      <a class="mdeal-card" href="https://www.creatrip.com/en/deal" target="_blank" rel="noopener sponsored">
-        <div class="mdeal-thumb" style="background:linear-gradient(135deg,#FFE0EC,#FFC1D5)">💆‍♀️</div>
-        <div class="mdeal-body">
-          <div class="mdeal-platform">Creatrip</div>
-          <div class="mdeal-name">BB Glow + Hydra Facial</div>
-          <div class="mdeal-badge">-32% OFF</div>
+    <div class="mobile-deals-slider">
+      <a class="mds-card" href="https://www.creatrip.com/en/deal" target="_blank" rel="noopener sponsored">
+        <div class="mds-thumb" style="background:linear-gradient(135deg,#FFE0EC,#FFC1D5)">💆‍♀️</div>
+        <div class="mds-body">
+          <div class="mds-platform">Creatrip</div>
+          <div class="mds-name">BB Glow + Hydra Facial</div>
+          <div class="mds-badge">-32% OFF</div>
         </div>
       </a>
-      <a class="mdeal-card" href="https://www.klook.com/en-US/activity/20974-dermatology-treatment-seoul/" target="_blank" rel="noopener sponsored">
-        <div class="mdeal-thumb" style="background:linear-gradient(135deg,#E3F2FD,#BBDEFB)">🏥</div>
-        <div class="mdeal-body">
-          <div class="mdeal-platform">Klook</div>
-          <div class="mdeal-name">Gangnam Derma Treatment</div>
-          <div class="mdeal-badge">-26% OFF</div>
+      <a class="mds-card" href="https://www.klook.com/en-US/activity/20974-dermatology-treatment-seoul/" target="_blank" rel="noopener sponsored">
+        <div class="mds-thumb" style="background:linear-gradient(135deg,#E3F2FD,#BBDEFB)">🏥</div>
+        <div class="mds-body">
+          <div class="mds-platform">Klook</div>
+          <div class="mds-name">Gangnam Derma Treatment</div>
+          <div class="mds-badge">-26% OFF</div>
         </div>
       </a>
-      <a class="mdeal-card" href="https://www.klook.com/en-US/activity/3099-nami-island-petite-france-gangchon-rail-bike-seoul/" target="_blank" rel="noopener sponsored">
-        <div class="mdeal-thumb" style="background:linear-gradient(135deg,#E8F5E9,#A5D6A7)">🌿</div>
-        <div class="mdeal-body">
-          <div class="mdeal-platform">Klook</div>
-          <div class="mdeal-name">Nami Island + Rail Bike</div>
-          <div class="mdeal-badge">-24% OFF</div>
+      <a class="mds-card" href="https://www.klook.com/en-US/activity/3099-nami-island-petite-france-gangchon-rail-bike-seoul/" target="_blank" rel="noopener sponsored">
+        <div class="mds-thumb" style="background:linear-gradient(135deg,#E8F5E9,#A5D6A7)">🌿</div>
+        <div class="mds-body">
+          <div class="mds-platform">Klook</div>
+          <div class="mds-name">Nami Island + Rail Bike</div>
+          <div class="mds-badge">-24% OFF</div>
         </div>
       </a>
-      <a class="mdeal-card" href="https://www.kkday.com/en/product/20388" target="_blank" rel="noopener sponsored">
-        <div class="mdeal-thumb" style="background:linear-gradient(135deg,#EDE7F6,#D1C4E9)">🧖‍♀️</div>
-        <div class="mdeal-body">
-          <div class="mdeal-platform">KKday</div>
-          <div class="mdeal-name">Seoul Luxury Spa Day</div>
-          <div class="mdeal-badge">-25% OFF</div>
+      <a class="mds-card" href="https://www.kkday.com/en/product/20388" target="_blank" rel="noopener sponsored">
+        <div class="mds-thumb" style="background:linear-gradient(135deg,#EDE7F6,#D1C4E9)">🧖‍♀️</div>
+        <div class="mds-body">
+          <div class="mds-platform">KKday</div>
+          <div class="mds-name">Seoul Luxury Spa Day</div>
+          <div class="mds-badge">-25% OFF</div>
         </div>
       </a>
+      <a class="mds-card" href="https://www.creatrip.com/en/deal" target="_blank" rel="noopener sponsored">
+        <div class="mds-thumb" style="background:linear-gradient(135deg,#FFF8E1,#FFE082)">💋</div>
+        <div class="mds-body">
+          <div class="mds-platform">Creatrip</div>
+          <div class="mds-name">Lip Filler — Apgujeong</div>
+          <div class="mds-badge">-28% OFF</div>
+        </div>
+      </a>
+      <!-- 마지막 See All 카드 -->
+      <div class="mds-card mds-see-all" onclick="goDeals('beauty')">
+        <div class="mds-see-all-inner">
+          <span style="font-size:22px">🔥</span>
+          <span>See all deals</span>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+      </div>
     </div>
+    <p class="mds-hint">Swipe for more deals →</p>
   </div>
 
     <!-- ③ Sticky 카테고리 탭 — 스크롤해도 화면 상단에 고정 -->

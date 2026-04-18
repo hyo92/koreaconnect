@@ -1657,7 +1657,8 @@
     height: 44px;
     background: #fff;
     border-bottom: 1px solid #EAEAEA;
-    overflow-x: auto; scrollbar-width: none;
+    /* overflow 제거 — overflow 있으면 자식 드롭다운이 잘림 */
+    overflow: visible;
     position: sticky; top: 0; z-index: 10;
   }
   .fe-inline-toolbar::-webkit-scrollbar { display: none; }
@@ -1681,13 +1682,14 @@
   .fe-tb-photo:hover { background: #c5eadf; color: var(--green-deeper); }
   .fe-autosave { font-size: 11px; color: #BDBDBD; flex-shrink: 0; }
 
-  /* ④ 드롭다운 */
+  /* ④ 드롭다운 — position:fixed로 overflow 탈출 */
   .fe-dropdown-wrap { position: relative; }
   .fe-dropdown {
-    display: none; position: absolute; top: calc(100% + 6px); left: 0;
+    display: none;
+    position: fixed; /* absolute → fixed: 부모 overflow 무시 */
     background: #fff; border: 1px solid #E8E8E8;
-    border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    z-index: 500; min-width: 160px; overflow: hidden;
+    border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+    z-index: 9999; min-width: 160px; overflow: hidden;
     animation: dropIn 0.14s ease;
   }
   .fe-dropdown.open { display: block; }
@@ -4266,9 +4268,8 @@
         data-placeholder="Share what you know — visa tips, neighborhood guides, restaurant finds, life hacks for living in Korea..."
         oninput="feOnBodyInput()"
         onkeydown="feOnKeydown(event)"
-        onmouseup="feSaveSelection();feUpdateToolbarState()"
-        onkeyup="feSaveSelection();feUpdateToolbarState()"
-        onblur="feSaveSelection()">
+        onmouseup="feUpdateToolbarState()"
+        onkeyup="feUpdateToolbarState()">
       </div>
 
     </div>
@@ -7529,100 +7530,126 @@ window.feToggleDropdown = function(id, event) {
   const target = document.getElementById(id);
   if (!target) return;
   const wasOpen = target.classList.contains('open');
+  // 모든 드롭다운 닫기
   document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
-  if (!wasOpen) target.classList.add('open');
+  if (!wasOpen) {
+    // 버튼 위치 기준으로 fixed 드롭다운 위치 계산
+    const btn = event.currentTarget || event.target.closest('.fe-tb-btn');
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      target.style.top  = (rect.bottom + 6) + 'px';
+      target.style.left = rect.left + 'px';
+    }
+    target.classList.add('open');
+  }
 }
 
-// 외부 mousedown 시 드롭다운 닫기 (click 아닌 mousedown — 더 빠름)
+// 외부 mousedown 시 드롭다운 닫기
 document.addEventListener('mousedown', function(e) {
   if (!e.target.closest('.fe-dropdown-wrap') && !e.target.closest('.fe-dropdown')) {
     document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
   }
 });
 
+// ══════════════════════════════════════════════════════
+// EDITOR TOOLBAR — 완전히 새로 작성
+//
+// 핵심 원리:
+//   toolbar 버튼에 onmousedown + preventDefault 사용
+//   → 버튼 클릭 시 editor의 focus/selection이 유지됨
+//   → 그 상태에서 바로 execCommand 실행
+//   → focus() 호출 불필요, selection 저장/복원 불필요
+// ══════════════════════════════════════════════════════
 
-// ── selection 저장/복원 ──
-let feLastSelection = null;
-
-function feSaveSelection() {
-  const sel = window.getSelection();
-  if (sel && sel.rangeCount > 0) {
-    feLastSelection = sel.getRangeAt(0).cloneRange();
-  }
-}
-
-function feRestoreSelection() {
-  if (!feLastSelection) return;
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(feLastSelection);
-}
-
-// ── 에디터 커맨드 ──
+// ── Bold / Italic / Underline / List ──
 window.feCmd = function(cmd, event) {
-  if (event) { event.preventDefault(); event.stopPropagation(); }
-  const editor = document.getElementById('feEditor');
-  if (!editor) return;
-  editor.focus();
-  if (feLastSelection) {
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(feLastSelection);
-  }
-  document.execCommand(cmd);
+  event.preventDefault();
+  event.stopPropagation();
+  document.execCommand(cmd, false, null);
   feUpdateToolbarState();
 }
 
-// ── 블록 서식 ──
+// ── 블록 서식 (H1/H2/H3/Normal) ──
 window.feSetBlock = function(tag, label, event) {
-  if (event) { event.preventDefault(); event.stopPropagation(); }
-  const editor = document.getElementById('feEditor');
-  if (!editor) return;
-  editor.focus();
-  if (feLastSelection) {
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(feLastSelection);
-  }
-  document.execCommand('formatBlock', false, '<' + tag + '>');
+  event.preventDefault();
+  event.stopPropagation();
+  document.execCommand('formatBlock', false, tag);
   const lbl = document.getElementById('feFontSizeLabel');
   if (lbl) lbl.textContent = label;
-  document.getElementById('feFontSizeDrop')?.classList.remove('open');
+  document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
 }
 
 // ── 글자 색상 ──
 window.feSetColor = function(color, event) {
-  if (event) { event.preventDefault(); event.stopPropagation(); }
-  const editor = document.getElementById('feEditor');
-  if (!editor) return;
-  editor.focus();
-  if (feLastSelection) {
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(feLastSelection);
-  }
+  event.preventDefault();
+  event.stopPropagation();
   if (color === 'inherit') {
-    // 색상 초기화 — removeFormat으로 색상 제거
-    document.execCommand('removeFormat');
+    document.execCommand('removeFormat', false, null);
   } else {
     document.execCommand('styleWithCSS', false, true);
     document.execCommand('foreColor', false, color);
-    // 미리보기 바 업데이트
     const preview = document.getElementById('feColorPreview');
     if (preview) preview.style.background = color;
   }
-  document.getElementById('feColorDrop')?.classList.remove('open');
+  document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
 }
+
+// ── 구분선 삽입 ──
+window.feInsertDivider = function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  document.execCommand('insertHTML', false, '<hr><p><br></p>');
+}
+
+// ── 툴바 상태 업데이트 (Bold/Italic active 표시) ──
+window.feUpdateToolbarState = function() {
+  const boldBtn   = document.getElementById('feBoldBtn');
+  const italicBtn = document.getElementById('feItalicBtn');
+  try {
+    if (boldBtn)   boldBtn.classList.toggle('active',   document.queryCommandState('bold'));
+    if (italicBtn) italicBtn.classList.toggle('active', document.queryCommandState('italic'));
+    const block = document.queryCommandValue('formatBlock');
+    const labelMap = { h1:'H1', h2:'H2', h3:'H3', p:'Normal', div:'Normal', '':'Normal' };
+    const lbl = document.getElementById('feFontSizeLabel');
+    if (lbl) lbl.textContent = labelMap[block.toLowerCase()] || 'Normal';
+  } catch(e) {}
+}
+
+// ── 드롭다운 토글 (position:fixed + getBoundingClientRect) ──
+window.feToggleDropdown = function(id, event) {
+  event.preventDefault();
+  event.stopPropagation();
+  const target = document.getElementById(id);
+  if (!target) return;
+  const wasOpen = target.classList.contains('open');
+  document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
+  if (!wasOpen) {
+    const btn = event.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    target.style.top  = (rect.bottom + 4) + 'px';
+    target.style.left = rect.left + 'px';
+    target.classList.add('open');
+  }
+}
+
+// 외부 mousedown 시 드롭다운 닫기
+document.addEventListener('mousedown', function(e) {
+  if (!e.target.closest('.fe-dropdown-wrap') && !e.target.closest('.fe-dropdown')) {
+    document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
+  }
+});
 
 // ── 링크 삽입 ──
 let feSavedRange = null;
-window.feInsertLink = function() {
+window.feInsertLink = function(event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  // 현재 selection 저장 (mousedown에서 호출되므로 selection이 살아있음)
   const sel = window.getSelection();
   if (sel && sel.rangeCount) feSavedRange = sel.getRangeAt(0).cloneRange();
   const popup = document.getElementById('feLinkPopup');
   const input = document.getElementById('feLinkInput');
   if (popup) popup.style.display = 'flex';
-  if (input) { input.value = ''; input.focus(); }
+  if (input) { input.value = ''; setTimeout(() => input.focus(), 50); }
 }
 
 window.feConfirmLink = function() {

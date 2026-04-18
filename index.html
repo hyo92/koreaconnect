@@ -784,8 +784,94 @@
 
   /* ── MOBILE INFO BAR ── */
   /* 모바일 전용: 탭 바로 아래 날씨 + 핫딜 컴팩트 바 */
-  .mobile-info-bar {
-    display: none; /* 데스크톱에서는 항상 숨김 */
+  .mobile-info-bar { display: none; } /* 기존 — 유지 */
+
+  /* ── 날씨 티커 바 ── */
+  .weather-ticker {
+    display: none; /* 모바일 전용 */
+  }
+  .mobile-deals-section {
+    display: none; /* 모바일 전용 */
+  }
+
+  @media (max-width: 1023px) {
+    /* 날씨 티커 바 */
+    .weather-ticker {
+      display: flex; align-items: center;
+      background: #EAF4FF;
+      border-bottom: 1px solid #C8DFF7;
+      padding: 0 14px;
+      height: 36px;
+      cursor: pointer;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .weather-ticker:active { background: #D4EAFF; }
+    .weather-ticker-track {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: #2a5f8f; font-weight: 500;
+      white-space: nowrap; overflow: hidden;
+      flex: 1;
+      animation: tickerScroll 18s linear infinite;
+    }
+    .weather-ticker:hover .weather-ticker-track { animation-play-state: paused; }
+    @keyframes tickerScroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-30%); }
+    }
+    .wt-icon { font-size: 15px; }
+    .wt-temp { font-size: 13px; font-weight: 700; color: #1a4a7a; }
+    .wt-sep  { color: #9dbdd6; font-size: 11px; }
+    .wt-desc, .wt-aqi, .wt-wear { font-size: 11px; color: #3a6a9a; }
+    .wt-arrow { color: #6a9fc0; flex-shrink: 0; }
+
+    /* 핫딜 그리드 */
+    .mobile-deals-section {
+      display: block;
+      padding: 12px 14px 4px;
+      background: var(--surface);
+    }
+    .mobile-deals-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .mobile-deals-title {
+      font-size: 13px; font-weight: 700; color: var(--text);
+    }
+    .mobile-deals-more {
+      font-size: 12px; color: var(--green); font-weight: 600; cursor: pointer;
+    }
+    .mobile-deals-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .mdeal-card {
+      display: flex; flex-direction: column;
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+      text-decoration: none; color: inherit;
+      transition: transform 0.15s;
+    }
+    .mdeal-card:active { transform: scale(0.97); }
+    .mdeal-thumb {
+      height: 72px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .mdeal-body { padding: 7px 8px 8px; }
+    .mdeal-platform { font-size: 9px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
+    .mdeal-name { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 4px; }
+    .mdeal-badge {
+      display: inline-block;
+      font-size: 10px; font-weight: 700;
+      background: var(--green-light); color: var(--green-deeper);
+      border-radius: 4px; padding: 1px 5px;
+    }
   }
   @media (max-width: 1023px) {
     .mobile-info-bar {
@@ -3348,87 +3434,68 @@
     </div>
   </div>
 
-  <!-- ② 날씨 + 핫딜 위젯 (모바일 전용, 항상 탭 위) -->
-  <!-- ═══ MOBILE INFO BAR ═══
-       모바일 전용 — 데스크탑에서는 display:none
-       왼쪽 40%: 날씨 + AQI + How to wear
-       오른쪽 60%: Hot Deals 가로 스크롤
-       ═══════════════════════════════════════════════════ -->
-  <div class="mobile-info-bar" id="mobileInfoBar">
-    <!-- 왼쪽 40%: 날씨 패널 -->
-    <div class="mib-weather" onclick="showWeatherModal()" style="cursor:pointer">
-      <div class="mib-weather-top">
-        <div class="mib-weather-icon" id="mibIcon">⛅</div>
-        <div class="mib-temp-block">
-          <div class="mib-temp"><span id="mibTemp">14</span>°C</div>
-          <div class="mib-temp-sub" id="mibDesc">Partly cloudy</div>
-        </div>
-      </div>
-      <div class="mib-aqi-row">
-        <div class="mib-aqi-dot" id="mibAqiDot" style="background:#4CAF50"></div>
-        <div class="mib-aqi-text">PM2.5 <strong id="mibPm25">18</strong> · <span id="mibAqiLabel">Good</span></div>
-      </div>
-      <div class="mib-wear" id="mibWear">Light jacket recommended. Layer up in the evening.</div>
-    </div>
-    <!-- 오른쪽 60%: Hot Deals 가로 스크롤 -->
-    <!-- ═══ MONETIZATION: Mobile Hot Deals Panel ═══
-         카드별 href를 파트너 링크로 교체 (Creatrip / Klook / KKday)
-         ═══════════════════════════════════════════ -->
-    <div class="mib-deals-panel">
-      <div class="mib-deals-header">
-        <span class="mib-deals-title" onclick="goDeals('beauty')" style="cursor:pointer">🔥 Hot Deals</span>
-        <span class="mib-deals-badge">PARTNER</span>
-      </div>
-      <div class="mib-deals-scroll-wrap">
-        <div class="mib-deals-scroll" id="mibDealsScroll">
-          <a class="mib-card" href="https://www.creatrip.com/en/deal" target="_blank" rel="noopener sponsored">
-            <div class="mib-card-thumb" style="background:linear-gradient(135deg,#FFE0EC,#FFC1D5)">💆‍♀️</div>
-            <div class="mib-card-body">
-              <div class="mib-card-platform">Creatrip</div>
-              <div class="mib-card-name">BB Glow + Hydra Facial</div>
-              <div class="mib-card-badge">-32% OFF</div>
-            </div>
-          </a>
-          <a class="mib-card" href="https://www.klook.com/en-US/activity/20974-dermatology-treatment-seoul/" target="_blank" rel="noopener sponsored">
-            <div class="mib-card-thumb" style="background:linear-gradient(135deg,#E3F2FD,#BBDEFB)">🏥</div>
-            <div class="mib-card-body">
-              <div class="mib-card-platform">Klook</div>
-              <div class="mib-card-name">Gangnam Derma Treatment</div>
-              <div class="mib-card-badge">-26% OFF</div>
-            </div>
-          </a>
-          <a class="mib-card" href="https://www.klook.com/en-US/activity/3099-nami-island-petite-france-gangchon-rail-bike-seoul/" target="_blank" rel="noopener sponsored">
-            <div class="mib-card-thumb" style="background:linear-gradient(135deg,#E8F5E9,#A5D6A7)">🌿</div>
-            <div class="mib-card-body">
-              <div class="mib-card-platform">Klook</div>
-              <div class="mib-card-name">Nami Island + Rail Bike</div>
-              <div class="mib-card-badge">-24% OFF</div>
-            </div>
-          </a>
-          <a class="mib-card" href="https://www.kkday.com/en/product/20388" target="_blank" rel="noopener sponsored">
-            <div class="mib-card-thumb" style="background:linear-gradient(135deg,#EDE7F6,#D1C4E9)">🧖‍♀️</div>
-            <div class="mib-card-body">
-              <div class="mib-card-platform">KKday</div>
-              <div class="mib-card-name">Seoul Luxury Spa Day</div>
-              <div class="mib-card-badge">-25% OFF</div>
-            </div>
-          </a>
-          <a class="mib-card" href="https://www.creatrip.com/en/deal" target="_blank" rel="noopener sponsored">
-            <div class="mib-card-thumb" style="background:linear-gradient(135deg,#FFF8E1,#FFE082)">💋</div>
-            <div class="mib-card-body">
-              <div class="mib-card-platform">Creatrip</div>
-              <div class="mib-card-name">Lip Filler — Apgujeong</div>
-              <div class="mib-card-badge">-28% OFF</div>
-            </div>
-          </a>
-        </div>
-      </div>
-    </div>
-    <!-- ═══ /MONETIZATION ═══ -->
-  </div>
-  <!-- ═══ /MOBILE INFO BAR ═══ -->
+  <!-- ② 날씨 티커 바 + 핫딜 그리드 (모바일 전용) -->
 
-  <!-- ③ Sticky 카테고리 탭 — 스크롤해도 화면 상단에 고정 -->
+  <!-- 날씨 티커 바 -->
+  <div class="weather-ticker" id="weatherTicker" onclick="showWeatherModal()">
+    <div class="weather-ticker-track" id="weatherTickerTrack">
+      <span class="wt-icon" id="wtIcon">⛅</span>
+      <span class="wt-temp" id="wtTemp">14°C</span>
+      <span class="wt-sep">·</span>
+      <span class="wt-desc" id="wtDesc">Partly cloudy</span>
+      <span class="wt-sep">·</span>
+      <span class="wt-aqi">PM2.5 <strong id="wtPm25">18</strong> — <span id="wtAqiLabel">Good</span></span>
+      <span class="wt-sep">·</span>
+      <span class="wt-wear" id="wtWear">Light jacket recommended</span>
+    </div>
+    <svg class="wt-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <!-- 핫딜 그리드 (모바일 전용 2열) -->
+  <div class="mobile-deals-section">
+    <div class="mobile-deals-header">
+      <span class="mobile-deals-title">🔥 Hot Deals</span>
+      <span class="mobile-deals-more" onclick="goDeals('beauty')">See all →</span>
+    </div>
+    <div class="mobile-deals-grid">
+      <a class="mdeal-card" href="https://www.creatrip.com/en/deal" target="_blank" rel="noopener sponsored">
+        <div class="mdeal-thumb" style="background:linear-gradient(135deg,#FFE0EC,#FFC1D5)">💆‍♀️</div>
+        <div class="mdeal-body">
+          <div class="mdeal-platform">Creatrip</div>
+          <div class="mdeal-name">BB Glow + Hydra Facial</div>
+          <div class="mdeal-badge">-32% OFF</div>
+        </div>
+      </a>
+      <a class="mdeal-card" href="https://www.klook.com/en-US/activity/20974-dermatology-treatment-seoul/" target="_blank" rel="noopener sponsored">
+        <div class="mdeal-thumb" style="background:linear-gradient(135deg,#E3F2FD,#BBDEFB)">🏥</div>
+        <div class="mdeal-body">
+          <div class="mdeal-platform">Klook</div>
+          <div class="mdeal-name">Gangnam Derma Treatment</div>
+          <div class="mdeal-badge">-26% OFF</div>
+        </div>
+      </a>
+      <a class="mdeal-card" href="https://www.klook.com/en-US/activity/3099-nami-island-petite-france-gangchon-rail-bike-seoul/" target="_blank" rel="noopener sponsored">
+        <div class="mdeal-thumb" style="background:linear-gradient(135deg,#E8F5E9,#A5D6A7)">🌿</div>
+        <div class="mdeal-body">
+          <div class="mdeal-platform">Klook</div>
+          <div class="mdeal-name">Nami Island + Rail Bike</div>
+          <div class="mdeal-badge">-24% OFF</div>
+        </div>
+      </a>
+      <a class="mdeal-card" href="https://www.kkday.com/en/product/20388" target="_blank" rel="noopener sponsored">
+        <div class="mdeal-thumb" style="background:linear-gradient(135deg,#EDE7F6,#D1C4E9)">🧖‍♀️</div>
+        <div class="mdeal-body">
+          <div class="mdeal-platform">KKday</div>
+          <div class="mdeal-name">Seoul Luxury Spa Day</div>
+          <div class="mdeal-badge">-25% OFF</div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+    <!-- ③ Sticky 카테고리 탭 — 스크롤해도 화면 상단에 고정 -->
   <div class="tabs" id="feedTabs">
     <div class="tab-btn active" onclick="setTab(this,'all')">All</div>
     <div class="tab-btn" onclick="setTab(this,'visa')">Visa</div>
@@ -9061,16 +9128,27 @@ function updateMobileInfoBar(guide, aqiLevel) {
   const mibAqi   = aqiLevel || AQI_LEVELS[0];
   const mibGuide = guide    || OUTFIT_GUIDE[3];
 
+  // 기존 mib 요소 업데이트
   mibSet('mibIcon', mibGuide.icon);
   mibSet('mibTemp', document.getElementById('tlwTemp')?.textContent || '—');
   mibSet('mibDesc', document.getElementById('tlwDesc')?.textContent || '');
   mibSet('mibWear', mibGuide.advice);
-
   const aqiDot = document.getElementById('mibAqiDot');
   const aqiColorMap = { 'aqi-good':'#4CAF50', 'aqi-normal':'#FFC107', 'aqi-bad':'#FF5722', 'aqi-worst':'#880E4F' };
   if (aqiDot) aqiDot.style.background = aqiColorMap[mibAqi.badgeClass] || '#4CAF50';
   mibSet('mibPm25',     document.getElementById('tlwPm25')?.textContent || '—');
   mibSet('mibAqiLabel', mibAqi.label);
+
+  // 날씨 티커 바 업데이트
+  const temp = document.getElementById('tlwTemp')?.textContent || '—';
+  const desc = document.getElementById('tlwDesc')?.textContent || '';
+  const pm25 = document.getElementById('tlwPm25')?.textContent || '—';
+  mibSet('wtIcon',     mibGuide.icon);
+  mibSet('wtTemp',     temp + '°C');
+  mibSet('wtDesc',     desc);
+  mibSet('wtPm25',     pm25);
+  mibSet('wtAqiLabel', mibAqi.label);
+  mibSet('wtWear',     mibGuide.advice);
 }
 
 // ══════════════════════════════════════════════════════

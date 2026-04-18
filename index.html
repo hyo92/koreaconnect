@@ -4019,7 +4019,7 @@
 <div class="edit-overlay" id="editPostOverlay">
   <div class="edit-sheet">
 
-    <!-- 헤더 — fullEditorOverlay와 동일 -->
+    <!-- 헤더 -->
     <div class="edit-sheet-header">
       <button style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:500;color:#555;font-family:var(--font);padding:7px 10px;border-radius:8px;" onclick="closeEditPost()">
         <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
@@ -4031,24 +4031,134 @@
       <button class="edit-save-btn ready" id="editSaveBtn" onclick="saveEditPost()">Save</button>
     </div>
 
-    <!-- 스크롤 영역 -->
-    <div class="edit-sheet-body">
-      <div class="edit-paper">
+  <!-- Edit 툴바 -->
+  <div class="fe-inline-toolbar" id="epInlineToolbar">
 
-        <!-- 제목 — 테두리 없이 큰 폰트 -->
-        <textarea class="edit-title-input" id="editTitleInput"
-          placeholder="Title"
-          rows="1"
-          oninput="checkEditReady();editAutoResize(this)"></textarea>
-        <div class="edit-title-divider"></div>
-
-        <!-- 본문 -->
-        <textarea class="edit-body-area" id="editBodyInput"
-          placeholder="Share what you know..."
-          oninput="checkEditReady()"></textarea>
-
+        <!-- 글자 크기 -->
+    <div class="fe-dropdown-wrap">
+      <button class="fe-tb-btn fe-tb-dropdown" onmousedown="epToggleDropdown('epFontSizeDrop',event)">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 13L6 3l4 10M3.5 10h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M10 10l2-4 2 4M10.7 8.5h2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span id="epFontSizeLabel">Normal</span>
+        <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </button>
+      <div class="fe-dropdown" id="epFontSizeDrop">
+        <div class="fe-dd-item" onmousedown="epSetBlock('h1','H1',event)"><span style="font-size:18px;font-weight:700">Heading 1</span></div>
+        <div class="fe-dd-item" onmousedown="epSetBlock('h2','H2',event)"><span style="font-size:15px;font-weight:600">Heading 2</span></div>
+        <div class="fe-dd-item" onmousedown="epSetBlock('h3','H3',event)"><span style="font-size:13px;font-weight:600">Heading 3</span></div>
+        <div class="fe-dd-sep"></div>
+        <div class="fe-dd-item" onmousedown="epSetBlock('p','Normal',event)"><span style="font-size:14px">Normal text</span></div>
       </div>
     </div>
+
+    <div class="fe-tb-sep"></div>
+
+    <!-- Bold / Italic / Underline -->
+    <button class="fe-tb-btn" id="epBoldBtn"   onmousedown="epCmd('bold',event)"      title="Bold">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M4 3h5a3 3 0 010 6H4V3z" stroke="currentColor" stroke-width="1.7"/><path d="M4 9h5.5a3.5 3.5 0 010 7H4V9z" stroke="currentColor" stroke-width="1.7"/></svg>
+    </button>
+    <button class="fe-tb-btn" id="epItalicBtn" onmousedown="epCmd('italic',event)"    title="Italic">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M10 3H7M9 13H6M8 3l-2 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </button>
+    <button class="fe-tb-btn"                   onmousedown="epCmd('underline',event)" title="Underline">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M4 3v5a4 4 0 008 0V3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M2 13h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </button>
+
+    <div class="fe-tb-sep"></div>
+
+    <!-- 글자 색상 -->
+      <div class="fe-dropdown-wrap">
+        <button class="fe-tb-btn" onmousedown="epToggleDropdown('epColorDrop',event)" title="Text color"
+          style="gap:4px; padding:0 8px;">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+            <path d="M2 11.5L5.5 2.5l3.5 9M3.2 8.8h4.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span id="epColorPreview" style="display:inline-block;width:14px;height:4px;border-radius:2px;background:#1A1A18;margin-top:1px;flex-shrink:0;"></span>
+          <svg width="8" height="8" viewBox="0 0 10 10" fill="none" style="opacity:0.5"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <div class="fe-dropdown fe-color-drop" id="epColorDrop">
+          <span class="fe-color-label">Text Color</span>
+          <div class="fe-color-grid">
+            <button class="fe-color-dot" style="background:#1A1A18" onmousedown="epSetColor('#1A1A18',event)" title="Black"></button>
+            <button class="fe-color-dot" style="background:#E53935" onmousedown="epSetColor('#E53935',event)" title="Red"></button>
+            <button class="fe-color-dot" style="background:#FB8C00" onmousedown="epSetColor('#FB8C00',event)" title="Orange"></button>
+            <button class="fe-color-dot" style="background:#F9A825" onmousedown="epSetColor('#F9A825',event)" title="Yellow"></button>
+            <button class="fe-color-dot" style="background:#43A047" onmousedown="epSetColor('#43A047',event)" title="Green"></button>
+          </div>
+          <div class="fe-color-grid-2">
+            <button class="fe-color-dot" style="background:#1D9E75" onmousedown="epSetColor('#1D9E75',event)" title="Teal"></button>
+            <button class="fe-color-dot" style="background:#1565C0" onmousedown="epSetColor('#1565C0',event)" title="Blue"></button>
+            <button class="fe-color-dot" style="background:#6A1B9A" onmousedown="epSetColor('#6A1B9A',event)" title="Purple"></button>
+            <button class="fe-color-dot" style="background:#757575" onmousedown="epSetColor('#757575',event)" title="Gray"></button>
+            <button class="fe-color-dot fe-color-reset" onmousedown="epSetColor('inherit',event)" title="Reset">↺</button>
+          </div>
+        </div>
+      </div>
+
+    <div class="fe-tb-sep"></div>
+
+        <!-- 리스트 -->
+    <button class="fe-tb-btn" onmousedown="epCmd('insertUnorderedList',event)" title="Bullet list">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="2.5" cy="4" r="1.2" fill="currentColor"/><circle cx="2.5" cy="8" r="1.2" fill="currentColor"/><circle cx="2.5" cy="12" r="1.2" fill="currentColor"/><path d="M6 4h9M6 8h9M6 12h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </button>
+    <button class="fe-tb-btn" onmousedown="epCmd('insertOrderedList',event)" title="Numbered list">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3h1.5v4M2 7h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M2 10c1-1 2 0 2 1s-2 2-2 2h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M7 4h9M7 8h9M7 12h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </button>
+
+    <div class="fe-tb-sep"></div>
+
+    <!-- 링크 -->
+    <button class="fe-tb-btn" onmousedown="epInsertLink(event)" title="Insert link">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6.5 9.5a4 4 0 005.7 0l1.5-1.5a4 4 0 00-5.7-5.7L7 3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9.5 6.5a4 4 0 00-5.7 0L2.3 8a4 4 0 005.7 5.7l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <!-- 구분선 -->
+    <button class="fe-tb-btn" onmousedown="epInsertDivider(event)" title="Horizontal rule">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 4h4M10 4h4M2 12h4M10 12h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/></svg>
+    </button>
+
+    <div class="fe-tb-sep"></div>
+
+    <!-- 📷 사진 추가 -->
+    <button class="fe-tb-btn fe-tb-photo" onclick="document.getElementById('epImgInput').click()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="6.5" r="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 11.5l3.5-3.5 2.5 2.5 2-2 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Photo
+    </button>
+    <input type="file" id="epImgInput" accept="image/*" style="display:none" onchange="epInsertImage(event)">
+
+    <!-- 자동저장 -->
+    <span class="fe-autosave" id="epAutosaveLabel" style="margin-left:auto"></span>
+
+  </div>
+
+  <!-- Edit 스크롤 영역 -->
+  <div class="fe-scroll" id="epScroll">
+    <div class="fe-container">
+
+      <!-- 제목 -->
+      <textarea class="fe-title-input" id="editTitleInput"
+        placeholder="Title"
+        rows="1" maxlength="120"
+        oninput="checkEditReady();editAutoResize(this)"></textarea>
+      <div class="fe-title-divider"></div>
+
+      <!-- 본문 (contenteditable WYSIWYG) -->
+      <div class="fe-editor" id="editBodyEditor"
+        contenteditable="true"
+        data-placeholder="Edit your post..."
+        oninput="checkEditReady()"
+        onmouseup="epUpdateToolbarState()"
+        onkeyup="epUpdateToolbarState()">
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 링크 팝업 (ep용) -->
+  <div class="fe-link-popup" id="epLinkPopup" style="display:none">
+    <input class="fe-link-input" id="epLinkInput" type="url" placeholder="https://...">
+    <button class="fe-link-ok" onclick="epConfirmLink()">Apply</button>
+    <button class="fe-link-cancel" onclick="epCloseLinkPopup()">✕</button>
+  </div>
+
   </div>
 </div>
 
@@ -7496,10 +7606,13 @@ window.openEditPost = function() {
   editingPostId = post.id;
   activeDetailId = String(targetId);
 
-  const titleEl = document.getElementById('editTitleInput');
-  const bodyEl  = document.getElementById('editBodyInput');
+  const titleEl  = document.getElementById('editTitleInput');
+  const bodyEditor = document.getElementById('editBodyEditor');
   titleEl.value = post.title;
-  bodyEl.value  = post.preview;
+  // 본문을 contenteditable에 로드 (줄바꿈 → <br> 변환)
+  if (bodyEditor) {
+    bodyEditor.innerHTML = (post.preview || '').replace(/\n/g, '<br>');
+  }
   document.getElementById('editPostOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 
@@ -7517,9 +7630,116 @@ window.closeEditPost = function() {
   editingPostId = null;
 }
 
+// ══ Edit Post 툴바 함수 (fe_ 미러링) ══
+window.epCmd = function(cmd, event) {
+  event.preventDefault(); event.stopPropagation();
+  document.execCommand(cmd, false, null);
+  epUpdateToolbarState();
+}
+window.epSetBlock = function(tag, label, event) {
+  event.preventDefault(); event.stopPropagation();
+  document.execCommand('formatBlock', false, tag);
+  const lbl = document.getElementById('epFontSizeLabel');
+  if (lbl) lbl.textContent = label;
+  document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
+}
+window.epSetColor = function(color, event) {
+  event.preventDefault(); event.stopPropagation();
+  if (color === 'inherit') {
+    document.execCommand('removeFormat', false, null);
+  } else {
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('foreColor', false, color);
+    const preview = document.getElementById('epColorPreview');
+    if (preview) preview.style.background = color;
+  }
+  document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
+}
+window.epToggleDropdown = function(id, event) {
+  event.preventDefault(); event.stopPropagation();
+  const target = document.getElementById(id);
+  if (!target) return;
+  const wasOpen = target.classList.contains('open');
+  document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
+  if (!wasOpen) {
+    const btn = event.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    target.style.top  = (rect.bottom + 4) + 'px';
+    target.style.left = rect.left + 'px';
+    target.classList.add('open');
+  }
+}
+window.epUpdateToolbarState = function() {
+  const boldBtn   = document.getElementById('epBoldBtn');
+  const italicBtn = document.getElementById('epItalicBtn');
+  try {
+    if (boldBtn)   boldBtn.classList.toggle('active',   document.queryCommandState('bold'));
+    if (italicBtn) italicBtn.classList.toggle('active', document.queryCommandState('italic'));
+    const block = document.queryCommandValue('formatBlock');
+    const labelMap = { h1:'H1', h2:'H2', h3:'H3', p:'Normal', div:'Normal', '':'Normal' };
+    const lbl = document.getElementById('epFontSizeLabel');
+    if (lbl && block !== undefined) lbl.textContent = labelMap[block.toLowerCase()] || 'Normal';
+  } catch(e) {}
+}
+window.epInsertDivider = function(event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  document.getElementById('editBodyEditor')?.focus();
+  document.execCommand('insertHTML', false, '<hr contenteditable="false"><p><br></p>');
+}
+let epSavedRange = null;
+window.epInsertLink = function(event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount) epSavedRange = sel.getRangeAt(0).cloneRange();
+  const popup = document.getElementById('epLinkPopup');
+  const input = document.getElementById('epLinkInput');
+  if (popup) popup.style.display = 'flex';
+  if (input) { input.value = ''; setTimeout(() => input.focus(), 50); }
+}
+window.epConfirmLink = function() {
+  const input = document.getElementById('epLinkInput');
+  let url = (input?.value || '').trim();
+  if (!url) { epCloseLinkPopup(); return; }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  const editor = document.getElementById('editBodyEditor');
+  if (editor && epSavedRange) {
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(epSavedRange); editor.focus();
+    document.execCommand('createLink', false, url);
+  }
+  epCloseLinkPopup();
+}
+window.epCloseLinkPopup = function() {
+  const popup = document.getElementById('epLinkPopup');
+  if (popup) popup.style.display = 'none';
+  epSavedRange = null;
+}
+window.epInsertImage = function(e) {
+  const files = Array.from(e.target.files || []);
+  e.target.value = '';
+  if (!files.length) return;
+  files.forEach(file => {
+    if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB per image', 'error'); return; }
+    const localUrl = URL.createObjectURL(file);
+    const editor = document.getElementById('editBodyEditor');
+    if (!editor) return;
+    editor.focus();
+    const html = `<div class="fe-img-block" contenteditable="false" data-local="${localUrl}">
+      <img src="${localUrl}" alt="">
+      <button class="fe-img-remove" onclick="epRemoveImage(this,'${localUrl}')" type="button">✕</button>
+    </div><p><br></p>`;
+    document.execCommand('insertHTML', false, html);
+  });
+}
+window.epRemoveImage = function(btn, localUrl) {
+  btn.closest('.fe-img-block')?.remove();
+  URL.revokeObjectURL(localUrl);
+}
+
 window.checkEditReady = function() {
-  const t = document.getElementById('editTitleInput').value.trim();
-  const b = document.getElementById('editBodyInput').value.trim();
+  const t = document.getElementById('editTitleInput')?.value.trim() || '';
+  const editor = document.getElementById('editBodyEditor');
+  const b = editor ? (editor.innerText || '').trim() : '';
   document.getElementById('editSaveBtn').classList.toggle('ready', t.length > 0 && b.length > 0);
 }
 
@@ -7530,15 +7750,15 @@ window.saveEditPost = async function() {
     showToast('Permission denied', 'error'); return;
   }
   const newTitle = document.getElementById('editTitleInput').value.trim();
-  const newBody  = document.getElementById('editBodyInput').value.trim();
+  const editor   = document.getElementById('editBodyEditor');
+  const newBody  = editor ? (editor.innerText || '').trim() : '';
   if (!newTitle || !newBody) return;
 
   const btn = document.getElementById('editSaveBtn');
   btn.textContent = 'Saving...';
   btn.classList.remove('ready');
 
-  // 로컬 즉시 반영
-  post.title = newTitle;
+  post.title   = newTitle;
   post.preview = newBody;
 
   if (firebaseOk && !String(editingPostId).startsWith('seed_') && !String(editingPostId).startsWith('local_')) {
@@ -7555,21 +7775,15 @@ window.saveEditPost = async function() {
 
   closeEditPost();
 
-  // 현재 화면에 따라 갱신 — goTo 없이 그 자리에서 갱신
   const feedList = document.getElementById('feedList');
-  const isMyPostsView = feedList && feedList.querySelector('.my-posts-header, [data-my-posts]');
+  const isMyPostsView = feedList && feedList.querySelector('[data-my-posts]');
   const isActivityNav = document.getElementById('sidenav-activity')?.classList.contains('active');
-
   if (isActivityNav || isMyPostsView) {
-    // My Posts 뷰: 화면 전환 없이 목록만 다시 그리기
     refreshMyPostsInPlace();
   } else {
-    // 일반 피드: 피드만 갱신
     renderFeed();
     renderNearby();
   }
-
-  // 상세창이 열려있으면 제목도 업데이트
   if (activeDetailId === editingPostId) {
     const titleEl = document.getElementById('sheetTitle');
     if (titleEl) titleEl.textContent = newTitle;

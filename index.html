@@ -1696,14 +1696,42 @@
   .fe-dd-item:hover { background: #F5F5F5; }
   .fe-dd-sep { height: 1px; background: #F0F0F0; }
 
-  /* 컬러 팔레트 */
-  .fe-color-drop { min-width: auto; padding: 10px; }
-  .fe-color-grid { display: grid; grid-template-columns: repeat(4, 26px); gap: 6px; }
-  .fe-color-dot {
-    width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent;
-    cursor: pointer; transition: transform 0.1s, border-color 0.1s;
+  /* 컬러 드롭다운 */
+  .fe-color-drop {
+    min-width: auto !important;
+    width: 188px;
+    padding: 12px;
   }
-  .fe-color-dot:hover { transform: scale(1.2); border-color: rgba(0,0,0,0.2); }
+  .fe-color-label {
+    font-size: 10px; font-weight: 600; color: #AAA;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    margin-bottom: 7px; display: block;
+  }
+  .fe-color-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 28px);
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+  .fe-color-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(5, 28px);
+    gap: 5px;
+  }
+  .fe-color-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer; transition: transform 0.12s, border-color 0.12s;
+    position: relative; flex-shrink: 0;
+  }
+  .fe-color-dot:hover { transform: scale(1.18); border-color: rgba(0,0,0,0.25); }
+  .fe-color-dot.fe-color-reset {
+    background: #fff !important;
+    border: 1.5px solid #DDD !important;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #888;
+  }
+  .fe-color-sep { height: 1px; background: #F0F0F0; margin: 8px 0; }
 
   /* ⑤ 스크롤 영역 */
   .fe-scroll {
@@ -4141,27 +4169,46 @@
 
     <div class="fe-tb-sep"></div>
 
-    <!-- 글자 색상 -->
-    <div class="fe-dropdown-wrap">
-      <button class="fe-tb-btn" onmousedown="feToggleDropdown('feColorDrop',event)" title="Text color">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-          <path d="M3 13L7 3l4 10M4.5 10h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <rect x="2" y="13.5" width="12" height="2" rx="1" id="feColorBar" fill="#1A1A18"/>
-        </svg>
-      </button>
-      <div class="fe-dropdown fe-color-drop" id="feColorDrop">
-        <div class="fe-color-grid">
-          <button class="fe-color-dot" style="background:#1A1A18" onmousedown="feSetColor('#1A1A18',event)"></button>
-          <button class="fe-color-dot" style="background:#E53935" onmousedown="feSetColor('#E53935',event)"></button>
-          <button class="fe-color-dot" style="background:#F57C00" onmousedown="feSetColor('#F57C00',event)"></button>
-          <button class="fe-color-dot" style="background:#F9A825" onmousedown="feSetColor('#F9A825',event)"></button>
-          <button class="fe-color-dot" style="background:#1D9E75" onmousedown="feSetColor('#1D9E75',event)"></button>
-          <button class="fe-color-dot" style="background:#1565C0" onmousedown="feSetColor('#1565C0',event)"></button>
-          <button class="fe-color-dot" style="background:#6A1B9A" onmousedown="feSetColor('#6A1B9A',event)"></button>
-          <button class="fe-color-dot" style="background:#757575" onmousedown="feSetColor('#757575',event)"></button>
+      <!-- 글자 색상 -->
+      <div class="fe-dropdown-wrap">
+        <button class="fe-tb-btn" onmousedown="feToggleDropdown('feColorDrop',event)" title="Text color"
+          style="gap:4px; padding:0 8px;">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+            <path d="M2 11.5L5.5 2.5l3.5 9M3.2 8.8h4.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <!-- 현재 색상 표시 바 -->
+          <span id="feColorPreview" style="
+            display:inline-block; width:14px; height:4px;
+            border-radius:2px; background:#1A1A18;
+            margin-top:1px; flex-shrink:0;
+          "></span>
+          <svg width="8" height="8" viewBox="0 0 10 10" fill="none" style="opacity:0.5">
+            <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <div class="fe-dropdown fe-color-drop" id="feColorDrop">
+          <span class="fe-color-label">Text Color</span>
+
+          <!-- Row 1: 기본 색상 -->
+          <div class="fe-color-grid">
+            <button class="fe-color-dot" style="background:#1A1A18" onmousedown="feSetColor('#1A1A18',event)" title="Black"></button>
+            <button class="fe-color-dot" style="background:#E53935" onmousedown="feSetColor('#E53935',event)" title="Red"></button>
+            <button class="fe-color-dot" style="background:#FB8C00" onmousedown="feSetColor('#FB8C00',event)" title="Orange"></button>
+            <button class="fe-color-dot" style="background:#F9A825" onmousedown="feSetColor('#F9A825',event)" title="Yellow"></button>
+            <button class="fe-color-dot" style="background:#43A047" onmousedown="feSetColor('#43A047',event)" title="Green"></button>
+          </div>
+
+          <!-- Row 2: 추가 색상 -->
+          <div class="fe-color-grid-2">
+            <button class="fe-color-dot" style="background:#1D9E75" onmousedown="feSetColor('#1D9E75',event)" title="Teal"></button>
+            <button class="fe-color-dot" style="background:#1565C0" onmousedown="feSetColor('#1565C0',event)" title="Blue"></button>
+            <button class="fe-color-dot" style="background:#6A1B9A" onmousedown="feSetColor('#6A1B9A',event)" title="Purple"></button>
+            <button class="fe-color-dot" style="background:#757575" onmousedown="feSetColor('#757575',event)" title="Gray"></button>
+            <button class="fe-color-dot fe-color-reset" onmousedown="feSetColor('inherit',event)" title="Reset color">↺</button>
+          </div>
         </div>
       </div>
-    </div>
 
     <div class="fe-tb-sep"></div>
 
@@ -7554,10 +7601,16 @@ window.feSetColor = function(color, event) {
     sel.removeAllRanges();
     sel.addRange(feLastSelection);
   }
-  document.execCommand('styleWithCSS', false, true);
-  document.execCommand('foreColor', false, color);
-  const bar = document.getElementById('feColorBar');
-  if (bar) bar.setAttribute('fill', color);
+  if (color === 'inherit') {
+    // 색상 초기화 — removeFormat으로 색상 제거
+    document.execCommand('removeFormat');
+  } else {
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('foreColor', false, color);
+    // 미리보기 바 업데이트
+    const preview = document.getElementById('feColorPreview');
+    if (preview) preview.style.background = color;
+  }
   document.getElementById('feColorDrop')?.classList.remove('open');
 }
 

@@ -800,39 +800,43 @@
       display: flex; align-items: center;
       background: #EAF4FF;
       border-bottom: 1px solid #C8DFF7;
-      padding: 0 14px;
-      height: 36px;
+      height: 34px;
       cursor: pointer;
       overflow: hidden;
-      position: relative;
       flex-shrink: 0;
-      gap: 8px;
-      transition: background 0.2s;
     }
     .weather-ticker:active { background: #D4EAFF; }
+
+    /* 트랙: 두 세트를 나란히 놓고 첫 번째 세트 너비만큼 이동 */
     .weather-ticker-track {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 12px; color: #2a5f8f; font-weight: 500;
-      white-space: nowrap; overflow: hidden;
-      flex: 1;
-      animation: tickerScroll 18s linear infinite;
+      display: flex; align-items: center;
+      white-space: nowrap;
+      animation: marqueeScroll 22s linear infinite;
     }
     .weather-ticker:hover .weather-ticker-track { animation-play-state: paused; }
-    @keyframes tickerScroll {
+
+    /* 첫 번째 세트가 다 지나가면 → 두 번째 세트가 같은 자리 → 리셋 */
+    @keyframes marqueeScroll {
       0%   { transform: translateX(0); }
-      100% { transform: translateX(-30%); }
+      100% { transform: translateX(-50%); }
     }
-    .wt-icon { font-size: 15px; }
-    .wt-temp { font-size: 13px; font-weight: 700; color: #1a4a7a; }
-    .wt-sep  { color: #9dbdd6; font-size: 11px; }
+
+    /* 각 세트 */
+    .wt-set {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 0 16px;
+    }
+    .wt-spacer { display: inline-block; width: 48px; }
+
+    .wt-icon { font-size: 14px; }
+    .wt-temp { font-size: 12px; font-weight: 700; color: #1a4a7a; }
+    .wt-sep  { color: #9dbdd6; font-size: 10px; }
     .wt-desc, .wt-aqi, .wt-wear { font-size: 11px; color: #3a6a9a; }
     .wt-cta {
-      font-size: 11px; font-weight: 700;
-      color: #1565C0; white-space: nowrap;
+      font-size: 11px; font-weight: 700; color: #1565C0;
       text-decoration: underline; text-underline-offset: 2px;
-      flex-shrink: 0;
+      white-space: nowrap;
     }
-    .wt-arrow { color: #6a9fc0; flex-shrink: 0; }
 
     /* 핫딜 슬라이더 */
     .mobile-deals-section {
@@ -3490,23 +3494,38 @@
 
   <!-- ② 날씨 티커 바 + 핫딜 그리드 (모바일 전용) -->
 
-  <!-- 날씨 티커 바 -->
+  <!-- 날씨 티커 바 — 무한 루프 마퀴 -->
   <div class="weather-ticker" id="weatherTicker" onclick="showWeatherModal()">
     <div class="weather-ticker-track" id="weatherTickerTrack">
-      <span class="wt-icon" id="wtIcon">⛅</span>
-      <span class="wt-temp" id="wtTemp">14°C</span>
-      <span class="wt-sep">·</span>
-      <span class="wt-desc" id="wtDesc">Partly cloudy</span>
-      <span class="wt-sep">·</span>
-      <span class="wt-aqi">PM2.5 <strong id="wtPm25">18</strong> — <span id="wtAqiLabel">Good</span></span>
-      <span class="wt-sep">·</span>
-      <span class="wt-wear" id="wtWear">Light jacket recommended</span>
-      <span class="wt-sep">·</span>
-      <span class="wt-cta">Tap for details</span>
+      <!-- 첫 번째 세트 -->
+      <span class="wt-set">
+        <span class="wt-icon" id="wtIcon">⛅</span>
+        <span class="wt-temp" id="wtTemp">14°C</span>
+        <span class="wt-sep">·</span>
+        <span class="wt-desc" id="wtDesc">Partly cloudy</span>
+        <span class="wt-sep">·</span>
+        <span class="wt-aqi">PM2.5 <strong id="wtPm25">18</strong> — <span id="wtAqiLabel">Normal</span></span>
+        <span class="wt-sep">·</span>
+        <span class="wt-wear" id="wtWear">Light jacket recommended</span>
+        <span class="wt-sep">·</span>
+        <span class="wt-cta">Tap for details ›</span>
+        <span class="wt-spacer"></span>
+      </span>
+      <!-- 두 번째 세트 (복제 — 이음새 없는 루프) -->
+      <span class="wt-set" aria-hidden="true">
+        <span class="wt-icon" id="wtIcon2">⛅</span>
+        <span class="wt-temp" id="wtTemp2">14°C</span>
+        <span class="wt-sep">·</span>
+        <span class="wt-desc" id="wtDesc2">Partly cloudy</span>
+        <span class="wt-sep">·</span>
+        <span class="wt-aqi">PM2.5 <strong id="wtPm252">18</strong> — <span id="wtAqiLabel2">Normal</span></span>
+        <span class="wt-sep">·</span>
+        <span class="wt-wear" id="wtWear2">Light jacket recommended</span>
+        <span class="wt-sep">·</span>
+        <span class="wt-cta">Tap for details ›</span>
+        <span class="wt-spacer"></span>
+      </span>
     </div>
-    <svg class="wt-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
   </div>
 
   <!-- 핫딜 가로 스크롤 슬라이더 (모바일 전용) -->
@@ -9212,16 +9231,25 @@ function updateMobileInfoBar(guide, aqiLevel) {
   mibSet('mibPm25',     document.getElementById('tlwPm25')?.textContent || '—');
   mibSet('mibAqiLabel', mibAqi.label);
 
-  // 날씨 티커 바 업데이트
+  // 날씨 티커 바 업데이트 (두 세트 모두)
   const temp = document.getElementById('tlwTemp')?.textContent || '—';
   const desc = document.getElementById('tlwDesc')?.textContent || '';
   const pm25 = document.getElementById('tlwPm25')?.textContent || '—';
-  mibSet('wtIcon',     mibGuide.icon);
-  mibSet('wtTemp',     temp + '°C');
-  mibSet('wtDesc',     desc);
-  mibSet('wtPm25',     pm25);
-  mibSet('wtAqiLabel', mibAqi.label);
-  mibSet('wtWear',     mibGuide.advice);
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  // 첫 번째 세트
+  setEl('wtIcon',     mibGuide.icon);
+  setEl('wtTemp',     temp + '°C');
+  setEl('wtDesc',     desc);
+  setEl('wtPm25',     pm25);
+  setEl('wtAqiLabel', mibAqi.label);
+  setEl('wtWear',     mibGuide.advice);
+  // 두 번째 세트 (복제)
+  setEl('wtIcon2',     mibGuide.icon);
+  setEl('wtTemp2',     temp + '°C');
+  setEl('wtDesc2',     desc);
+  setEl('wtPm252',     pm25);
+  setEl('wtAqiLabel2', mibAqi.label);
+  setEl('wtWear2',     mibGuide.advice);
 }
 
 // ══════════════════════════════════════════════════════

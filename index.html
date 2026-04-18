@@ -4219,8 +4219,9 @@
         data-placeholder="Share what you know — visa tips, neighborhood guides, restaurant finds, life hacks for living in Korea..."
         oninput="feOnBodyInput()"
         onkeydown="feOnKeydown(event)"
-        onmouseup="feUpdateToolbarState()"
-        onkeyup="feUpdateToolbarState()">
+        onmouseup="feSaveSelection();feUpdateToolbarState()"
+        onkeyup="feSaveSelection();feUpdateToolbarState()"
+        onblur="feSaveSelection()">
       </div>
 
     </div>
@@ -7475,31 +7476,56 @@ function feCheckReady() {
 
 // ── 에디터 기본 커맨드 ──
 window.feCmd = function(cmd) {
-  document.getElementById('feEditor')?.focus();
-  document.execCommand(cmd);
-  feUpdateToolbarState();
+  feRestoreSelection();
+  const editor = document.getElementById('feEditor');
+  if (editor) {
+    editor.focus();
+    document.execCommand(cmd);
+    feUpdateToolbarState();
+  }
 }
 
 // ── 드롭다운 토글 ──
 window.feToggleDropdown = function(id) {
-  // 다른 드롭다운 닫기
-  document.querySelectorAll('.fe-dropdown').forEach(d => {
-    if (d.id !== id) d.classList.remove('open');
-  });
-  document.getElementById(id)?.classList.toggle('open');
+  // 이벤트 버블링으로 인한 즉시 닫힘 방지 — setTimeout으로 한 틱 뒤에 닫기 리스너보다 먼저 처리
+  const target = document.getElementById(id);
+  if (!target) return;
+  const isOpen = target.classList.contains('open');
+  // 모든 드롭다운 닫기
+  document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
+  // 닫혀 있었으면 열기
+  if (!isOpen) target.classList.add('open');
 }
 
-// 에디터 외 클릭 시 드롭다운 닫기
+// 에디터 외 클릭 시 드롭다운 닫기 (드롭다운 내부 클릭은 제외)
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.fe-dropdown-wrap') && !e.target.closest('.fe-dropdown')) {
+  if (!e.target.closest('.fe-dropdown-wrap')) {
     document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
   }
-});
+}, true); // capture phase — toggle보다 먼저 실행되지 않게 capture 제거
+
+// ── selection 저장/복원 유틸 ──
+let feLastSelection = null;
+
+function feSaveSelection() {
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    feLastSelection = sel.getRangeAt(0).cloneRange();
+  }
+}
+
+function feRestoreSelection() {
+  if (!feLastSelection) return;
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(feLastSelection);
+}
 
 // ── 블록 서식 (H1/H2/H3/P) ──
 window.feSetBlock = function(tag, label) {
+  feRestoreSelection();
   document.getElementById('feEditor')?.focus();
-  document.execCommand('formatBlock', false, tag);
+  document.execCommand('formatBlock', false, '<' + tag + '>');
   const lbl = document.getElementById('feFontSizeLabel');
   if (lbl) lbl.textContent = label;
   document.getElementById('feFontSizeDrop')?.classList.remove('open');
@@ -7507,8 +7533,13 @@ window.feSetBlock = function(tag, label) {
 
 // ── 글자 색상 ──
 window.feSetColor = function(color) {
-  document.getElementById('feEditor')?.focus();
-  document.execCommand('foreColor', false, color);
+  feRestoreSelection(); // 선택 복원 후 색상 적용
+  const editor = document.getElementById('feEditor');
+  if (editor) {
+    editor.focus();
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('foreColor', false, color);
+  }
   // 컬러바 아이콘 업데이트
   const bar = document.getElementById('feColorBar');
   if (bar) bar.setAttribute('fill', color);

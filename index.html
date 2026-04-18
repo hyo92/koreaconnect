@@ -1682,6 +1682,15 @@
   .fe-tb-photo:hover { background: #c5eadf; color: var(--green-deeper); }
   .fe-autosave { font-size: 11px; color: #BDBDBD; flex-shrink: 0; }
 
+  /* 컬러 드롭다운 */
+  .fe-color-drop { min-width: auto !important; width: 172px; padding: 12px; }
+  .fe-color-label { font-size: 10px; font-weight: 600; color: #AAA; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 7px; display: block; }
+  .fe-color-grid { display: grid; grid-template-columns: repeat(5, 28px); gap: 5px; margin-bottom: 6px; }
+  .fe-color-grid-2 { display: grid; grid-template-columns: repeat(5, 28px); gap: 5px; }
+  .fe-color-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.12s, border-color 0.12s; }
+  .fe-color-dot:hover { transform: scale(1.18); border-color: rgba(0,0,0,0.25); }
+  .fe-color-dot.fe-color-reset { background: #fff !important; border: 1.5px solid #DDD !important; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #888; }
+
   /* ④ 드롭다운 — position:fixed로 overflow 탈출 */
   .fe-dropdown-wrap { position: relative; }
   .fe-dropdown {
@@ -4103,6 +4112,24 @@
   <!-- ② 툴바 (헤더 바로 아래 — 스크롤해도 고정) -->
   <div class="fe-inline-toolbar" id="feInlineToolbar">
 
+        <!-- 글자 크기 -->
+    <div class="fe-dropdown-wrap">
+      <button class="fe-tb-btn fe-tb-dropdown" onmousedown="feToggleDropdown('feFontSizeDrop',event)">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 13L6 3l4 10M3.5 10h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M10 10l2-4 2 4M10.7 8.5h2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span id="feFontSizeLabel">Normal</span>
+        <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </button>
+      <div class="fe-dropdown" id="feFontSizeDrop">
+        <div class="fe-dd-item" onmousedown="feSetBlock('h1','H1',event)"><span style="font-size:18px;font-weight:700">Heading 1</span></div>
+        <div class="fe-dd-item" onmousedown="feSetBlock('h2','H2',event)"><span style="font-size:15px;font-weight:600">Heading 2</span></div>
+        <div class="fe-dd-item" onmousedown="feSetBlock('h3','H3',event)"><span style="font-size:13px;font-weight:600">Heading 3</span></div>
+        <div class="fe-dd-sep"></div>
+        <div class="fe-dd-item" onmousedown="feSetBlock('p','Normal',event)"><span style="font-size:14px">Normal text</span></div>
+      </div>
+    </div>
+
+    <div class="fe-tb-sep"></div>
+
     <!-- Bold / Italic / Underline -->
     <button class="fe-tb-btn" id="feBoldBtn"   onmousedown="feCmd('bold',event)"      title="Bold">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M4 3h5a3 3 0 010 6H4V3z" stroke="currentColor" stroke-width="1.7"/><path d="M4 9h5.5a3.5 3.5 0 010 7H4V9z" stroke="currentColor" stroke-width="1.7"/></svg>
@@ -4116,7 +4143,38 @@
 
     <div class="fe-tb-sep"></div>
 
-    <!-- 리스트 -->
+    <!-- 글자 색상 -->
+      <div class="fe-dropdown-wrap">
+        <button class="fe-tb-btn" onmousedown="feToggleDropdown('feColorDrop',event)" title="Text color"
+          style="gap:4px; padding:0 8px;">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+            <path d="M2 11.5L5.5 2.5l3.5 9M3.2 8.8h4.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span id="feColorPreview" style="display:inline-block;width:14px;height:4px;border-radius:2px;background:#1A1A18;margin-top:1px;flex-shrink:0;"></span>
+          <svg width="8" height="8" viewBox="0 0 10 10" fill="none" style="opacity:0.5"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <div class="fe-dropdown fe-color-drop" id="feColorDrop">
+          <span class="fe-color-label">Text Color</span>
+          <div class="fe-color-grid">
+            <button class="fe-color-dot" style="background:#1A1A18" onmousedown="feSetColor('#1A1A18',event)" title="Black"></button>
+            <button class="fe-color-dot" style="background:#E53935" onmousedown="feSetColor('#E53935',event)" title="Red"></button>
+            <button class="fe-color-dot" style="background:#FB8C00" onmousedown="feSetColor('#FB8C00',event)" title="Orange"></button>
+            <button class="fe-color-dot" style="background:#F9A825" onmousedown="feSetColor('#F9A825',event)" title="Yellow"></button>
+            <button class="fe-color-dot" style="background:#43A047" onmousedown="feSetColor('#43A047',event)" title="Green"></button>
+          </div>
+          <div class="fe-color-grid-2">
+            <button class="fe-color-dot" style="background:#1D9E75" onmousedown="feSetColor('#1D9E75',event)" title="Teal"></button>
+            <button class="fe-color-dot" style="background:#1565C0" onmousedown="feSetColor('#1565C0',event)" title="Blue"></button>
+            <button class="fe-color-dot" style="background:#6A1B9A" onmousedown="feSetColor('#6A1B9A',event)" title="Purple"></button>
+            <button class="fe-color-dot" style="background:#757575" onmousedown="feSetColor('#757575',event)" title="Gray"></button>
+            <button class="fe-color-dot fe-color-reset" onmousedown="feSetColor('inherit',event)" title="Reset">↺</button>
+          </div>
+        </div>
+      </div>
+
+    <div class="fe-tb-sep"></div>
+
+        <!-- 리스트 -->
     <button class="fe-tb-btn" onmousedown="feCmd('insertUnorderedList',event)" title="Bullet list">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="2.5" cy="4" r="1.2" fill="currentColor"/><circle cx="2.5" cy="8" r="1.2" fill="currentColor"/><circle cx="2.5" cy="12" r="1.2" fill="currentColor"/><path d="M6 4h9M6 8h9M6 12h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
     </button>
@@ -7471,6 +7529,32 @@ window.feCmd = function(cmd, event) {
   feUpdateToolbarState();
 }
 
+// ── 블록 서식 (H1/H2/H3/Normal) ──
+window.feSetBlock = function(tag, label, event) {
+  event.preventDefault();
+  event.stopPropagation();
+  document.execCommand('formatBlock', false, tag);
+  const lbl = document.getElementById('feFontSizeLabel');
+  if (lbl) lbl.textContent = label;
+  document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
+}
+
+// ── 글자 색상 ──
+window.feSetColor = function(color, event) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (color === 'inherit') {
+    document.execCommand('removeFormat', false, null);
+  } else {
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('foreColor', false, color);
+    const preview = document.getElementById('feColorPreview');
+    if (preview) preview.style.background = color;
+  }
+  document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
+}
+
+
 
 
 // ── 구분선 삽입 ──
@@ -7564,6 +7648,12 @@ window.feUpdateToolbarState = function() {
   const italicBtn = document.getElementById('feItalicBtn');
   if (boldBtn)   boldBtn.classList.toggle('active',   document.queryCommandState('bold'));
   if (italicBtn) italicBtn.classList.toggle('active', document.queryCommandState('italic'));
+  try {
+    const block = document.queryCommandValue('formatBlock');
+    const labelMap = { h1:'H1', h2:'H2', h3:'H3', p:'Normal', div:'Normal', '':'Normal' };
+    const lbl = document.getElementById('feFontSizeLabel');
+    if (lbl && block !== undefined) lbl.textContent = labelMap[block.toLowerCase()] || 'Normal';
+  } catch(e) {}
 }
 
 window.feInsertDivider = function(event) {

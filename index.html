@@ -6549,7 +6549,7 @@ function renderFeed() {
         <div class="hcard-title">${p.title}</div>
 
         <!-- 본문 요약 (옅은 색, 2줄) -->
-        <div class="hcard-preview">${p.preview}</div>
+        <div class="hcard-preview">${(p.previewText || p.preview || '').replace(/<[^>]*>/g, '').slice(0,120)}</div>
 
         <!-- 하단: 저자 + 스탯 + Save -->
         <div class="hcard-footer">
@@ -6851,8 +6851,8 @@ window.openDetail = async function(postId) {
     <!-- ④ 구분선 -->
     <div class="pd-divider"></div>
 
-    <!-- ⑤ 본문 -->
-    <div class="pd-body">${(post.preview || '').replace(/\n/g, '<br>')}</div>
+    <!-- ⑤ 본문 — HTML 그대로 렌더링 (색상, Bold 등 유지) -->
+    <div class="pd-body">${post.preview || ''}</div>
 
     <!-- ⑥ 이미지 (본문 아래) -->
     ${hasImg ? `
@@ -7755,9 +7755,12 @@ window.openEditPost = function() {
   const titleEl  = document.getElementById('editTitleInput');
   const bodyEditor = document.getElementById('editBodyEditor');
   titleEl.value = post.title;
-  // 본문을 contenteditable에 로드 (줄바꿈 → <br> 변환)
+  // 본문을 contenteditable에 로드 (이미 HTML이면 그대로, plain text면 줄바꿈 변환)
   if (bodyEditor) {
-    bodyEditor.innerHTML = (post.preview || '').replace(/\n/g, '<br>');
+    const isHtml = /<[a-z][\s\S]*>/i.test(post.preview || '');
+    bodyEditor.innerHTML = isHtml
+      ? (post.preview || '')
+      : (post.preview || '').replace(/\n/g, '<br>');
   }
   document.getElementById('editPostOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -7946,8 +7949,9 @@ window.saveEditPost = async function(newTopic) {
   }
   const newTitle = document.getElementById('editTitleInput').value.trim();
   const editor   = document.getElementById('editBodyEditor');
-  const newBody  = editor ? (editor.innerText || '').trim() : '';
-  if (!newTitle || !newBody) return;
+  const newBody  = editor ? editor.innerHTML.trim() : '';
+  const newBodyText = editor ? (editor.innerText || '').trim() : '';
+  if (!newTitle || !newBodyText) return;
 
   const topic = newTopic || post.topic || 'social';
 
@@ -8428,28 +8432,29 @@ window.feRemoveImage = function(btn, localUrl) {
 // ── 에디터 내용 추출 ──
 function feGetContent() {
   const editor = document.getElementById('feEditor');
-  if (!editor) return { text: '', imageFiles: [] };
+  if (!editor) return { html: '', text: '', imageFiles: [] };
   const clone = editor.cloneNode(true);
   clone.querySelectorAll('.fe-img-block').forEach(el => el.remove());
-  const text = clone.innerText.trim();
+  const html = clone.innerHTML.trim();
+  const text = clone.innerText.trim(); // 길이 체크용
   const imageFiles = [];
   editor.querySelectorAll('.fe-img-block').forEach(block => {
     const localUrl = block.getAttribute('data-local');
     const match = feImages.find(img => img.localUrl === localUrl);
     if (match) imageFiles.push(match.file);
   });
-  return { text, imageFiles };
+  return { html, text, imageFiles };
 }
 
 // ── 발행 ──
 window.publishFromEditor = async function() {
   if (!currentUser) { openLoginGate(); return; }
   const title = document.getElementById('feTitleInput')?.value.trim();
-  const { text: body, imageFiles } = feGetContent();
+  const { html: bodyHtml, text: bodyText, imageFiles } = feGetContent();
   const topic = feTopic || 'social';
 
   if (!title || title.length < 4) { showToast('Title must be at least 4 characters', 'error'); return; }
-  if (body.length < 10 && imageFiles.length === 0) { showToast('Add some content or a photo', 'error'); return; }
+  if (bodyText.length < 2 && imageFiles.length === 0) { showToast('Add some content or a photo', 'error'); return; }
 
   const btn = document.getElementById('fePublishBtn');
   if (btn) { btn.textContent = imageFiles.length ? 'Uploading...' : 'Publishing...'; btn.classList.remove('ready'); }
@@ -8478,7 +8483,10 @@ window.publishFromEditor = async function() {
     comm: selectedComm || 'KoreaConnect',
     author: authorName, authorId: currentUser.uid,
     authorPhoto: currentUser.photoURL || null,
-    topic, title, preview: body, votes: 1, commentCount: 0,
+    topic, title,
+    preview: bodyHtml,      // HTML 그대로 저장 (색상, Bold 등 유지)
+    previewText: bodyText,  // 검색/피드 미리보기용 plain text
+    votes: 1, commentCount: 0,
     ...(userDistrict ? { district: userDistrict } : {}),
     ...(userCity     ? { city: userCity }         : {}),
     ...(locationStr  ? { location: locationStr }  : {}),

@@ -4643,16 +4643,14 @@ onAuthStateChanged(auth, (user) => {
 window.signInWithGoogle = async function() {
   closeLoginGate();
 
-  // disallowed_useragent 사전 감지 — 삼성 브라우저 / WebView 체크
+  // 비정상 브라우저(WebView, 인앱브라우저) 사전 감지
   const ua = navigator.userAgent;
   const isBadBrowser = /SamsungBrowser/i.test(ua) ||
                        /FBAN|FBAV|Instagram|Line|KakaoTalk/i.test(ua) ||
-                       (/Android/i.test(ua) && /wv\)/.test(ua)); // WebView
+                       (/Android/i.test(ua) && /wv\)/.test(ua));
 
   if (isBadBrowser) {
-    const pageURL = encodeURIComponent(location.href);
-    const msg = '구글 로그인은 Chrome 브라우저에서만 가능해요.\n\nChrome으로 열까요?';
-    if (confirm(msg)) {
+    if (confirm('구글 로그인은 Chrome 브라우저에서만 가능해요.\nChrome으로 열까요?')) {
       location.href = 'intent://' + location.host + location.pathname +
         '#Intent;scheme=https;package=com.android.chrome;end';
     }
@@ -4660,36 +4658,74 @@ window.signInWithGoogle = async function() {
   }
 
   try {
+    // 먼저 Popup 시도
     const result = await signInWithPopup(auth, googleProvider);
     const name = result.user.displayName?.split(' ')[0] || 'friend';
-    showToast(`Welcome, ${name}!`, 'success');
+    showToast(`Welcome, ${name}! 👋`, 'success');
   } catch(e) {
-    console.error('Auth error code:', e.code, e.message);
+    console.error('Auth error:', e.code, e.message);
 
+    // 유저가 닫음 → 무시
     if (e.code === 'auth/popup-closed-by-user' ||
-        e.code === 'auth/cancelled-popup-request') {
+        e.code === 'auth/cancelled-popup-request') return;
+
+    // Popup 차단 → Redirect로 전환
+    if (e.code === 'auth/popup-blocked' ||
+        e.code === 'auth/operation-not-supported-in-this-environment') {
+      showToast('Redirecting to Google…', 'info');
+      try { await signInWithRedirect(auth, googleProvider); } catch(_) {}
       return;
     }
 
-    if (e.code === 'auth/popup-blocked' ||
-        e.code === 'auth/operation-not-supported-in-this-environment') {
-      showToast('Redirecting to Google sign in...', 'info');
+    // 미승인 도메인 → Redirect로 재시도 (Vercel 등)
+    if (e.code === 'auth/unauthorized-domain' ||
+        e.message?.includes('disallowed_useragent') ||
+        e.message?.includes('unauthorized')) {
+      showToast('Redirecting to Google sign-in…', 'info');
       try {
         await signInWithRedirect(auth, googleProvider);
       } catch(e2) {
-        showToast('Sign in failed. Please open in Chrome.', 'error');
+        // Redirect도 실패하면 Firebase Console 안내
+        showDomainErrorModal();
       }
-      return;
-    }
-
-    if (e.message?.includes('disallowed_useragent') ||
-        e.code === 'auth/unauthorized-domain') {
-      showToast('Chrome 브라우저에서 열어서 로그인해주세요.', 'error');
       return;
     }
 
     showToast('Sign in failed: ' + (e.message || e.code), 'error');
   }
+}
+
+// Firebase 도메인 미등록 시 안내 모달
+function showDomainErrorModal() {
+  const existing = document.getElementById('domainErrorModal');
+  if (existing) { existing.style.display = 'flex'; return; }
+
+  const modal = document.createElement('div');
+  modal.id = 'domainErrorModal';
+  modal.style.cssText = `position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);
+    display:flex;align-items:center;justify-content:center;padding:20px`;
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:18px;padding:28px 24px;max-width:360px;width:100%;text-align:center">
+      <div style="font-size:32px;margin-bottom:12px">⚙️</div>
+      <div style="font-size:17px;font-weight:700;color:#111;margin-bottom:8px">도메인 등록 필요</div>
+      <div style="font-size:13px;color:#666;line-height:1.6;margin-bottom:20px">
+        Firebase Console에서 현재 도메인을 승인해야 해요.<br><br>
+        <b>Firebase Console</b> → Authentication<br>
+        → Settings → Authorized domains<br>
+        → <b>${location.hostname}</b> 추가
+      </div>
+      <button onclick="navigator.clipboard?.writeText('${location.hostname}').then(()=>this.textContent='Copied!')"
+        style="width:100%;padding:10px;background:#F5F5F5;border:none;border-radius:8px;
+               font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:inherit">
+        📋 Copy domain name
+      </button>
+      <button onclick="document.getElementById('domainErrorModal').style.display='none'"
+        style="width:100%;padding:10px;background:#1D9E75;color:#fff;border:none;border-radius:8px;
+               font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+        OK
+      </button>
+    </div>`;
+  document.body.appendChild(modal);
 }
 
 window.signOutUser = async function() {

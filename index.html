@@ -1657,9 +1657,7 @@
     height: 44px;
     background: #fff;
     border-bottom: 1px solid #EAEAEA;
-    /* overflow 제거 — overflow 있으면 자식 드롭다운이 잘림 */
     overflow: visible;
-    position: sticky; top: 0; z-index: 10;
   }
   .fe-inline-toolbar::-webkit-scrollbar { display: none; }
   .fe-tb-btn {
@@ -1866,14 +1864,47 @@
     .fe-title-input { font-size: 34px; }
     .fe-editor { font-size: 18px; line-height: 1.9; }
   }
+  /* ⑫ 모바일 에디터 */
   @media (max-width: 1023px) {
-    .fe-scroll { padding: 0 0 60px; background: #fff; }
-    .fe-container { padding: 24px 18px 60px; box-shadow: none; border-radius: 0; min-height: auto; }
+
+    /* 헤더 — flex로 이미 고정됨 (sticky 불필요) */
+    .fe-topbar {
+      padding: 0 14px;
+      /* position: sticky 제거 — fullEditorOverlay가 position:fixed+overflow:hidden이므로
+         내부 sticky는 동작 안 함. flex-shrink:0이 이미 헤더를 상단에 고정함 */
+    }
+
+    /* 툴바 — 2줄 허용, 높이 auto */
+    .fe-inline-toolbar {
+      padding: 4px 8px;
+      height: auto;      /* 고정 높이 해제 → 2줄 가능 */
+      flex-wrap: wrap;   /* 줄바꿈 허용 */
+      gap: 2px;
+      overflow: visible; /* 드롭다운 잘림 방지 */
+      position: static;  /* sticky 제거 */
+    }
+
+    /* 모바일 툴바 버튼 — 터치 영역 44px */
+    .fe-tb-btn {
+      min-width: 40px;
+      height: 40px;
+      padding: 0 10px;
+      font-size: 14px;
+    }
+    .fe-tb-sep { height: 20px; margin: 0 3px; }
+
+    /* 스크롤 영역 */
+    .fe-scroll { padding: 0 0 80px; background: #fff; }
+
+    /* 종이 박스 — 모바일 전체폭 */
+    .fe-container {
+      padding: 24px 18px 60px;
+      box-shadow: none; border-radius: 0; min-height: auto;
+    }
+
     .fe-img-block { margin: 20px -18px; }
     .fe-title-input { font-size: 22px; }
     .fe-editor { font-size: 16px; line-height: 1.75; }
-    .fe-inline-toolbar { padding: 0 12px; }
-    .fe-topbar { padding: 0 14px; }
   }
   /* 기존 kc-modal은 알림 모달 등에서만 사용 */
   .kc-modal-overlay {

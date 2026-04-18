@@ -826,6 +826,12 @@
     .wt-temp { font-size: 13px; font-weight: 700; color: #1a4a7a; }
     .wt-sep  { color: #9dbdd6; font-size: 11px; }
     .wt-desc, .wt-aqi, .wt-wear { font-size: 11px; color: #3a6a9a; }
+    .wt-cta {
+      font-size: 11px; font-weight: 700;
+      color: #1565C0; white-space: nowrap;
+      text-decoration: underline; text-underline-offset: 2px;
+      flex-shrink: 0;
+    }
     .wt-arrow { color: #6a9fc0; flex-shrink: 0; }
 
     /* 핫딜 슬라이더 */
@@ -3486,6 +3492,8 @@
       <span class="wt-aqi">PM2.5 <strong id="wtPm25">18</strong> — <span id="wtAqiLabel">Good</span></span>
       <span class="wt-sep">·</span>
       <span class="wt-wear" id="wtWear">Light jacket recommended</span>
+      <span class="wt-sep">·</span>
+      <span class="wt-cta">Tap for details</span>
     </div>
     <svg class="wt-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none">
       <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>

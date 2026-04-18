@@ -4112,30 +4112,30 @@
 
     <!-- 글자 크기 -->
     <div class="fe-dropdown-wrap">
-      <button class="fe-tb-btn fe-tb-dropdown" onclick="feToggleDropdown('feFontSizeDrop',event)">
+      <button class="fe-tb-btn fe-tb-dropdown" onmousedown="feToggleDropdown('feFontSizeDrop',event)">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 13L6 3l4 10M3.5 10h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M10 10l2-4 2 4M10.7 8.5h2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         <span id="feFontSizeLabel">Normal</span>
         <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
       </button>
       <div class="fe-dropdown" id="feFontSizeDrop">
-        <div class="fe-dd-item" onclick="feSetBlock('h1','H1')"><span style="font-size:18px;font-weight:700">Heading 1</span></div>
-        <div class="fe-dd-item" onclick="feSetBlock('h2','H2')"><span style="font-size:15px;font-weight:600">Heading 2</span></div>
-        <div class="fe-dd-item" onclick="feSetBlock('h3','H3')"><span style="font-size:13px;font-weight:600">Heading 3</span></div>
+        <div class="fe-dd-item" onmousedown="feSetBlock('h1','H1',event)"><span style="font-size:18px;font-weight:700">Heading 1</span></div>
+        <div class="fe-dd-item" onmousedown="feSetBlock('h2','H2',event)"><span style="font-size:15px;font-weight:600">Heading 2</span></div>
+        <div class="fe-dd-item" onmousedown="feSetBlock('h3','H3',event)"><span style="font-size:13px;font-weight:600">Heading 3</span></div>
         <div class="fe-dd-sep"></div>
-        <div class="fe-dd-item" onclick="feSetBlock('p','Normal')"><span style="font-size:14px">Normal text</span></div>
+        <div class="fe-dd-item" onmousedown="feSetBlock('p','Normal',event)"><span style="font-size:14px">Normal text</span></div>
       </div>
     </div>
 
     <div class="fe-tb-sep"></div>
 
     <!-- Bold / Italic / Underline -->
-    <button class="fe-tb-btn" id="feBoldBtn"   onclick="feCmd('bold')"      title="Bold">
+    <button class="fe-tb-btn" id="feBoldBtn"   onmousedown="feCmd('bold',event)"      title="Bold">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M4 3h5a3 3 0 010 6H4V3z" stroke="currentColor" stroke-width="1.7"/><path d="M4 9h5.5a3.5 3.5 0 010 7H4V9z" stroke="currentColor" stroke-width="1.7"/></svg>
     </button>
-    <button class="fe-tb-btn" id="feItalicBtn" onclick="feCmd('italic')"    title="Italic">
+    <button class="fe-tb-btn" id="feItalicBtn" onmousedown="feCmd('italic',event)"    title="Italic">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M10 3H7M9 13H6M8 3l-2 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
     </button>
-    <button class="fe-tb-btn"                   onclick="feCmd('underline')" title="Underline">
+    <button class="fe-tb-btn"                   onmousedown="feCmd('underline',event)" title="Underline">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M4 3v5a4 4 0 008 0V3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M2 13h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
     </button>
 
@@ -4143,7 +4143,7 @@
 
     <!-- 글자 색상 -->
     <div class="fe-dropdown-wrap">
-      <button class="fe-tb-btn" onclick="feToggleDropdown('feColorDrop',event)" title="Text color">
+      <button class="fe-tb-btn" onmousedown="feToggleDropdown('feColorDrop',event)" title="Text color">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
           <path d="M3 13L7 3l4 10M4.5 10h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           <rect x="2" y="13.5" width="12" height="2" rx="1" id="feColorBar" fill="#1A1A18"/>
@@ -4151,14 +4151,14 @@
       </button>
       <div class="fe-dropdown fe-color-drop" id="feColorDrop">
         <div class="fe-color-grid">
-          <button class="fe-color-dot" style="background:#1A1A18" onmousedown="feSaveSelection()" onclick="feSetColor('#1A1A18')"></button>
-          <button class="fe-color-dot" style="background:#E53935" onmousedown="feSaveSelection()" onclick="feSetColor('#E53935')"></button>
-          <button class="fe-color-dot" style="background:#F57C00" onmousedown="feSaveSelection()" onclick="feSetColor('#F57C00')"></button>
-          <button class="fe-color-dot" style="background:#F9A825" onmousedown="feSaveSelection()" onclick="feSetColor('#F9A825')"></button>
-          <button class="fe-color-dot" style="background:#1D9E75" onmousedown="feSaveSelection()" onclick="feSetColor('#1D9E75')"></button>
-          <button class="fe-color-dot" style="background:#1565C0" onmousedown="feSaveSelection()" onclick="feSetColor('#1565C0')"></button>
-          <button class="fe-color-dot" style="background:#6A1B9A" onmousedown="feSaveSelection()" onclick="feSetColor('#6A1B9A')"></button>
-          <button class="fe-color-dot" style="background:#757575" onmousedown="feSaveSelection()" onclick="feSetColor('#757575')"></button>
+          <button class="fe-color-dot" style="background:#1A1A18" onmousedown="feSetColor('#1A1A18',event)"></button>
+          <button class="fe-color-dot" style="background:#E53935" onmousedown="feSetColor('#E53935',event)"></button>
+          <button class="fe-color-dot" style="background:#F57C00" onmousedown="feSetColor('#F57C00',event)"></button>
+          <button class="fe-color-dot" style="background:#F9A825" onmousedown="feSetColor('#F9A825',event)"></button>
+          <button class="fe-color-dot" style="background:#1D9E75" onmousedown="feSetColor('#1D9E75',event)"></button>
+          <button class="fe-color-dot" style="background:#1565C0" onmousedown="feSetColor('#1565C0',event)"></button>
+          <button class="fe-color-dot" style="background:#6A1B9A" onmousedown="feSetColor('#6A1B9A',event)"></button>
+          <button class="fe-color-dot" style="background:#757575" onmousedown="feSetColor('#757575',event)"></button>
         </div>
       </div>
     </div>
@@ -4166,21 +4166,21 @@
     <div class="fe-tb-sep"></div>
 
     <!-- 리스트 -->
-    <button class="fe-tb-btn" onclick="feCmd('insertUnorderedList')" title="Bullet list">
+    <button class="fe-tb-btn" onmousedown="feCmd('insertUnorderedList',event)" title="Bullet list">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="2.5" cy="4" r="1.2" fill="currentColor"/><circle cx="2.5" cy="8" r="1.2" fill="currentColor"/><circle cx="2.5" cy="12" r="1.2" fill="currentColor"/><path d="M6 4h9M6 8h9M6 12h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
     </button>
-    <button class="fe-tb-btn" onclick="feCmd('insertOrderedList')" title="Numbered list">
+    <button class="fe-tb-btn" onmousedown="feCmd('insertOrderedList',event)" title="Numbered list">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3h1.5v4M2 7h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M2 10c1-1 2 0 2 1s-2 2-2 2h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M7 4h9M7 8h9M7 12h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
     </button>
 
     <div class="fe-tb-sep"></div>
 
     <!-- 링크 -->
-    <button class="fe-tb-btn" onclick="feInsertLink()" title="Insert link">
+    <button class="fe-tb-btn" onmousedown="feInsertLink(event)" title="Insert link">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6.5 9.5a4 4 0 005.7 0l1.5-1.5a4 4 0 00-5.7-5.7L7 3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9.5 6.5a4 4 0 00-5.7 0L2.3 8a4 4 0 005.7 5.7l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     </button>
     <!-- 구분선 -->
-    <button class="fe-tb-btn" onclick="feInsertDivider()" title="Horizontal rule">
+    <button class="fe-tb-btn" onmousedown="feInsertDivider(event)" title="Horizontal rule">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 4h4M10 4h4M2 12h4M10 12h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/></svg>
     </button>
 
@@ -7477,20 +7477,22 @@ function feCheckReady() {
 // ── 에디터 기본 커맨드 ──
 // ── 드롭다운 토글 ──
 window.feToggleDropdown = function(id, event) {
-  if (event) event.stopPropagation(); // bubble이 document까지 올라가서 닫히는 것 방지
+  event.preventDefault();
+  event.stopPropagation();
   const target = document.getElementById(id);
   if (!target) return;
-  const isOpen = target.classList.contains('open');
+  const wasOpen = target.classList.contains('open');
   document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
-  if (!isOpen) target.classList.add('open');
+  if (!wasOpen) target.classList.add('open');
 }
 
-// 드롭다운 외부 클릭 시 닫기
-document.addEventListener('click', function(e) {
+// 외부 mousedown 시 드롭다운 닫기 (click 아닌 mousedown — 더 빠름)
+document.addEventListener('mousedown', function(e) {
   if (!e.target.closest('.fe-dropdown-wrap') && !e.target.closest('.fe-dropdown')) {
     document.querySelectorAll('.fe-dropdown').forEach(d => d.classList.remove('open'));
   }
 });
+
 
 // ── selection 저장/복원 ──
 let feLastSelection = null;
@@ -7510,7 +7512,8 @@ function feRestoreSelection() {
 }
 
 // ── 에디터 커맨드 ──
-window.feCmd = function(cmd) {
+window.feCmd = function(cmd, event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
   const editor = document.getElementById('feEditor');
   if (!editor) return;
   editor.focus();
@@ -7524,7 +7527,8 @@ window.feCmd = function(cmd) {
 }
 
 // ── 블록 서식 ──
-window.feSetBlock = function(tag, label) {
+window.feSetBlock = function(tag, label, event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
   const editor = document.getElementById('feEditor');
   if (!editor) return;
   editor.focus();
@@ -7540,21 +7544,18 @@ window.feSetBlock = function(tag, label) {
 }
 
 // ── 글자 색상 ──
-window.feSetColor = function(color) {
+window.feSetColor = function(color, event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
   const editor = document.getElementById('feEditor');
   if (!editor) return;
-  // 1. 에디터 focus (activeElement 설정)
   editor.focus();
-  // 2. mousedown에서 저장한 selection 복원
   if (feLastSelection) {
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(feLastSelection);
   }
-  // 3. 색상 적용
   document.execCommand('styleWithCSS', false, true);
   document.execCommand('foreColor', false, color);
-  // 4. 아이콘 색상 업데이트
   const bar = document.getElementById('feColorBar');
   if (bar) bar.setAttribute('fill', color);
   document.getElementById('feColorDrop')?.classList.remove('open');
@@ -7615,7 +7616,8 @@ window.feUpdateToolbarState = function() {
   if (lbl && block) lbl.textContent = labelMap[block.toLowerCase()] || 'Normal';
 }
 
-window.feInsertDivider = function() {
+window.feInsertDivider = function(event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
   document.getElementById('feEditor')?.focus();
   document.execCommand('insertHTML', false, '<hr contenteditable="false"><p><br></p>');
 }

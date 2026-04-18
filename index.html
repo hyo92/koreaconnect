@@ -1609,21 +1609,22 @@
 
   /* ── WRITE MODAL & ALERTS MODAL ── */
   /* ══════════════════════════════════════
-     FULL-SCREEN BLOG EDITOR — Pro Style
+     FULL-SCREEN BLOG EDITOR
   ══════════════════════════════════════ */
 
+  /* ① 전체 오버레이 */
   #fullEditorOverlay {
     display: none; position: fixed; inset: 0; z-index: 900;
     background: #F0F0EE; flex-direction: column; overflow: hidden;
   }
   #fullEditorOverlay.open { display: flex; }
 
-  /* ── 헤더 바 ── */
+  /* ② 헤더 바 */
   .fe-topbar {
     height: 52px; flex-shrink: 0; background: #fff;
-    border-bottom: 1px solid #EEEEEE;
+    border-bottom: 1px solid #EAEAEA;
     display: flex; align-items: center; padding: 0 20px;
-    position: relative; z-index: 10;
+    position: relative; z-index: 11;
   }
   .fe-cancel-btn {
     display: flex; align-items: center; gap: 5px;
@@ -1635,7 +1636,7 @@
   .fe-cancel-btn:hover { background: #F5F5F5; color: #111; }
   .fe-topbar-title {
     position: absolute; left: 50%; transform: translateX(-50%);
-    font-size: 14px; font-weight: 600; color: #888;
+    font-size: 14px; font-weight: 600; color: #999;
     pointer-events: none;
   }
   .fe-publish-btn {
@@ -1643,63 +1644,23 @@
     border: none; border-radius: 999px; padding: 8px 22px;
     font-size: 14px; font-weight: 700; cursor: pointer;
     font-family: var(--font); transition: background 0.15s, opacity 0.15s;
-    white-space: nowrap; opacity: 0.4; pointer-events: none;
+    white-space: nowrap; opacity: 0.42;
   }
-  .fe-publish-btn.ready { opacity: 1; pointer-events: auto; }
-  .fe-publish-btn.ready:hover { background: var(--green-dark); }
+  .fe-publish-btn.ready { opacity: 1; }
+  .fe-publish-btn:hover { background: var(--green-dark); opacity: 1; }
 
-  /* ── 스크롤 영역 ── */
-  .fe-scroll { flex: 1; overflow-y: auto; padding: 28px 20px 80px; background: #F0F0EE; }
-
-  /* ── 종이 박스 ── */
-  .fe-container {
-    max-width: 860px; margin: 0 auto; background: #fff;
-    border-radius: 4px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.05);
-    padding: 40px 52px 60px; min-height: calc(100vh - 200px);
-  }
-  @media (min-width: 1024px) {
-    .fe-scroll { padding: 32px 40px 80px; }
-    .fe-container { padding: 48px 60px 80px; }
-    .fe-topbar { padding: 0 32px; }
-  }
-
-  /* ── Topic 칩 ── */
-  .fe-topic-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px; }
-  .fe-chip {
-    padding: 5px 13px; border-radius: 999px;
-    border: 1.5px solid #E5E5E5; font-size: 12px; font-weight: 500;
-    color: #888; cursor: pointer; transition: all 0.15s;
-    font-family: var(--font); background: #fff;
-  }
-  .fe-chip:hover { border-color: var(--green); color: var(--green-deeper); background: var(--green-light); }
-  .fe-chip.selected { background: var(--green-light); color: var(--green-deeper); border-color: var(--green); font-weight: 700; }
-
-  /* ── 제목 ── */
-  .fe-title-input {
-    width: 100%; border: none; outline: none;
-    font-size: 30px; font-weight: 700; color: #111;
-    background: transparent; font-family: var(--font);
-    line-height: 1.3; resize: none; overflow: hidden; padding: 0;
-    letter-spacing: -0.3px;
-  }
-  .fe-title-input::placeholder { color: #D8D8D8; font-weight: 400; }
-  .fe-title-meta {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-top: 6px; margin-bottom: 0;
-  }
-  .fe-char-count { font-size: 11px; color: #C0C0C0; }
-  .fe-title-divider { height: 1px; background: #EFEFEF; margin: 14px 0; }
-
-  /* ── 인라인 툴바 ── */
+  /* ③ 인라인 툴바 — 헤더 바로 아래 sticky */
   .fe-inline-toolbar {
-    display: flex; align-items: center; flex-wrap: wrap; gap: 1px;
-    padding: 6px 10px;
-    background: #FAFAFA;
-    border: 1px solid #EBEBEB;
-    border-radius: 10px;
-    margin-bottom: 16px;
+    flex-shrink: 0;
+    display: flex; align-items: center; flex-wrap: nowrap; gap: 1px;
+    padding: 0 16px;
+    height: 44px;
+    background: #fff;
+    border-bottom: 1px solid #EAEAEA;
+    overflow-x: auto; scrollbar-width: none;
+    position: sticky; top: 0; z-index: 10;
   }
+  .fe-inline-toolbar::-webkit-scrollbar { display: none; }
   .fe-tb-btn {
     display: flex; align-items: center; gap: 5px;
     height: 32px; min-width: 32px; padding: 0 8px;
@@ -1708,36 +1669,34 @@
     font-family: var(--font); transition: background 0.1s, color 0.1s;
     flex-shrink: 0; white-space: nowrap;
   }
-  .fe-tb-btn:hover { background: #EDEDED; color: #111; }
+  .fe-tb-btn:hover { background: #F0F0F0; color: #111; }
   .fe-tb-btn.active { background: #E5F5EE; color: var(--green-deeper); }
   .fe-tb-sep { width: 1px; height: 18px; background: #E0E0E0; margin: 0 4px; flex-shrink: 0; }
-  .fe-tb-dropdown { gap: 4px; padding: 0 8px; }
-  .fe-tb-dropdown span { font-size: 12px; font-weight: 500; }
+  .fe-tb-dropdown { gap: 4px; }
+  .fe-tb-dropdown span { font-size: 12px; font-weight: 500; min-width: 46px; }
   .fe-tb-photo {
     background: var(--green-light); color: var(--green-deeper);
     font-weight: 600; font-size: 12px; padding: 0 12px; border-radius: 6px;
   }
-  .fe-tb-photo:hover { background: #c8ede3; color: var(--green-deeper); }
+  .fe-tb-photo:hover { background: #c5eadf; color: var(--green-deeper); }
+  .fe-autosave { font-size: 11px; color: #BDBDBD; flex-shrink: 0; }
 
-  /* ── 드롭다운 ── */
+  /* ④ 드롭다운 */
   .fe-dropdown-wrap { position: relative; }
   .fe-dropdown {
     display: none; position: absolute; top: calc(100% + 6px); left: 0;
     background: #fff; border: 1px solid #E8E8E8;
     border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    z-index: 200; min-width: 160px; overflow: hidden;
+    z-index: 500; min-width: 160px; overflow: hidden;
     animation: dropIn 0.14s ease;
   }
   .fe-dropdown.open { display: block; }
-  @keyframes dropIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-  .fe-dd-item {
-    padding: 10px 14px; cursor: pointer; transition: background 0.1s;
-    font-family: var(--font);
-  }
+  @keyframes dropIn { from { opacity:0;transform:translateY(-4px); } to { opacity:1;transform:translateY(0); } }
+  .fe-dd-item { padding: 10px 14px; cursor: pointer; transition: background 0.1s; font-family: var(--font); }
   .fe-dd-item:hover { background: #F5F5F5; }
   .fe-dd-sep { height: 1px; background: #F0F0F0; }
 
-  /* ── 컬러 팔레트 ── */
+  /* 컬러 팔레트 */
   .fe-color-drop { min-width: auto; padding: 10px; }
   .fe-color-grid { display: grid; grid-template-columns: repeat(4, 26px); gap: 6px; }
   .fe-color-dot {
@@ -1746,31 +1705,63 @@
   }
   .fe-color-dot:hover { transform: scale(1.2); border-color: rgba(0,0,0,0.2); }
 
-  /* ── 에디터 본문 ── */
+  /* ⑤ 스크롤 영역 */
+  .fe-scroll {
+    flex: 1; overflow-y: auto;
+    padding: 32px 20px 80px; background: #F0F0EE;
+  }
+
+  /* ⑥ 종이 박스 (가운데 정렬, 흰 배경) */
+  .fe-container {
+    max-width: 860px; margin: 0 auto; background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.04);
+    padding: 48px 56px 80px;
+    min-height: calc(100vh - 200px);
+  }
+
+  /* ⑦ 제목 */
+  .fe-title-input {
+    width: 100%; border: none; outline: none;
+    font-size: 30px; font-weight: 700; color: #111;
+    background: transparent; font-family: var(--font);
+    line-height: 1.35; resize: none; overflow: hidden; padding: 0;
+    letter-spacing: -0.3px;
+  }
+  .fe-title-input::placeholder { color: #D5D5D5; font-weight: 400; }
+  .fe-title-meta {
+    display: flex; justify-content: flex-end; align-items: center;
+    gap: 12px; margin-top: 6px;
+  }
+  .fe-char-count { font-size: 11px; color: #C0C0C0; }
+  .fe-title-divider { height: 1px; background: #F0F0F0; margin: 16px 0; }
+
+  /* ⑧ 본문 에디터 */
   .fe-editor {
-    min-height: 300px; font-size: 17px; line-height: 1.8;
+    min-height: 300px; font-size: 17px; line-height: 1.85;
     color: #222; outline: none; font-family: var(--font);
     word-break: break-word; caret-color: var(--green);
   }
   .fe-editor:empty::before {
-    content: attr(data-placeholder); color: #C8C8C8; pointer-events: none;
+    content: attr(data-placeholder); color: #CCCCCC; pointer-events: none;
   }
   .fe-editor h1 { font-size: 26px; font-weight: 700; margin: 20px 0 8px; line-height: 1.3; }
-  .fe-editor h2 { font-size: 20px; font-weight: 700; margin: 18px 0 6px; line-height: 1.3; }
-  .fe-editor h3 { font-size: 16px; font-weight: 700; margin: 14px 0 4px; }
+  .fe-editor h2 { font-size: 21px; font-weight: 700; margin: 16px 0 6px; }
+  .fe-editor h3 { font-size: 17px; font-weight: 700; margin: 12px 0 4px; }
   .fe-editor p { margin: 0 0 4px; }
-  .fe-editor ul, .fe-editor ol { padding-left: 24px; margin: 8px 0; }
+  .fe-editor ul, .fe-editor ol { padding-left: 26px; margin: 8px 0; }
   .fe-editor li { margin-bottom: 4px; }
-  .fe-editor a { color: var(--green); text-decoration: underline; }
+  .fe-editor a { color: var(--green); text-decoration: underline; cursor: pointer; }
   .fe-editor hr { border: none; border-top: 2px solid #EEEEEE; margin: 28px 0; }
   .fe-editor strong { font-weight: 700; }
   .fe-editor em { font-style: italic; }
   .fe-editor u { text-decoration: underline; }
 
-  /* ── 이미지 블록 ── */
+  /* ⑨ 이미지 블록 — 종이 패딩 돌파해서 꽉 차게 */
   .fe-img-block {
-    position: relative; margin: 24px -52px;
+    position: relative; margin: 24px -56px;
     overflow: hidden; background: #F5F5F5;
+    line-height: 0;
   }
   .fe-img-block img {
     width: 100%; display: block;
@@ -1779,26 +1770,25 @@
   .fe-img-remove {
     position: absolute; top: 10px; right: 10px;
     width: 30px; height: 30px; border-radius: 50%;
-    background: rgba(0,0,0,0.55); color: #fff; border: none;
-    cursor: pointer; font-size: 14px;
-    display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(4px); transition: background 0.12s;
+    background: rgba(0,0,0,0.55); color: #fff; border: none; cursor: pointer;
+    font-size: 14px; display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px); transition: background 0.12s; z-index: 2;
   }
   .fe-img-remove:hover { background: rgba(0,0,0,0.8); }
 
-  /* ── 링크 팝업 ── */
+  /* ⑩ 링크 팝업 */
   .fe-link-popup {
     position: fixed; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    background: #fff; border: 1px solid #E8E8E8;
+    background: #fff; border: 1px solid #E0E0E0;
     border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.15);
-    padding: 14px 14px; display: flex; align-items: center; gap: 8px;
-    z-index: 1000; min-width: 320px;
+    padding: 12px 14px; display: flex; align-items: center; gap: 8px;
+    z-index: 1100; min-width: 300px;
   }
   .fe-link-input {
-    flex: 1; border: 1px solid #E0E0E0; border-radius: 8px;
+    flex: 1; border: 1.5px solid #E0E0E0; border-radius: 8px;
     padding: 8px 12px; font-size: 14px; outline: none;
-    font-family: var(--font); color: #111;
+    font-family: var(--font); color: #111; transition: border-color 0.15s;
   }
   .fe-link-input:focus { border-color: var(--green); }
   .fe-link-ok {
@@ -1808,23 +1798,79 @@
   }
   .fe-link-cancel {
     background: none; border: none; cursor: pointer;
-    color: #999; font-size: 16px; padding: 4px; border-radius: 6px;
-    transition: background 0.1s;
+    color: #AAA; font-size: 18px; line-height: 1; padding: 4px;
+    border-radius: 6px; transition: background 0.1s;
   }
   .fe-link-cancel:hover { background: #F5F5F5; }
 
-  /* ── 자동저장 ── */
-  .fe-autosave { font-size: 11px; color: #BDBDBD; }
+  /* ⑪ Publish 모달 */
+  .fe-publish-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.4);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .fe-publish-overlay.open { display: flex; }
+  .fe-publish-modal {
+    background: #fff; border-radius: 20px;
+    padding: 28px 24px 24px;
+    width: 100%; max-width: 420px;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.18);
+    animation: popIn 0.22s ease;
+  }
+  .fe-pm-header { margin-bottom: 20px; }
+  .fe-pm-title { font-size: 18px; font-weight: 700; color: #111; margin-bottom: 4px; }
+  .fe-pm-sub { font-size: 13px; color: #999; }
+  .fe-pm-topics {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-bottom: 16px;
+  }
+  .fe-pm-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 11px 14px; border-radius: 10px;
+    border: 1.5px solid #E8E8E8; background: #FAFAFA;
+    cursor: pointer; transition: all 0.15s;
+    font-size: 14px; font-weight: 500; color: #444;
+    font-family: var(--font);
+  }
+  .fe-pm-chip:hover { border-color: var(--green-mid); background: var(--green-light); color: var(--green-deeper); }
+  .fe-pm-chip.selected { border-color: var(--green); background: var(--green-light); color: var(--green-deeper); font-weight: 700; }
+  .fe-pm-chip-icon { font-size: 16px; }
+  .fe-pm-actions {
+    display: flex; gap: 10px; margin-top: 8px;
+  }
+  .fe-pm-cancel {
+    flex: 1; padding: 12px; border-radius: 10px;
+    border: 1.5px solid #E0E0E0; background: none;
+    font-size: 14px; font-weight: 600; color: #666;
+    cursor: pointer; font-family: var(--font); transition: background 0.12s;
+  }
+  .fe-pm-cancel:hover { background: #F5F5F5; }
+  .fe-pm-confirm {
+    flex: 2; padding: 12px; border-radius: 10px;
+    border: none; background: var(--green); color: #fff;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: var(--font); display: flex; align-items: center;
+    justify-content: center; gap: 7px; transition: background 0.15s;
+  }
+  .fe-pm-confirm:hover { background: var(--green-dark); }
 
-  /* ── 모바일 ── */
+  /* ⑫ 반응형 */
+  @media (min-width: 1024px) {
+    .fe-topbar { padding: 0 28px; }
+    .fe-inline-toolbar { padding: 0 28px; }
+    .fe-scroll { padding: 40px 40px 80px; }
+    .fe-container { padding: 56px 68px 100px; }
+    .fe-img-block { margin: 28px -68px; }
+    .fe-title-input { font-size: 34px; }
+    .fe-editor { font-size: 18px; line-height: 1.9; }
+  }
   @media (max-width: 1023px) {
     .fe-scroll { padding: 0 0 60px; background: #fff; }
-    .fe-container { padding: 20px 16px 40px; box-shadow: none; border-radius: 0; min-height: auto; }
-    .fe-img-block { margin: 20px -16px; }
+    .fe-container { padding: 24px 18px 60px; box-shadow: none; border-radius: 0; min-height: auto; }
+    .fe-img-block { margin: 20px -18px; }
     .fe-title-input { font-size: 22px; }
-    .fe-editor { font-size: 16px; }
-    .fe-inline-toolbar { border-radius: 8px; padding: 4px 6px; gap: 0; }
-    .fe-tb-btn { min-width: 36px; height: 36px; }
+    .fe-editor { font-size: 16px; line-height: 1.75; }
+    .fe-inline-toolbar { padding: 0 12px; }
     .fe-topbar { padding: 0 14px; }
   }
   /* 기존 kc-modal은 알림 모달 등에서만 사용 */
@@ -4049,7 +4095,7 @@
 ══════════════════════════════════ -->
 <div id="fullEditorOverlay">
 
-  <!-- ① 상단 헤더 바 -->
+  <!-- ① 헤더 바 -->
   <div class="fe-topbar">
     <button class="fe-cancel-btn" onclick="closeFullEditor()">
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
@@ -4058,132 +4104,116 @@
       Back
     </button>
     <span class="fe-topbar-title">Write a Post</span>
-    <button class="fe-publish-btn" id="fePublishBtn" onclick="publishFromEditor()">Publish</button>
+    <button class="fe-publish-btn" id="fePublishBtn" onclick="feOpenPublishModal()">Publish</button>
   </div>
 
-  <!-- ② 스크롤 영역 -->
+  <!-- ② 툴바 (헤더 바로 아래 — 스크롤해도 고정) -->
+  <div class="fe-inline-toolbar" id="feInlineToolbar">
+
+    <!-- 글자 크기 -->
+    <div class="fe-dropdown-wrap">
+      <button class="fe-tb-btn fe-tb-dropdown" onclick="feToggleDropdown('feFontSizeDrop')">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 13L6 3l4 10M3.5 10h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M10 10l2-4 2 4M10.7 8.5h2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span id="feFontSizeLabel">Normal</span>
+        <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </button>
+      <div class="fe-dropdown" id="feFontSizeDrop">
+        <div class="fe-dd-item" onclick="feSetBlock('h1','H1')"><span style="font-size:18px;font-weight:700">Heading 1</span></div>
+        <div class="fe-dd-item" onclick="feSetBlock('h2','H2')"><span style="font-size:15px;font-weight:600">Heading 2</span></div>
+        <div class="fe-dd-item" onclick="feSetBlock('h3','H3')"><span style="font-size:13px;font-weight:600">Heading 3</span></div>
+        <div class="fe-dd-sep"></div>
+        <div class="fe-dd-item" onclick="feSetBlock('p','Normal')"><span style="font-size:14px">Normal text</span></div>
+      </div>
+    </div>
+
+    <div class="fe-tb-sep"></div>
+
+    <!-- Bold / Italic / Underline -->
+    <button class="fe-tb-btn" id="feBoldBtn"   onclick="feCmd('bold')"      title="Bold">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M4 3h5a3 3 0 010 6H4V3z" stroke="currentColor" stroke-width="1.7"/><path d="M4 9h5.5a3.5 3.5 0 010 7H4V9z" stroke="currentColor" stroke-width="1.7"/></svg>
+    </button>
+    <button class="fe-tb-btn" id="feItalicBtn" onclick="feCmd('italic')"    title="Italic">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M10 3H7M9 13H6M8 3l-2 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </button>
+    <button class="fe-tb-btn"                   onclick="feCmd('underline')" title="Underline">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M4 3v5a4 4 0 008 0V3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M2 13h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </button>
+
+    <div class="fe-tb-sep"></div>
+
+    <!-- 글자 색상 -->
+    <div class="fe-dropdown-wrap">
+      <button class="fe-tb-btn" onclick="feToggleDropdown('feColorDrop')" title="Text color">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M3 13L7 3l4 10M4.5 10h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <rect x="2" y="13.5" width="12" height="2" rx="1" id="feColorBar" fill="#1A1A18"/>
+        </svg>
+      </button>
+      <div class="fe-dropdown fe-color-drop" id="feColorDrop">
+        <div class="fe-color-grid">
+          <button class="fe-color-dot" style="background:#1A1A18" onclick="feSetColor('#1A1A18')"></button>
+          <button class="fe-color-dot" style="background:#E53935" onclick="feSetColor('#E53935')"></button>
+          <button class="fe-color-dot" style="background:#F57C00" onclick="feSetColor('#F57C00')"></button>
+          <button class="fe-color-dot" style="background:#F9A825" onclick="feSetColor('#F9A825')"></button>
+          <button class="fe-color-dot" style="background:#1D9E75" onclick="feSetColor('#1D9E75')"></button>
+          <button class="fe-color-dot" style="background:#1565C0" onclick="feSetColor('#1565C0')"></button>
+          <button class="fe-color-dot" style="background:#6A1B9A" onclick="feSetColor('#6A1B9A')"></button>
+          <button class="fe-color-dot" style="background:#757575" onclick="feSetColor('#757575')"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fe-tb-sep"></div>
+
+    <!-- 리스트 -->
+    <button class="fe-tb-btn" onclick="feCmd('insertUnorderedList')" title="Bullet list">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="2.5" cy="4" r="1.2" fill="currentColor"/><circle cx="2.5" cy="8" r="1.2" fill="currentColor"/><circle cx="2.5" cy="12" r="1.2" fill="currentColor"/><path d="M6 4h9M6 8h9M6 12h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </button>
+    <button class="fe-tb-btn" onclick="feCmd('insertOrderedList')" title="Numbered list">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3h1.5v4M2 7h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M2 10c1-1 2 0 2 1s-2 2-2 2h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M7 4h9M7 8h9M7 12h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </button>
+
+    <div class="fe-tb-sep"></div>
+
+    <!-- 링크 -->
+    <button class="fe-tb-btn" onclick="feInsertLink()" title="Insert link">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6.5 9.5a4 4 0 005.7 0l1.5-1.5a4 4 0 00-5.7-5.7L7 3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9.5 6.5a4 4 0 00-5.7 0L2.3 8a4 4 0 005.7 5.7l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <!-- 구분선 -->
+    <button class="fe-tb-btn" onclick="feInsertDivider()" title="Horizontal rule">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 4h4M10 4h4M2 12h4M10 12h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/></svg>
+    </button>
+
+    <div class="fe-tb-sep"></div>
+
+    <!-- 📷 사진 추가 -->
+    <button class="fe-tb-btn fe-tb-photo" onclick="document.getElementById('feImgInput').click()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="6.5" r="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 11.5l3.5-3.5 2.5 2.5 2-2 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Photo
+    </button>
+    <input type="file" id="feImgInput" accept="image/*" style="display:none" onchange="feInsertImage(event)">
+
+    <!-- 자동저장 -->
+    <span class="fe-autosave" id="feAutosaveLabel" style="margin-left:auto"></span>
+
+  </div>
+
+  <!-- ③ 스크롤 영역 — 제목 + 본문만 -->
   <div class="fe-scroll" id="feScroll">
     <div class="fe-container">
 
-      <!-- Topic 선택 -->
-      <div class="fe-topic-row" id="feTopicRow">
-        <div class="fe-chip" onclick="fePickTopic(this,'visa')">Visa</div>
-        <div class="fe-chip" onclick="fePickTopic(this,'jobs')">Jobs</div>
-        <div class="fe-chip" onclick="fePickTopic(this,'housing')">Housing</div>
-        <div class="fe-chip" onclick="fePickTopic(this,'tips')">Tips</div>
-        <div class="fe-chip" onclick="fePickTopic(this,'questions')">Questions</div>
-        <div class="fe-chip" onclick="fePickTopic(this,'travel')">Travel</div>
-        <div class="fe-chip" onclick="fePickTopic(this,'beauty')">Beauty</div>
-        <div class="fe-chip" onclick="fePickTopic(this,'social')">Social</div>
-      </div>
-
-      <!-- 제목 입력 -->
+      <!-- 제목 -->
       <textarea class="fe-title-input" id="feTitleInput"
         placeholder="Title"
         rows="1" maxlength="120"
         oninput="feOnTitleInput()"></textarea>
       <div class="fe-title-meta">
-        <span class="fe-autosave" id="feAutosaveLabel"></span>
+        <span class="fe-autosave" id="feAutosaveLabel2"></span>
         <span class="fe-char-count"><span id="feTitleLen">0</span>/120</span>
       </div>
       <div class="fe-title-divider"></div>
 
-      <!-- ③ 인라인 툴바 (제목 아래, 에디터 위) -->
-      <div class="fe-inline-toolbar" id="feInlineToolbar">
-
-        <!-- 폰트 크기 드롭다운 -->
-        <div class="fe-dropdown-wrap">
-          <button class="fe-tb-btn fe-tb-dropdown" id="feFontSizeBtn" onclick="feToggleDropdown('feFontSizeDrop')">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 13L6 3l4 10M3.5 10h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M10 10l2-4 2 4M10.7 8.5h2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-            <span id="feFontSizeLabel">Normal</span>
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-          </button>
-          <div class="fe-dropdown" id="feFontSizeDrop">
-            <div class="fe-dd-item" onclick="feSetBlock('h1','Heading 1')"><span style="font-size:18px;font-weight:700">Heading 1</span></div>
-            <div class="fe-dd-item" onclick="feSetBlock('h2','Heading 2')"><span style="font-size:15px;font-weight:600">Heading 2</span></div>
-            <div class="fe-dd-item" onclick="feSetBlock('h3','Heading 3')"><span style="font-size:13px;font-weight:600">Heading 3</span></div>
-            <div class="fe-dd-sep"></div>
-            <div class="fe-dd-item" onclick="feSetBlock('p','Normal')"><span style="font-size:14px">Normal text</span></div>
-          </div>
-        </div>
-
-        <div class="fe-tb-sep"></div>
-
-        <!-- Bold -->
-        <button class="fe-tb-btn" onclick="feCmd('bold')" title="Bold" id="feBoldBtn">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 3h5a3 3 0 010 6H4V3z" stroke="currentColor" stroke-width="1.6"/><path d="M4 9h5.5a3.5 3.5 0 010 7H4V9z" stroke="currentColor" stroke-width="1.6"/></svg>
-        </button>
-
-        <!-- Italic -->
-        <button class="fe-tb-btn" onclick="feCmd('italic')" title="Italic" id="feItalicBtn">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3H7M9 13H6M8 3l-2 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        </button>
-
-        <!-- Underline -->
-        <button class="fe-tb-btn" onclick="feCmd('underline')" title="Underline">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 3v5a4 4 0 008 0V3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 13h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        </button>
-
-        <div class="fe-tb-sep"></div>
-
-        <!-- 글자 색상 -->
-        <div class="fe-dropdown-wrap">
-          <button class="fe-tb-btn" onclick="feToggleDropdown('feColorDrop')" title="Text color">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M3 13L7 3l4 10M4.5 10h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              <rect x="2" y="13.5" width="12" height="2" rx="1" id="feColorBar" fill="#1A1A18"/>
-            </svg>
-          </button>
-          <div class="fe-dropdown fe-color-drop" id="feColorDrop">
-            <div class="fe-color-grid">
-              <button class="fe-color-dot" style="background:#1A1A18" onclick="feSetColor('#1A1A18')" title="Black"></button>
-              <button class="fe-color-dot" style="background:#E53935" onclick="feSetColor('#E53935')" title="Red"></button>
-              <button class="fe-color-dot" style="background:#F57C00" onclick="feSetColor('#F57C00')" title="Orange"></button>
-              <button class="fe-color-dot" style="background:#F9A825" onclick="feSetColor('#F9A825')" title="Yellow"></button>
-              <button class="fe-color-dot" style="background:#1D9E75" onclick="feSetColor('#1D9E75')" title="Green"></button>
-              <button class="fe-color-dot" style="background:#1565C0" onclick="feSetColor('#1565C0')" title="Blue"></button>
-              <button class="fe-color-dot" style="background:#6A1B9A" onclick="feSetColor('#6A1B9A')" title="Purple"></button>
-              <button class="fe-color-dot" style="background:#757575" onclick="feSetColor('#757575')" title="Gray"></button>
-            </div>
-          </div>
-        </div>
-
-        <div class="fe-tb-sep"></div>
-
-        <!-- 글머리 기호 -->
-        <button class="fe-tb-btn" onclick="feCmd('insertUnorderedList')" title="Bullet list">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="2.5" cy="4" r="1.2" fill="currentColor"/><circle cx="2.5" cy="8" r="1.2" fill="currentColor"/><circle cx="2.5" cy="12" r="1.2" fill="currentColor"/><path d="M6 4h9M6 8h9M6 12h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        </button>
-
-        <!-- 번호 목록 -->
-        <button class="fe-tb-btn" onclick="feCmd('insertOrderedList')" title="Numbered list">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3h1.5v4M2 7h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M2 10c1-1 2 0 2 1s-2 2-2 2h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M7 4h9M7 8h9M7 12h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        </button>
-
-        <div class="fe-tb-sep"></div>
-
-        <!-- 링크 삽입 -->
-        <button class="fe-tb-btn" onclick="feInsertLink()" title="Insert link" id="feLinkBtn">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6.5 9.5a4 4 0 005.7 0l1.5-1.5a4 4 0 00-5.7-5.7L7 3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9.5 6.5a4 4 0 00-5.7 0L2.3 8a4 4 0 005.7 5.7l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </button>
-
-        <!-- 구분선 삽입 -->
-        <button class="fe-tb-btn" onclick="feInsertDivider()" title="Horizontal rule">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 4h4M10 4h4M2 12h4M10 12h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/></svg>
-        </button>
-
-        <div class="fe-tb-sep"></div>
-
-        <!-- 사진 추가 -->
-        <button class="fe-tb-btn fe-tb-photo" onclick="document.getElementById('feImgInput').click()" title="Add photo">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="6.5" r="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 11.5l3.5-3.5 2.5 2.5 2-2 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-          Photo
-        </button>
-        <input type="file" id="feImgInput" accept="image/*" style="display:none" onchange="feInsertImage(event)">
-
-      </div><!-- /fe-inline-toolbar -->
-
-      <!-- ④ 본문 에디터 (contenteditable) -->
+      <!-- 본문 (contenteditable WYSIWYG) -->
       <div class="fe-editor" id="feEditor"
         contenteditable="true"
         data-placeholder="Share what you know — visa tips, neighborhood guides, restaurant finds, life hacks for living in Korea..."
@@ -4199,10 +4229,40 @@
   <!-- 링크 입력 팝업 -->
   <div class="fe-link-popup" id="feLinkPopup" style="display:none">
     <input class="fe-link-input" id="feLinkInput" type="url" placeholder="https://...">
-    <button class="fe-link-ok" onclick="feConfirmLink()">OK</button>
+    <button class="fe-link-ok" onclick="feConfirmLink()">Apply</button>
     <button class="fe-link-cancel" onclick="feCloseLinkPopup()">✕</button>
   </div>
 
+</div>
+
+<!-- ══ PUBLISH MODAL ══ -->
+<div class="fe-publish-overlay" id="fePublishOverlay" onclick="feClosePublishModal(event)">
+  <div class="fe-publish-modal">
+    <div class="fe-pm-header">
+      <div class="fe-pm-title">Where would you like to post?</div>
+      <div class="fe-pm-sub">Choose the topic that best fits your content</div>
+    </div>
+    <div class="fe-pm-topics">
+      <div class="fe-pm-chip" onclick="fePmPickTopic(this,'visa')"><span class="fe-pm-chip-icon">🛂</span> Visa</div>
+      <div class="fe-pm-chip" onclick="fePmPickTopic(this,'jobs')"><span class="fe-pm-chip-icon">💼</span> Jobs</div>
+      <div class="fe-pm-chip" onclick="fePmPickTopic(this,'housing')"><span class="fe-pm-chip-icon">🏠</span> Housing</div>
+      <div class="fe-pm-chip" onclick="fePmPickTopic(this,'tips')"><span class="fe-pm-chip-icon">💡</span> Tips</div>
+      <div class="fe-pm-chip" onclick="fePmPickTopic(this,'questions')"><span class="fe-pm-chip-icon">❓</span> Questions</div>
+      <div class="fe-pm-chip" onclick="fePmPickTopic(this,'travel')"><span class="fe-pm-chip-icon">✈️</span> Travel</div>
+      <div class="fe-pm-chip" onclick="fePmPickTopic(this,'beauty')"><span class="fe-pm-chip-icon">💄</span> Beauty</div>
+      <div class="fe-pm-chip" onclick="fePmPickTopic(this,'social')"><span class="fe-pm-chip-icon">🎉</span> Social</div>
+    </div>
+    <div id="fePmError" style="display:none;color:#E53935;font-size:12px;text-align:center;margin-top:-4px">
+      Please select a topic to continue.
+    </div>
+    <div class="fe-pm-actions">
+      <button class="fe-pm-cancel" onclick="feClosePublishModal()">Cancel</button>
+      <button class="fe-pm-confirm" id="fePmConfirmBtn" onclick="feConfirmPublish()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 9l4.5 4.5L14 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Confirm & Publish
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════
@@ -7400,11 +7460,15 @@ window.feOnKeydown = function(e) {
 function feCheckReady() {
   const title = (document.getElementById('feTitleInput')?.value || '').trim();
   const editor = document.getElementById('feEditor');
+
+  // innerText 대신 textContent 사용 — 더 안정적
   const clone = editor?.cloneNode(true);
-  clone?.querySelectorAll('.fe-img-block').forEach(el => el.remove());
-  const body = clone?.innerText.trim() || '';
-  const hasImg = (feImages.length > 0) || (editor?.querySelector('.fe-img-block') !== null);
-  const ready = title.length >= 4 && (body.length >= 10 || hasImg) && feTopic;
+  clone?.querySelectorAll('.fe-img-block, hr').forEach(el => el.remove());
+  const body = (clone?.textContent || '').replace(/\s+/g, ' ').trim();
+  const hasImg = !!(editor?.querySelector('.fe-img-block'));
+
+  // 제목 2자 이상 + (본문 2자 이상 OR 이미지)
+  const ready = title.length >= 2 && (body.length >= 2 || hasImg);
   const btn = document.getElementById('fePublishBtn');
   if (btn) btn.classList.toggle('ready', !!ready);
 }
@@ -7511,7 +7575,58 @@ window.feInsertDivider = function() {
   document.execCommand('insertHTML', false, '<hr contenteditable="false"><p><br></p>');
 }
 
-// ── 이미지 삽입 ──
+// ── Publish 모달 ──
+let fePmTopic = null;
+
+window.feOpenPublishModal = function() {
+  if (!currentUser) { openLoginGate(); return; }
+  const title = (document.getElementById('feTitleInput')?.value || '').trim();
+  const editor = document.getElementById('feEditor');
+  const clone = editor?.cloneNode(true);
+  clone?.querySelectorAll('.fe-img-block, hr').forEach(el => el.remove());
+  const body = (clone?.textContent || '').replace(/\s+/g, ' ').trim();
+  const hasImg = !!(editor?.querySelector('.fe-img-block'));
+
+  if (!title || title.length < 2) { showToast('Please add a title', 'error'); return; }
+  if (body.length < 2 && !hasImg)  { showToast('Please add some content', 'error'); return; }
+
+  fePmTopic = null;
+  document.querySelectorAll('.fe-pm-chip').forEach(c => c.classList.remove('selected'));
+  const confirmBtn = document.getElementById('fePmConfirmBtn');
+  if (confirmBtn) confirmBtn.classList.remove('ready');
+  const errEl = document.getElementById('fePmError');
+  if (errEl) errEl.style.display = 'none';
+  document.getElementById('fePublishOverlay')?.classList.add('open');
+}
+
+window.feClosePublishModal = function(e) {
+  if (e && e.target !== document.getElementById('fePublishOverlay')) return;
+  document.getElementById('fePublishOverlay')?.classList.remove('open');
+}
+
+window.fePmPickTopic = function(el, topic) {
+  document.querySelectorAll('.fe-pm-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  fePmTopic = topic;
+  const btn = document.getElementById('fePmConfirmBtn');
+  if (btn) btn.classList.add('ready');
+  const errEl = document.getElementById('fePmError');
+  if (errEl) errEl.style.display = 'none';
+}
+
+window.feConfirmPublish = async function() {
+  if (!fePmTopic) {
+    const errEl = document.getElementById('fePmError');
+    if (errEl) errEl.style.display = 'block';
+    return;
+  }
+  feTopic = fePmTopic;
+  selectedFlair = fePmTopic;
+  document.getElementById('fePublishOverlay')?.classList.remove('open');
+  await publishFromEditor();
+}
+
+// ── 이미지 삽입 (커서 위치) ──
 window.feInsertImage = function(e) {
   const files = Array.from(e.target.files || []);
   e.target.value = '';
@@ -7650,8 +7765,11 @@ function feScheduleAutosave() {
     const body = editor?.innerHTML || '';
     if (!title && !body) return;
     localStorage.setItem(FE_DRAFT_KEY, JSON.stringify({ title, body, topic: feTopic, ts: Date.now() }));
-    const lbl = document.getElementById('feAutosaveLabel');
-    if (lbl) { lbl.textContent = 'Saved'; setTimeout(() => { if(lbl) lbl.textContent = ''; }, 2000); }
+    // 두 자동저장 레이블 모두 업데이트
+    ['feAutosaveLabel', 'feAutosaveLabel2'].forEach(id => {
+      const lbl = document.getElementById(id);
+      if (lbl) { lbl.textContent = 'Saved'; setTimeout(() => { if(lbl) lbl.textContent=''; }, 2000); }
+    });
   }, 1500);
 }
 

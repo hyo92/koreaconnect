@@ -3273,39 +3273,78 @@
   .confirm-btn-delete { flex: 1; padding: 11px; border-radius: var(--radius-pill); border: none; background: #E24B4A; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: background 0.15s; }
   .confirm-btn-delete:hover { background: #A32D2D; }
 
+  /* ── Edit Post — 전체화면 에디터와 동일한 스타일 ── */
   .edit-overlay {
-    display: none; position: fixed; inset: 0; z-index: 500;
-    background: rgba(0,0,0,0.4); align-items: flex-end; justify-content: center;
+    display: none; position: fixed; inset: 0; z-index: 950;
+    background: #F0F0EE; flex-direction: column; overflow: hidden;
   }
   .edit-overlay.open { display: flex; }
   .edit-sheet {
-    width: 100%; max-width: 480px; background: var(--surface);
-    border-radius: 20px 20px 0 0;
-    padding: 0 0 calc(16px + env(safe-area-inset-bottom));
-    animation: slideUp 0.25s ease; max-height: 85vh; display: flex; flex-direction: column;
+    display: flex; flex-direction: column;
+    width: 100%; height: 100%;
   }
-  @media (min-width: 1024px) {
-    .edit-overlay { align-items: center; }
-    .edit-sheet {
-      border-radius: 18px;
-      max-width: 560px;
-      max-height: 80vh;
-      animation: modalIn 0.22s ease;
-    }
-    .edit-sheet-handle { display: none; }
+  /* 헤더 */
+  .edit-sheet-header {
+    height: 52px; flex-shrink: 0; background: #fff;
+    border-bottom: 1px solid #EAEAEA;
+    display: flex; align-items: center; padding: 0 20px;
+    position: relative;
   }
-  .edit-sheet-handle { width: 36px; height: 4px; background: var(--border-mid); border-radius: 2px; margin: 12px auto 0; flex-shrink: 0; }
-  .edit-sheet-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
-  .edit-sheet-title { font-size: 15px; font-weight: 600; }
-  .edit-save-btn { background: var(--green); color: #fff; border: none; border-radius: var(--radius-pill); padding: 7px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: background 0.15s; opacity: 0.4; }
+  .edit-sheet-handle { display: none; }
+  .edit-sheet-title {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: 14px; font-weight: 600; color: #999;
+    pointer-events: none;
+  }
+  .edit-save-btn {
+    margin-left: auto; background: var(--green); color: #fff;
+    border: none; border-radius: 999px; padding: 8px 22px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: var(--font); opacity: 0.42;
+    transition: background 0.15s, opacity 0.15s;
+  }
   .edit-save-btn.ready { opacity: 1; }
   .edit-save-btn.ready:hover { background: var(--green-dark); }
-  .edit-sheet-body { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .edit-field-label { font-size: 10px; font-weight: 600; color: var(--text-3); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 5px; }
-  .edit-input { width: 100%; border: 0.5px solid var(--border-mid); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; font-weight: 600; font-family: var(--font); color: var(--text); background: transparent; outline: none; transition: border-color 0.15s; resize: none; }
-  .edit-input:focus { border-color: var(--green); }
-  .edit-textarea { width: 100%; border: 0.5px solid var(--border-mid); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.7; font-family: var(--font); color: var(--text); background: transparent; outline: none; resize: none; min-height: 120px; transition: border-color 0.15s; }
-  .edit-textarea:focus { border-color: var(--green); }
+  /* 스크롤 영역 */
+  .edit-sheet-body {
+    flex: 1; overflow-y: auto;
+    padding: 32px 20px 80px; background: #F0F0EE;
+  }
+  @media (min-width: 1024px) {
+    .edit-sheet-body { padding: 40px 40px 80px; }
+  }
+  /* 종이 박스 */
+  .edit-paper {
+    max-width: 860px; margin: 0 auto; background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.04);
+    padding: 40px 52px 80px; min-height: calc(100vh - 200px);
+  }
+  @media (max-width: 1023px) {
+    .edit-sheet-body { padding: 0; background: #fff; }
+    .edit-paper { padding: 24px 18px 60px; box-shadow: none; border-radius: 0; min-height: auto; }
+  }
+  /* 제목 — 테두리 없이 크게 */
+  .edit-title-input {
+    width: 100%; border: none; outline: none;
+    font-size: 28px; font-weight: 700; color: #111;
+    background: transparent; font-family: var(--font);
+    line-height: 1.3; resize: none; overflow: hidden; padding: 0;
+    letter-spacing: -0.3px;
+  }
+  .edit-title-input::placeholder { color: #D5D5D5; font-weight: 400; }
+  @media (min-width: 1024px) { .edit-title-input { font-size: 32px; } }
+  .edit-title-divider { height: 1px; background: #F0F0F0; margin: 16px 0; }
+  /* 본문 */
+  .edit-body-area {
+    width: 100%; border: none; outline: none;
+    font-size: 16px; line-height: 1.85; color: #222;
+    background: transparent; font-family: var(--font);
+    resize: none; min-height: 200px; padding: 0;
+  }
+  @media (min-width: 1024px) { .edit-body-area { font-size: 17px; } }
+  /* 더 이상 필요 없는 구 스타일 */
+  .edit-field-label, .edit-input, .edit-textarea { display: none; }
 </style>
 </head>
 <body>
@@ -3979,20 +4018,35 @@
 <!-- 글 수정 모달 -->
 <div class="edit-overlay" id="editPostOverlay">
   <div class="edit-sheet">
-    <div class="edit-sheet-handle"></div>
+
+    <!-- 헤더 — fullEditorOverlay와 동일 -->
     <div class="edit-sheet-header">
-      <button style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-2)" onclick="closeEditPost()">✕</button>
-      <div class="edit-sheet-title">Edit post</div>
+      <button style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:500;color:#555;font-family:var(--font);padding:7px 10px;border-radius:8px;" onclick="closeEditPost()">
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+          <path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+      </button>
+      <div class="edit-sheet-title">Edit Post</div>
       <button class="edit-save-btn ready" id="editSaveBtn" onclick="saveEditPost()">Save</button>
     </div>
+
+    <!-- 스크롤 영역 -->
     <div class="edit-sheet-body">
-      <div>
-        <div class="edit-field-label">Title</div>
-        <textarea class="edit-input" id="editTitleInput" rows="2" oninput="checkEditReady()"></textarea>
-      </div>
-      <div>
-        <div class="edit-field-label">Content</div>
-        <textarea class="edit-textarea" id="editBodyInput" oninput="checkEditReady()"></textarea>
+      <div class="edit-paper">
+
+        <!-- 제목 — 테두리 없이 큰 폰트 -->
+        <textarea class="edit-title-input" id="editTitleInput"
+          placeholder="Title"
+          rows="1"
+          oninput="checkEditReady();editAutoResize(this)"></textarea>
+        <div class="edit-title-divider"></div>
+
+        <!-- 본문 -->
+        <textarea class="edit-body-area" id="editBodyInput"
+          placeholder="Share what you know..."
+          oninput="checkEditReady()"></textarea>
+
       </div>
     </div>
   </div>
@@ -7423,8 +7477,12 @@ window.closeActionMenu = function() {
 }
 
 // ── EDIT POST ──
+window.editAutoResize = function(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
 window.openEditPost = function() {
-  // ID를 먼저 확정 (상세화면 or 피드 카드)
   const targetId = activeDetailId || activePostMenuId;
   activePostMenuId = null;
   closeActionMenu();
@@ -7436,14 +7494,26 @@ window.openEditPost = function() {
     showToast('You can only edit your own posts', 'error'); return;
   }
   editingPostId = post.id;
-  activeDetailId = String(targetId);  // edit 후 상세화면 갱신용
-  document.getElementById('editTitleInput').value = post.title;
-  document.getElementById('editBodyInput').value = post.preview;
+  activeDetailId = String(targetId);
+
+  const titleEl = document.getElementById('editTitleInput');
+  const bodyEl  = document.getElementById('editBodyInput');
+  titleEl.value = post.title;
+  bodyEl.value  = post.preview;
   document.getElementById('editPostOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // 제목 높이 자동 조절
+  setTimeout(() => {
+    editAutoResize(titleEl);
+    titleEl.focus();
+    titleEl.setSelectionRange(titleEl.value.length, titleEl.value.length);
+  }, 50);
 }
 
 window.closeEditPost = function() {
   document.getElementById('editPostOverlay').classList.remove('open');
+  document.body.style.overflow = '';
   editingPostId = null;
 }
 

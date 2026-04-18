@@ -1614,7 +1614,10 @@
 
   /* ① 전체 오버레이 */
   #fullEditorOverlay {
-    display: none; position: fixed; inset: 0; z-index: 900;
+    display: none; position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 100dvh; /* dynamic viewport height — 키보드/주소창 반영 */
+    z-index: 900;
     background: #F0F0EE; flex-direction: column; overflow: hidden;
   }
   #fullEditorOverlay.open { display: flex; }
@@ -1867,44 +1870,32 @@
   /* ⑫ 모바일 에디터 */
   @media (max-width: 1023px) {
 
-    /* 헤더 — flex로 이미 고정됨 (sticky 불필요) */
-    .fe-topbar {
-      padding: 0 14px;
-      /* position: sticky 제거 — fullEditorOverlay가 position:fixed+overflow:hidden이므로
-         내부 sticky는 동작 안 함. flex-shrink:0이 이미 헤더를 상단에 고정함 */
-    }
+    /* 헤더 — flex-shrink:0으로 상단 고정 */
+    .fe-topbar { padding: 0 14px; }
 
-    /* 툴바 — 2줄 허용, 높이 auto */
+    /* 툴바 — 2줄 허용 */
     .fe-inline-toolbar {
       padding: 4px 8px;
-      height: auto;      /* 고정 높이 해제 → 2줄 가능 */
-      flex-wrap: wrap;   /* 줄바꿈 허용 */
+      height: auto;
+      flex-wrap: wrap;
       gap: 2px;
-      overflow: visible; /* 드롭다운 잘림 방지 */
-      position: static;  /* sticky 제거 */
+      overflow: visible;
+      position: static;
     }
 
-    /* 모바일 툴바 버튼 — 터치 영역 44px */
-    .fe-tb-btn {
-      min-width: 40px;
-      height: 40px;
-      padding: 0 10px;
-      font-size: 14px;
-    }
+    /* 터치 친화 버튼 */
+    .fe-tb-btn { min-width: 40px; height: 40px; padding: 0 10px; font-size: 14px; }
     .fe-tb-sep { height: 20px; margin: 0 3px; }
 
-    /* 스크롤 영역 */
-    .fe-scroll { padding: 0 0 80px; background: #fff; }
+    /* 스크롤 영역 — JS가 동적으로 height를 계산해 채워줌 */
+    .fe-scroll { padding: 0 0 40px; background: #fff; overflow-y: auto; }
 
-    /* 종이 박스 — 모바일 전체폭 */
-    .fe-container {
-      padding: 24px 18px 60px;
-      box-shadow: none; border-radius: 0; min-height: auto;
-    }
+    /* 종이 박스 */
+    .fe-container { padding: 20px 18px 60px; box-shadow: none; border-radius: 0; min-height: auto; }
 
     .fe-img-block { margin: 20px -18px; }
     .fe-title-input { font-size: 22px; }
-    .fe-editor { font-size: 16px; line-height: 1.75; }
+    .fe-editor { font-size: 16px; line-height: 1.75; min-height: 200px; }
   }
   /* 기존 kc-modal은 알림 모달 등에서만 사용 */
   .kc-modal-overlay {
@@ -7436,6 +7427,20 @@ window.openFullEditor = function() {
   const navbar = document.querySelector('.navbar');
   if (navbar) navbar.style.display = 'none';
 
+  // Visual Viewport API — 키보드 올라올 때 overlay 높이 동적 조정
+  if (window.visualViewport) {
+    window._feVVHandler = function() {
+      const vv = window.visualViewport;
+      overlay.style.top    = vv.offsetTop  + 'px';
+      overlay.style.left   = vv.offsetLeft + 'px';
+      overlay.style.width  = vv.width      + 'px';
+      overlay.style.height = vv.height     + 'px';
+    };
+    window.visualViewport.addEventListener('resize', window._feVVHandler);
+    window.visualViewport.addEventListener('scroll', window._feVVHandler);
+    window._feVVHandler(); // 초기 적용
+  }
+
   // 임시저장 불러오기
   feLoadDraft();
   feCheckReady();
@@ -7450,7 +7455,16 @@ window.openFullEditor = function() {
 // ── 닫기 ──
 window.closeFullEditor = function() {
   const overlay = document.getElementById('fullEditorOverlay');
-  if (overlay) overlay.classList.remove('open');
+  if (overlay) {
+    overlay.classList.remove('open');
+    // Visual Viewport 리스너 해제 + 스타일 초기화
+    if (window.visualViewport && window._feVVHandler) {
+      window.visualViewport.removeEventListener('resize', window._feVVHandler);
+      window.visualViewport.removeEventListener('scroll', window._feVVHandler);
+      window._feVVHandler = null;
+    }
+    overlay.style.cssText = ''; // 인라인 스타일 초기화
+  }
   document.body.style.overflow = '';
   const navbar = document.querySelector('.navbar');
   if (navbar) navbar.style.display = '';

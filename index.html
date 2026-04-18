@@ -2439,14 +2439,20 @@
 
   /* ── HOT DEALS 전용 페이지 ── */
   /* HOT DEALS PAGE */
-  .deals-page { display:flex; flex-direction:column; min-height:100%; background:#F2F2F2; }
+  .deals-page {
+    display:flex; flex-direction:column;
+    height:100%; /* 부모(screen-deals) 높이 채우기 */
+    background:#F2F2F2;
+  }
 
   /* 헤더 */
   .deals-page-header {
     background:#fff; border-bottom:1px solid #EBEBEB;
-    height:54px; display:flex; align-items:center;
-    padding:0 16px; position:sticky; top:0; z-index:10;
-    /* 타이틀 완전 중앙 정렬 */
+    height:54px; flex-shrink:0;
+    display:flex; align-items:center;
+    padding:0 16px;
+    position:relative; /* sticky 제거 — flex로 고정 */
+    z-index:10;
   }
   /* 타이틀: 절대 중앙 */
   .deals-page-title {
@@ -2471,10 +2477,12 @@
   /* 탭 바 */
   .deals-tab-bar {
     background:#fff; border-bottom:1px solid #EBEBEB;
-    position:sticky; top:54px; z-index:9;
+    flex-shrink:0;
+    position:relative; /* sticky 제거 */
+    z-index:9;
     display:flex; overflow-x:auto; scrollbar-width:none;
     padding:0 16px;
-    justify-content:flex-start; /* 모바일: 좌측 */
+    justify-content:flex-start;
   }
   @media (min-width:1024px) {
     .deals-tab-bar { justify-content:center; overflow-x:visible; padding:0; }
@@ -2489,8 +2497,9 @@
   }
   .deals-tab.active { color:#111; font-weight:700; border-bottom-color:#111; }
 
-  /* 그리드 컨테이너 (최대 너비 제한 + 중앙 정렬) */
+  /* 그리드 컨테이너 — 이 영역만 스크롤 */
   .deals-grid-wrap {
+    flex:1; overflow-y:auto;
     width:100%; max-width:1400px;
     margin:0 auto; padding:20px 24px 80px; box-sizing:border-box;
   }
@@ -4433,8 +4442,8 @@
 ══════════════════════════════════ -->
 <div id="screen-deals" style="
   display:none; position:fixed; inset:0; z-index:200;
-  background:var(--bg); overflow-y:auto;
-  padding-top:var(--top-h);
+  background:var(--bg);
+  flex-direction:column; overflow:hidden;
 ">
   <div class="deals-page">
 
@@ -8380,7 +8389,7 @@ window.goDeals = function(tab) {
   }
 
   // 2. 즉시 표시
-  dealsEl.style.cssText = 'display:block !important; position:fixed; inset:0; z-index:9999; background:var(--bg,#F5F5F0); overflow-y:auto; padding-top:54px;';
+  dealsEl.style.cssText = 'display:flex !important; flex-direction:column; position:fixed; inset:0; z-index:9999; background:var(--bg,#F5F5F0); overflow:hidden;';
   dealsEl.scrollTop = 0;
 
   // 3. 탭 활성화

@@ -4738,6 +4738,14 @@
       <div class="fe-pm-title">Where would you like to post?</div>
       <div class="fe-pm-sub">Choose the topic that best fits your content</div>
     </div>
+    <!-- Featured 토글 — 오너만 표시 -->
+    <div id="fePmFeaturedWrap" style="display:none;margin:0 0 14px;background:var(--green-light);border:1px solid var(--green-mid);border-radius:10px;padding:10px 14px;align-items:center;gap:10px;flex-direction:row">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--green-deeper)">⭐ Post as Featured</div>
+        <div style="font-size:11px;color:var(--green-dark);margin-top:2px">Pinned banner at the top of the feed</div>
+      </div>
+      <button id="fePmFeaturedBtn" onclick="toggleFeaturedMode()" style="width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;background:var(--border-mid);transition:background 0.2s;flex-shrink:0;touch-action:manipulation" aria-label="Toggle featured"></button>
+    </div>
     <div class="fe-pm-topics">
       <div class="fe-pm-chip" onclick="fePmPickTopic(this,'visa')"><span class="fe-pm-chip-icon">🛂</span> Visa</div>
       <div class="fe-pm-chip" onclick="fePmPickTopic(this,'jobs')"><span class="fe-pm-chip-icon">💼</span> Jobs</div>
@@ -7697,6 +7705,9 @@ window.toggleFeaturedMode = function() {
     var btn = document.getElementById(id);
     if (btn) btn.className = 'featured-toggle-btn' + (isFeaturedMode ? ' on' : '');
   });
+  // Publish 모달 토글 버튼도 동기화
+  var fePmBtn = document.getElementById('fePmFeaturedBtn');
+  if (fePmBtn) fePmBtn.style.background = isFeaturedMode ? 'var(--green)' : 'var(--border-mid)';
 };
 
 function showFeaturedToggleIfOwner() {
@@ -8503,6 +8514,17 @@ window.feOpenPublishModal = function() {
   if (confirmBtn) confirmBtn.classList.remove('ready');
   const errEl = document.getElementById('fePmError');
   if (errEl) errEl.style.display = 'none';
+
+  // 오너면 Featured 토글 표시
+  isFeaturedMode = false;
+  const featWrap = document.getElementById('fePmFeaturedWrap');
+  const featBtn  = document.getElementById('fePmFeaturedBtn');
+  if (featWrap) {
+    var isOwner = currentUser && OWNER_EMAILS.includes(currentUser.email);
+    featWrap.style.display = isOwner ? 'flex' : 'none';
+    if (featBtn) featBtn.style.background = 'var(--border-mid)';
+  }
+
   document.getElementById('fePublishOverlay')?.classList.add('open');
 }
 
@@ -8614,6 +8636,32 @@ window.publishFromEditor = async function() {
     }
   }
   if (btn) btn.textContent = 'Publishing...';
+
+  // Featured 모드: Firestore 'featured' 컬렉션에 저장 후 종료
+  if (OWNER_EMAILS.includes(currentUser.email) && isFeaturedMode) {
+    try {
+      await addDoc(collection(db, 'featured'), {
+        topic, title,
+        preview: bodyText,
+        comm: 'r/KoreaConnect',
+        author: authorName,
+        cta: 'Read Guide',
+        active: true,
+        createdAt: serverTimestamp(),
+      });
+      await loadFeaturedFromFirestore();
+      if (btn) { btn.textContent = 'Publish'; btn.classList.remove('ready'); }
+      localStorage.removeItem(FE_DRAFT_KEY);
+      feResetEditor();
+      closeFullEditor();
+      showToast('⭐ Featured post published!', 'success');
+    } catch(e) {
+      console.error('Featured 저장 실패:', e);
+      showToast('Failed to publish featured post', 'error');
+      if (btn) btn.textContent = 'Publish';
+    }
+    return;
+  }
 
   const newPost = {
     comm: selectedComm || 'KoreaConnect',

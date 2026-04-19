@@ -7193,14 +7193,10 @@ function renderComments(comments, postId) {
     return;
   }
   list.innerHTML = visible.map((c, i) => {
-    const initials = getInitials(c.author || 'Anonymous');
-    const colors = ['#E1F5EE/#085041','#E6F1FB/#0C447C','#FAEEDA/#633806','#FBEAF0/#72243E','#EAF3DE/#27500A'];
-    const [bg, col] = colors[i % colors.length].split('/');
     const isOwner = currentUser && c.authorId === currentUser.uid;
     return `
     <div class="comment-item">
       <div class="comment-top">
-        <div class="comment-avatar" style="background:${bg};color:${col}">${initials}</div>
         <span class="comment-author">${c.author || 'Anonymous'}</span>
         <span class="comment-time">${c.createdAt ? timeAgo(c.createdAt) : 'Just now'}</span>
         ${isOwner ? `
@@ -7345,10 +7341,8 @@ window.submitComment = async function() {
     if (noC) noC.remove();
     const div = document.createElement('div');
     div.className = 'comment-item';
-    const initials = getInitials(authorName);
     div.innerHTML = `
       <div class="comment-top">
-        <div class="comment-avatar" style="background:#E1F5EE;color:#085041">${initials}</div>
         <span class="comment-author">${authorName}</span>
         <span class="comment-time">Just now</span>
       </div>

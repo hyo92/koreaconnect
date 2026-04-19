@@ -7563,10 +7563,10 @@ window.saveProfileEdit = async function() {
   const saveBtn = document.querySelector('.pes-save-btn');
   saveBtn.textContent = 'Saving...';
 
-  try {
-    let photoURL = currentUser.photoURL || null;
+  let photoURL = currentUser.photoURL || null;
 
-    // 새 사진 업로드
+  try {
+    // ① 새 사진 업로드 (있을 때만)
     if (pesNewPhotoFile) {
       document.getElementById('pesUploadProgress').style.display = 'block';
       const bar = document.getElementById('pesUploadBar');
@@ -7585,45 +7585,44 @@ window.saveProfileEdit = async function() {
       photoURL = null;
     }
 
-    // Firebase Auth 프로필 업데이트
-    await updateProfile(currentUser, {
-      displayName: newName,
-      photoURL: photoURL
-    });
-
-    // Firestore users 컬렉션에도 저장 (옵션)
-    if (firebaseOk) {
-      try {
-        await addDoc(collection(db, 'users'), {
-          uid: currentUser.uid,
-          displayName: newName,
-          photoURL: photoURL,
-          updatedAt: serverTimestamp()
-        });
-      } catch(e) { /* non-critical */ }
-    }
-
-    showToast('Profile updated!', 'success');
-    closeProfileEdit();
-    updateProfileScreen(currentUser);
-    updateTopbarAvatar(currentUser);
-
-    // 내 게시글 author 이름도 로컬에서 업데이트
-    POSTS.forEach(p => {
-      if (p.authorId === currentUser.uid) {
-        p.author = newName;
-        p.authorPhoto = photoURL;
-      }
-    });
-    renderFeed();
-    renderNearby();
-    if (activeProfileTab === 'myposts') renderMyPosts();
+    // ② Firebase Auth 프로필 업데이트 (핵심)
+    await updateProfile(currentUser, { displayName: newName, photoURL });
 
   } catch(err) {
     console.error('Profile update failed:', err);
     showToast('Update failed. Please try again.', 'error');
-  } finally {
     saveBtn.textContent = 'Save';
+    return;
+  }
+
+  // ③ Auth 업데이트 성공 — 즉시 성공 처리
+  showToast('Profile updated! ✓', 'success');
+  closeProfileEdit();
+  updateProfileScreen(currentUser);
+  updateTopbarAvatar(currentUser);
+  saveBtn.textContent = 'Save';
+
+  // ④ 로컬 피드 동기화
+  POSTS.forEach(p => {
+    if (p.authorId === currentUser.uid) {
+      p.author = newName;
+      p.authorPhoto = photoURL;
+    }
+  });
+  renderFeed();
+  renderNearby();
+  if (activeProfileTab === 'myposts') renderMyPosts();
+
+  // ⑤ Firestore users 컬렉션 저장 (non-critical, 실패해도 무관)
+  if (firebaseOk) {
+    try {
+      await addDoc(collection(db, 'users'), {
+        uid: currentUser.uid,
+        displayName: newName,
+        photoURL,
+        updatedAt: serverTimestamp()
+      });
+    } catch(e) { /* non-critical */ }
   }
 }
 
@@ -9570,8 +9569,8 @@ async function fetchRealWeather(lat, lon) {
   try {
     // 날씨 + 대기질 동시 호출
     const [wxRes, aqiRes] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&timezone=auto`),
-      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${la}&longitude=${lo}&current=pm2_5,pm10&timezone=auto`)
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&timezone=Asia%2FSeoul&forecast_days=1`),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${la}&longitude=${lo}&current=pm2_5,pm10&timezone=Asia%2FSeoul`)
     ]);
 
     if (!wxRes.ok) throw new Error('Weather API error');
@@ -9724,8 +9723,25 @@ const WEATHER_PROMO = {
 window.loadTodaysLook = async function(weatherData, aqiData) {
   // 인자 없으면 실제 API 호출
   if (!weatherData) {
-    const lat = userLat  || null;
-    const lon = userLng  || null;
+    // 위치 권한이 이미 허용된 경우 정확한 좌표 사용, 없으면 서울 기본값
+    let lat = userLat || null;
+    let lon = userLng || null;
+
+    // userLat 없으면 브라우저 위치 조용히 요청 (거부해도 계속 진행)
+    if (!lat && navigator.geolocation) {
+      try {
+        const pos = await new Promise((res, rej) =>
+          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 4000, maximumAge: 300000 })
+        );
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+      } catch(e) {
+        // 거부 or 타임아웃 — 서울 기본값 사용
+        lat = 37.5665; lon = 126.9780;
+      }
+    }
+    if (!lat) { lat = 37.5665; lon = 126.9780; } // 최종 fallback
+
     try {
       const result = await fetchRealWeather(lat, lon);
       weatherData = result.weatherData;

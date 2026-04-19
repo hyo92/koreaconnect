@@ -5026,7 +5026,8 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {
   getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, increment,
-  query, orderBy, where, limit, startAfter, getDocs, getDoc, collectionGroup, serverTimestamp, onSnapshot
+  query, orderBy, where, limit, startAfter, getDocs, getDoc, collectionGroup,
+  setDoc, arrayUnion, serverTimestamp, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect,
@@ -5815,6 +5816,7 @@ async function loadNextPage(isFirst = false) {
     setLoading(false);
     renderFeed();
     renderNearby();
+    if (currentUser) _syncWidgetStats();
 
     if (!hasMore) setLoadMoreIndicator('end');
     else setLoadMoreIndicator('none');
@@ -7219,21 +7221,26 @@ window.submitComment = async function() {
 
   const postId = activeDetailId;
 
-  // 내 댓글 localStorage 캐시 (Activity Comments 탭 fallback용)
+  // 내 댓글 이력 저장 — localStorage + Firestore userActivity
+  const commentEntry = {
+    id: 'c_' + Date.now(),
+    text,
+    postId: String(postId),
+    postTitle: POSTS.find(p => String(p.id) === String(postId))?.title || '',
+    createdAt: Date.now(),
+  };
+  // localStorage (즉시, 오프라인도 동작)
   try {
-    const myCommentCache = JSON.parse(localStorage.getItem('kc_my_comments') || '[]');
-    const post = POSTS.find(p => String(p.id) === String(postId));
-    myCommentCache.unshift({
-      id: 'local_' + Date.now(),
-      text,
-      postId: String(postId),
-      postTitle: post?.title || '',
-      authorId: currentUser.uid,
-      createdAt: Date.now(),
-    });
-    // 최대 100개 보관
-    localStorage.setItem('kc_my_comments', JSON.stringify(myCommentCache.slice(0, 100)));
+    const cache = JSON.parse(localStorage.getItem('kc_my_comments') || '[]');
+    cache.unshift(commentEntry);
+    localStorage.setItem('kc_my_comments', JSON.stringify(cache.slice(0, 100)));
   } catch(e) {}
+  // Firestore userActivity (로그인 세션 간 동기화)
+  if (firebaseOk && currentUser) {
+    setDoc(doc(db, 'userActivity', currentUser.uid), {
+      comments: arrayUnion(commentEntry)
+    }, { merge: true }).catch(() => {});
+  }
 
   if (firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
     try {
@@ -9885,57 +9892,30 @@ window.switchActivityTab = async function(tab) {
     content.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-3);font-size:13px">Loading…</div>`;
     let myComments = [];
 
+    // ① Firestore userActivity/{uid} (가장 신뢰할 수 있는 소스)
     if (firebaseOk && currentUser) {
       try {
-        // 먼저 orderBy 포함 쿼리 시도 (인덱스 필요)
-        const q = query(
-          collectionGroup(db, 'comments'),
-          where('authorId', '==', currentUser.uid),
-          orderBy('createdAt', 'desc'),
-          limit(50)
-        );
-        const snap = await getDocs(q);
-        myComments = snap.docs.map(d => ({
-          id: d.id,
-          postId: d.data().postId || d.ref.parent.parent?.id,
-          ...d.data(),
-          time: timeAgo(d.data().createdAt),
-        }));
-      } catch(e) {
-        // 인덱스 없으면 orderBy 없이 재시도 후 클라이언트 정렬
-        try {
-          const q2 = query(
-            collectionGroup(db, 'comments'),
-            where('authorId', '==', currentUser.uid),
-            limit(50)
-          );
-          const snap2 = await getDocs(q2);
-          myComments = snap2.docs.map(d => ({
-            id: d.id,
-            postId: d.data().postId || d.ref.parent.parent?.id,
-            ...d.data(),
-            time: timeAgo(d.data().createdAt),
-          })).sort((a, b) => {
-            const ta = a.createdAt?.toMillis?.() || 0;
-            const tb = b.createdAt?.toMillis?.() || 0;
-            return tb - ta;
-          });
-        } catch(e2) {
-          console.warn('Comments query failed:', e2.message);
+        const actSnap = await getDoc(doc(db, 'userActivity', currentUser.uid));
+        if (actSnap.exists()) {
+          const data = actSnap.data().comments || [];
+          myComments = [...data]
+            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+            .map(c => ({
+              ...c,
+              time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
+            }));
         }
-      }
+      } catch(e) {}
     }
 
-    // collectionGroup 실패 또는 결과 없으면 localStorage fallback
+    // ② Firestore 실패 또는 결과 없으면 localStorage fallback
     if (myComments.length === 0) {
       try {
         const cached = JSON.parse(localStorage.getItem('kc_my_comments') || '[]');
-        if (cached.length > 0) {
-          myComments = cached.map(c => ({
-            ...c,
-            time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
-          }));
-        }
+        myComments = cached.map(c => ({
+          ...c,
+          time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
+        }));
       } catch(e) {}
     }
 
@@ -10735,6 +10715,22 @@ window.setTabByName = function(tab) {
   selectCategory(tab);
 }
 
+// POSTS 배열 기준으로 위젯 + 프로필 통계 즉시 갱신
+function _syncWidgetStats() {
+  if (!currentUser) return;
+  const myPosts = POSTS.filter(p => p.authorId === currentUser.uid && !p.deleted);
+  const cnt   = myPosts.length;
+  const votes = formatVotes(myPosts.reduce((s, p) => s + (p.votes || 0), 0));
+  const sp = document.getElementById('statPosts');
+  const su = document.getElementById('statUpvotes');
+  const wp = document.getElementById('widgetStatPosts');
+  const wu = document.getElementById('widgetStatUpvotes');
+  if (sp) sp.textContent = cnt;
+  if (su) su.textContent = votes;
+  if (wp) wp.textContent = cnt;
+  if (wu) wu.textContent = votes;
+}
+
 function updateDesktopUserWidget(user) {
   if (!isDesktop()) return;
   const guestCta  = document.getElementById('widgetGuestCta');
@@ -10756,29 +10752,8 @@ function updateDesktopUserWidget(user) {
     document.getElementById('widgetUserName').textContent  = user.displayName || 'Anonymous';
     document.getElementById('widgetUserEmail').textContent = user.email || '';
 
-    // 캐시 먼저 즉시 표시
-    const cached = POSTS.filter(p => p.authorId === user.uid && !p.deleted);
-    if (cached.length) {
-      document.getElementById('widgetStatPosts').textContent   = cached.length;
-      document.getElementById('widgetStatUpvotes').textContent = formatVotes(cached.reduce((s,p)=>s+(p.votes||0),0));
-    }
-
-    // Firestore에서 정확한 수치 비동기 fetch
-    if (firebaseOk) {
-      getDocs(query(collection(db, 'posts'), where('authorId', '==', user.uid)))
-        .then(snap => {
-          const posts = snap.docs.map(d => d.data()).filter(p => !p.deleted);
-          const cnt   = posts.length;
-          const votes = formatVotes(posts.reduce((s,p) => s+(p.votes||0), 0));
-          document.getElementById('widgetStatPosts').textContent   = cnt;
-          document.getElementById('widgetStatUpvotes').textContent = votes;
-          const sp = document.getElementById('statPosts');
-          const su = document.getElementById('statUpvotes');
-          if (sp) sp.textContent = cnt;
-          if (su) su.textContent = votes;
-        })
-        .catch(() => {});
-    }
+    // POSTS 기반 즉시 표시 (포스트 로드 후 _syncWidgetStats로 자동 갱신)
+    _syncWidgetStats();
   } else {
     guestCta.style.display  = '';
     userRow.style.display   = 'none';

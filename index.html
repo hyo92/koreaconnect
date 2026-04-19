@@ -1209,6 +1209,40 @@
     }
     /* 하단 바 높이만큼 폼 여백 추가 */
     #writeFormWrapper { padding-bottom: 80px; }
+
+  /* ── Featured 토글 (오너 전용) ── */
+  .featured-toggle-wrap {
+    display: none; /* JS로 오너만 보이게 */
+    margin: 0 16px 12px;
+    background: var(--green-light);
+    border: 1px solid var(--green-mid);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    align-items: center;
+    gap: 10px;
+  }
+  .featured-toggle-wrap.visible { display: flex; }
+  .featured-toggle-label {
+    flex: 1; font-size: 13px; font-weight: 600; color: var(--green-deeper);
+  }
+  .featured-toggle-sub {
+    font-size: 11px; color: var(--green-dark); font-weight: 400;
+  }
+  .featured-toggle-btn {
+    width: 44px; height: 24px; border-radius: 12px;
+    border: none; cursor: pointer; position: relative;
+    background: var(--border-mid); transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .featured-toggle-btn.on { background: var(--green); }
+  .featured-toggle-btn::after {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: white; top: 3px; left: 3px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .featured-toggle-btn.on::after { transform: translateX(20px); }
   }
   .btn-post {
     background: #D3D1C7; color: #888780;
@@ -3780,6 +3814,14 @@
       <div class="write-header-title">Write a post</div>
       <button class="btn-post" id="postBtn" onclick="publishPost()">Post</button>
     </div>
+    <!-- Featured 토글 — 오너 계정만 표시 -->
+    <div class="featured-toggle-wrap" id="featuredToggleWrap">
+      <div>
+        <div class="featured-toggle-label">⭐ Post as Featured</div>
+        <div class="featured-toggle-sub">Shown as a pinned banner at the top of the feed</div>
+      </div>
+      <button class="featured-toggle-btn" id="featuredToggleBtn" onclick="toggleFeaturedMode()" aria-label="Toggle featured"></button>
+    </div>
     <div id="writeForm">
       <div class="write-body">
         <div>
@@ -4822,6 +4864,14 @@
       </div>
       <!-- Write form -->
       <div id="writeFormWrapperModal" style="display:none">
+        <!-- Featured 토글 — 오너 계정만 표시 -->
+        <div class="featured-toggle-wrap" id="featuredToggleWrapModal">
+          <div>
+            <div class="featured-toggle-label">⭐ Post as Featured</div>
+            <div class="featured-toggle-sub">Shown as a pinned banner at the top of the feed</div>
+          </div>
+          <button class="featured-toggle-btn" id="featuredToggleBtnModal" onclick="toggleFeaturedMode()" aria-label="Toggle featured"></button>
+        </div>
         <div id="writeFormModal">
           <div class="write-body">
             <div>
@@ -5024,6 +5074,7 @@ const CHATS = [
 // ── STATE ──
 let POSTS = [];
 let locOn = false;
+let FEATURED_CACHE = []; // Firestore 'featured' 컬렉션 캐시
 let isHomeMode = true; // Home 모드 여부 — true: 로비 뷰, false: 카테고리 필터 뷰
 let userDistrict = null;   // 예: "Mapo-gu"
 let userCity    = null;    // 예: "Seoul"
@@ -6279,38 +6330,28 @@ const HOT_DEALS = {
   ],
 };
 
-const FEATURED_CONFIG = {
-  beauty: {
-    title: 'The Ultimate Guide to Korean Skincare Routines for Expats',
-    preview: 'From double cleansing to sheet masks — everything you need to know about building a K-beauty routine that actually works for Western skin types.',
-    comm: 'r/KoreaConnect',
-    topic: 'beauty',
-    author: 'KoreaConnect Team',
-    authorId: '__featured__',
-    href: null, // null이면 게시물처럼 동작, URL 있으면 외부 링크
-    cta: 'Read Guide',
-  },
-  visa: {
-    title: '2026 Complete Visa Guide for Expats in Korea',
-    preview: 'F-1 through F-6, E visas, D visas — a plain-English breakdown of every visa type, requirements, and how to extend or change status.',
-    comm: 'r/KoreaConnect',
-    topic: 'visa',
-    author: 'KoreaConnect Team',
-    authorId: '__featured__',
-    href: null,
-    cta: 'Read Guide',
-  },
-  jobs: {
-    title: 'How to Get a Work Visa in Korea — Step by Step',
-    preview: 'From job offer to ARC card in 60 days. A practical checklist covering E-2, E-7, and D-8 visas with real timelines from the community.',
-    comm: 'r/KoreaConnect',
-    topic: 'jobs',
-    author: 'KoreaConnect Team',
-    authorId: '__featured__',
-    href: null,
-    cta: 'Read Guide',
-  },
-};
+// FEATURED_CONFIG — Firestore 'featured' 컬렉션에서 로드됨
+// Firebase 콘솔 → Firestore → featured 컬렉션에서 직접 수정 가능
+// 각 문서 필드: topic, title, preview, comm, author, cta, href(선택), active(true/false)
+const FEATURED_CONFIG = {}; // Firestore 로드 전 빈 객체
+
+async function loadFeaturedFromFirestore() {
+  if (!firebaseOk) return;
+  try {
+    const snap = await getDocs(collection(db, 'featured'));
+    FEATURED_CACHE = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if (data.active !== false) { // active: false면 숨김
+        FEATURED_CACHE.push({ id: d.id, ...data });
+      }
+    });
+    console.log('[Featured] Firestore에서 로드:', FEATURED_CACHE.length, '개');
+    renderFeed(); // 로드 후 피드 갱신
+  } catch(e) {
+    console.warn('[Featured] Firestore 로드 실패:', e.message);
+  }
+}
 
 const TOPIC_TABS = ['visa','jobs','housing','tips','questions','travel','beauty','social'];
 
@@ -6405,11 +6446,11 @@ function renderFeed() {
 
   let featuredHtml = '';
   if (isHomeMode) {
-    // Home: 모든 Featured 카드 표시
-    featuredHtml = Object.values(FEATURED_CONFIG).map(makeFeaturedCard).join('');
+    // Home: 모든 Featured 카드 표시 (Firestore 캐시 기준)
+    featuredHtml = FEATURED_CACHE.map(makeFeaturedCard).join('');
   } else {
     // 카테고리 탭: 해당 탭 Featured만
-    const cfg = FEATURED_CONFIG[currentTab];
+    const cfg = FEATURED_CACHE.find(f => f.topic === currentTab);
     featuredHtml = cfg ? makeFeaturedCard(cfg) : '';
   }
 
@@ -7311,6 +7352,32 @@ window.publishPost = async function() {
     : userDistrict || userCity || null;
 
   const isOwnerPost = OWNER_EMAILS.includes(currentUser.email);
+
+  // Featured 모드: Firestore 'featured' 컬렉션에 저장 후 종료
+  if (isOwnerPost && isFeaturedMode) {
+    try {
+      await addDoc(collection(db, 'featured'), {
+        topic: selectedFlair || 'social',
+        title,
+        preview: body,
+        comm: 'r/KoreaConnect',
+        author: authorName,
+        cta: 'Read Guide',
+        active: true,
+        createdAt: serverTimestamp(),
+      });
+      await loadFeaturedFromFirestore();
+      showToast('⭐ Featured post published!', 'success');
+      if (btnEl) { btnEl.textContent = 'Post'; btnEl.classList.remove('ready'); }
+      closeFullEditor();
+    } catch(e) {
+      console.error('Featured 저장 실패:', e);
+      showToast('Failed to publish featured post', 'error');
+      if (btnEl) { btnEl.textContent = 'Post'; }
+    }
+    return;
+  }
+
   const newPost = {
     comm: selectedComm,
     author: authorName,
@@ -7620,6 +7687,32 @@ window.switchProfileTab = function(tab) {
 
 // renderMyPosts → showMyPosts로 통합 (하위 호환 래퍼)
 async function renderMyPosts() { showMyPosts(); }
+
+// ── Featured 토글 (오너 전용) ──
+let isFeaturedMode = false;
+
+window.toggleFeaturedMode = function() {
+  isFeaturedMode = !isFeaturedMode;
+  ['featuredToggleBtn','featuredToggleBtnModal'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (btn) btn.className = 'featured-toggle-btn' + (isFeaturedMode ? ' on' : '');
+  });
+};
+
+function showFeaturedToggleIfOwner() {
+  if (!currentUser) return;
+  var isOwner = OWNER_EMAILS.includes(currentUser.email);
+  ['featuredToggleWrap','featuredToggleWrapModal'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.className = 'featured-toggle-wrap' + (isOwner ? ' visible' : '');
+  });
+  // 화면 열 때마다 토글 초기화
+  isFeaturedMode = false;
+  ['featuredToggleBtn','featuredToggleBtnModal'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (btn) btn.className = 'featured-toggle-btn';
+  });
+}
 
 // ── POST MENU (점 3개) ──
 window.openPostMenu = function(e) {
@@ -10149,6 +10242,7 @@ function isDesktopMode() { return window.innerWidth >= 1024; }
 window.openWriteModal = function() {
   // 전체화면 에디터로 대체
   openFullEditor();
+  showFeaturedToggleIfOwner();
 }
 
 window.closeWriteModal = function() {
@@ -10218,6 +10312,7 @@ getRedirectResult(auth).then(result => {
 isHomeMode = true;
 initPostsListener();
 renderChatList();
+loadFeaturedFromFirestore(); // Firestore에서 Featured 글 로드
 setTimeout(() => {
   setSideNav('home');
   loadTodaysLook(); // 실시간 날씨 API 호출

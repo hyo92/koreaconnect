@@ -5672,8 +5672,33 @@ function initPostsListener() {
   lastVisible = null;
   hasMore = true;
 
-  loadNextPage(true);
+  // pinned 글 먼저 로드 후 일반 글 로드
+  loadPinnedPosts().then(function() {
+    loadNextPage(true);
+  });
   setupInfiniteScroll();
+}
+
+// Pinned 글 항상 상단 고정 — 별도 쿼리로 먼저 로드
+async function loadPinnedPosts() {
+  if (!firebaseOk) return;
+  try {
+    const q = query(
+      collection(db, 'posts'),
+      where('isPinned', '==', true),
+      orderBy('createdAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    snap.docs.forEach(d => {
+      if (!dbPostIds.has(d.id)) {
+        dbPostIds.add(d.id);
+        POSTS.push({ id: d.id, ...d.data(), time: timeAgo(d.data().createdAt) });
+      }
+    });
+    console.log('[Pinned] 로드:', snap.docs.length, '개');
+  } catch(e) {
+    console.warn('[Pinned] 쿼리 실패:', e.message);
+  }
 }
 
 async function loadNextPage(isFirst = false) {
@@ -10360,7 +10385,8 @@ getRedirectResult(auth).then(result => {
 isHomeMode = true;
 initPostsListener();
 renderChatList();
-loadFeaturedFromFirestore(); // Firestore에서 Featured 글 로드
+// Featured는 약간 딜레이 후 로드 (Firestore 연결 안정화 후)
+setTimeout(function() { loadFeaturedFromFirestore(); }, 800);
 setTimeout(() => {
   setSideNav('home');
   loadTodaysLook(); // 실시간 날씨 API 호출

@@ -9223,8 +9223,32 @@ window.confirmDeleteComment = async function() {
       await updateDoc(doc(db, 'posts', postId, 'comments', commentId), { deleted: true });
       await updateDoc(doc(db, 'posts', postId), { commentCount: increment(-1) });
       showToast('Comment deleted', 'info');
-    } catch(e) { showToast('Delete failed', 'error'); }
+    } catch(e) { showToast('Delete failed', 'error'); return; }
   }
+
+  // localStorage에서도 제거
+  try {
+    const cache = JSON.parse(localStorage.getItem('kc_my_comments') || '[]');
+    localStorage.setItem('kc_my_comments', JSON.stringify(cache.filter(c => c.id !== commentId)));
+  } catch(e) {}
+
+  // Firestore userActivity에서도 제거
+  if (firebaseOk && currentUser) {
+    try {
+      const actSnap = await getDoc(doc(db, 'userActivity', currentUser.uid));
+      if (actSnap.exists()) {
+        const comments = (actSnap.data().comments || []).filter(c => c.id !== commentId);
+        await setDoc(doc(db, 'userActivity', currentUser.uid), { comments }, { merge: true });
+      }
+    } catch(e) {}
+  }
+
+  // My Activity가 열려있으면 Comments 탭 갱신
+  const actContent = document.getElementById('activityContent');
+  if (actContent && actContent.querySelector('.tag[style*="blue"]')) {
+    switchActivityTab('comments');
+  }
+  _loadCommentCount();
 }
 
 // ── NOTIFICATIONS ──
@@ -9830,15 +9854,37 @@ window.showMyPosts = async function(tab) {
       </div>
       <div id="actTab-comments" onclick="switchActivityTab('comments')"
            style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all 0.15s">
-        <div style="font-size:20px;font-weight:700;color:var(--green)" id="actCommentCount">—</div>
+        <div style="font-size:20px;font-weight:700;color:var(--green)" id="actCommentCount">0</div>
         <div style="font-size:10px;color:var(--text-3);margin-top:2px">Comments</div>
       </div>
     </div>
 
     <div id="activityContent"></div>`;
 
+  // 댓글 수 비동기 로드 (탭 전환과 병렬)
+  _loadCommentCount();
+
   await switchActivityTab(tab || 'posts');
 };
+
+// 댓글 수 카운트 비동기 로드 → actCommentCount 업데이트
+async function _loadCommentCount() {
+  if (!currentUser) return;
+  let count = 0;
+  if (firebaseOk) {
+    try {
+      const actSnap = await getDoc(doc(db, 'userActivity', currentUser.uid));
+      if (actSnap.exists()) count = (actSnap.data().comments || []).length;
+    } catch(e) {}
+  }
+  if (count === 0) {
+    try { count = JSON.parse(localStorage.getItem('kc_my_comments') || '[]').length; } catch(e) {}
+  }
+  const el = document.getElementById('actCommentCount');
+  if (el) el.textContent = count;
+  const sc = document.getElementById('statComments');
+  if (sc) sc.textContent = count;
+}
 
 // ── 탭 전환 ──
 window.switchActivityTab = async function(tab) {

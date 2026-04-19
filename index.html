@@ -3936,7 +3936,6 @@
         Edit
       </button>
     </div>
-    <!-- 숨겨진 stat 값 — My Posts 탭에서 읽어감 -->
     <div style="display:none">
       <span id="statPosts">0</span>
       <span id="statUpvotes">0</span>
@@ -5016,7 +5015,7 @@ const OWNER_EMAILS = [
   'andhaw89@gmail.com',
 ];
 
-// 더미 admin 목업 글 제거 — 실제 글만 표시
+// 더미 admin 목업 글 제거
 const ADMIN_MOCK_POSTS = [];
 
 const CHATS = [
@@ -5699,17 +5698,9 @@ async function loadNextPage(isFirst = false) {
         mockToAdd.forEach(p => dbPostIds.add(p.id));
         POSTS = [...mockToAdd, ...POSTS]; // 최상단에 배치
       }
-      const myPostsForStat = POSTS.filter(p => currentUser && p.authorId === currentUser.uid);
-      postCount = myPostsForStat.length;
+      postCount = POSTS.filter(p => currentUser && p.authorId === currentUser.uid).length;
       const statEl = document.getElementById('statPosts');
       if (statEl) statEl.textContent = postCount;
-      // Upvotes / Comments 도 함께 업데이트
-      const totalVotesStat = myPostsForStat.reduce((s, p) => s + (p.votes || 0), 0);
-      const totalCommentsStat = myPostsForStat.reduce((s, p) => s + (p.commentCount || 0), 0);
-      const statUpEl = document.getElementById('statUpvotes');
-      const statCmEl = document.getElementById('statComments');
-      if (statUpEl) statUpEl.textContent = totalVotesStat;
-      if (statCmEl) statCmEl.textContent = totalCommentsStat;
     }
 
     setLoading(false);
@@ -7645,7 +7636,7 @@ window.filterMyPostsBy = function(type) {
     var el = document.getElementById('mpstat-' + t);
     if (!el) return;
     el.style.background  = t === type ? 'var(--green-light)' : 'var(--surface)';
-    el.style.borderColor = t === type ? 'var(--green)'       : 'var(--border-mid)';
+    el.style.borderColor = t === type ? 'var(--green)' : 'rgba(0,0,0,0.08)';
   });
 
   var list = document.getElementById('feedList');
@@ -7664,8 +7655,8 @@ window.filterMyPostsBy = function(type) {
     filterLabel = '💬 Sorted by comments';
   } else {
     sorted = sorted.sort(function(a,b){
-      var ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
-      var tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+      var ta = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : 0;
+      var tb = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : 0;
       return tb - ta;
     });
     filterLabel = 'All posts';
@@ -7675,27 +7666,28 @@ window.filterMyPostsBy = function(type) {
   if (!postsListEl) return;
 
   if (sorted.length === 0) {
-    postsListEl.innerHTML = '<div style="padding:32px 20px;text-align:center;color:var(--text-3);font-size:13px">No posts yet</div>';
+    postsListEl.innerHTML = '<div style="padding:32px 20px;text-align:center;color:var(--text-3);font-size:13px">No posts yet for this filter</div>';
     return;
   }
 
-  var rows = sorted.map(function(p, i) {
-    return '<div class="post-card" data-post-id="' + p.id + '">' +
+  var rows = sorted.map(function(p) {
+    var pid = String(p.id);
+    return '<div class="post-card" data-post-id="' + pid + '">' +
       '<div class="post-meta">' +
         '<span class="tag tag-' + p.topic + '">' + capTopic(p.topic) + '</span>' +
         '<div class="meta-dot"></div>' +
         '<span class="meta-time">' + (p.time || 'Just now') + '</span>' +
         '<span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:600">▲ ' + (p.votes||0) + '</span>' +
       '</div>' +
-      '<div class="post-title" onclick="openDetail('' + p.id + '')" style="cursor:pointer">' + p.title + '</div>' +
-      '<div class="post-preview" onclick="openDetail('' + p.id + '')" style="cursor:pointer">' + p.preview + '</div>' +
+      '<div class="post-title" onclick="openDetail('' + pid + '')" style="cursor:pointer">' + p.title + '</div>' +
+      '<div class="post-preview" onclick="openDetail('' + pid + '')" style="cursor:pointer">' + p.preview + '</div>' +
       '<div class="post-actions" style="margin-top:8px">' +
-        '<button class="action-btn" onclick="openDetail('' + p.id + '')">' +
+        '<button class="action-btn" onclick="openDetail('' + pid + '')">' +
           '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 2H2C1.4 2 1 2.4 1 3v8c0 .6.4 1 1 1h2v3l3.5-3H14c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1z" stroke="currentColor" stroke-width="1.3"/></svg>' +
           (p.commentCount||0) +
         '</button>' +
         '<div class="spacer"></div>' +
-        '<button class="action-btn" style="color:#E24B4A" onclick="event.stopPropagation();confirmDeletePost('' + p.id + '')">' +
+        '<button class="action-btn" style="color:#E24B4A" onclick="event.stopPropagation();confirmDeletePost('' + pid + '')">' +
           '<svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M6 6v4M8 6v4M3 3l1 9h6l1-9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>' +
           'Delete' +
         '</button>' +
@@ -9357,15 +9349,17 @@ window.showMyPosts = async function() {
   const totalVotes    = myPosts.reduce((s, p) => s + (p.votes || 0), 0);
   const totalComments = myPosts.reduce((s, p) => s + (p.commentCount || 0), 0);
 
-  // 캐시에 저장 — 스탯 카드 클릭 필터링에 사용
+  // 캐시 저장 — 스탯 카드 필터링에 사용
   _myPostsCache = myPosts;
   _myPostsActiveFilter = 'posts';
 
   // 프로필 화면 통계도 동기화
   const statPostsEl   = document.getElementById('statPosts');
   const statUpvotesEl = document.getElementById('statUpvotes');
+  const statCmEl      = document.getElementById('statComments');
   if (statPostsEl)   statPostsEl.textContent   = myPosts.length;
   if (statUpvotesEl) statUpvotesEl.textContent = formatVotes(totalVotes);
+  if (statCmEl)      statCmEl.textContent      = totalComments;
 
   list.innerHTML = `
     <!-- 헤더 -->
@@ -9384,17 +9378,17 @@ window.showMyPosts = async function() {
       </button>
     </div>
 
-    <!-- 스탯 카드 3개 — 클릭하면 해당 기준으로 글 필터링 -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 14px" id="myPostsStatCards">
-      <div onclick="filterMyPostsBy('posts')" style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all 0.15s" id="mpstat-posts">
+    <!-- 스탯 카드 3개 — 클릭하면 해당 기준으로 필터링 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 14px">
+      <div id="mpstat-posts" onclick="filterMyPostsBy('posts')" style="background:var(--green-light);border:0.5px solid var(--green);border-radius:10px;padding:10px;text-align:center;cursor:pointer;touch-action:manipulation">
         <div style="font-size:20px;font-weight:700;color:var(--green)">${myPosts.length}</div>
         <div style="font-size:10px;color:var(--text-3);margin-top:2px">Posts</div>
       </div>
-      <div onclick="filterMyPostsBy('upvotes')" style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all 0.15s" id="mpstat-upvotes">
+      <div id="mpstat-upvotes" onclick="filterMyPostsBy('upvotes')" style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;touch-action:manipulation">
         <div style="font-size:20px;font-weight:700;color:var(--green)">${formatVotes(totalVotes)}</div>
         <div style="font-size:10px;color:var(--text-3);margin-top:2px">Upvotes</div>
       </div>
-      <div onclick="filterMyPostsBy('comments')" style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all 0.15s" id="mpstat-comments">
+      <div id="mpstat-comments" onclick="filterMyPostsBy('comments')" style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;touch-action:manipulation">
         <div style="font-size:20px;font-weight:700;color:var(--green)">${totalComments}</div>
         <div style="font-size:10px;color:var(--text-3);margin-top:2px">Comments</div>
       </div>
@@ -9634,7 +9628,6 @@ const OUTFIT_GUIDE = [
 const FIREBASE_AQI_URL = 'https://us-central1-koreaconnect-81f3b.cloudfunctions.net/getAQI';
 
 async function fetchAQI(lat, lon) {
-  // 1순위: Firebase Functions (에어코리아 연동)
   try {
     const r = await fetch(`${FIREBASE_AQI_URL}?lat=${lat}&lon=${lon}`);
     if (r.ok) {
@@ -9645,9 +9638,9 @@ async function fetchAQI(lat, lon) {
       console.log('[AQI] Firebase Functions 응답:', { pm25, pm10 });
       return { pm25, pm10 };
     }
-  } catch(e) { console.warn('[AQI] Firebase Functions 실패, fallback 시도:', e.message); }
+  } catch(e) { console.warn('[AQI] Firebase Functions 실패, fallback:', e.message); }
 
-  // 2순위: Open-Meteo AQI — 무제한 무료 fallback
+  // Open-Meteo fallback
   try {
     const r = await fetch(
       `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,pm10&timezone=Asia%2FSeoul`

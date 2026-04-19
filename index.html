@@ -6936,9 +6936,18 @@ window.castVote = async function(e, postId, dir) {
 
 // ── POST DETAIL + COMMENTS ──
 // ── Featured 글 전체화면 뷰 ──
-window.openFeaturedDetail = function(featuredId) {
-  const cfg = FEATURED_CACHE.find(f => f.id === featuredId);
-  if (!cfg) return;
+window.openFeaturedDetail = async function(featuredId) {
+  let cfg = FEATURED_CACHE.find(f => f.id === featuredId);
+  if (!cfg && firebaseOk) {
+    try {
+      const snap = await getDoc(doc(db, 'featured', featuredId));
+      if (snap.exists()) {
+        cfg = { id: snap.id, ...snap.data() };
+        FEATURED_CACHE.push(cfg);
+      }
+    } catch(e) {}
+  }
+  if (!cfg) { showToast('Post not found', 'error'); return; }
 
   const syntheticId = 'featured_' + featuredId;
   activeDetailId = syntheticId;
@@ -7022,8 +7031,17 @@ window.openFeaturedDetail = function(featuredId) {
 };
 
 window.openDetail = async function(postId) {
-  const post = POSTS.find(p => String(p.id) === String(postId));
-  if (!post) return;
+  let post = POSTS.find(p => String(p.id) === String(postId));
+  if (!post && firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
+    try {
+      const snap = await getDoc(doc(db, 'posts', postId));
+      if (snap.exists() && !snap.data().deleted) {
+        post = { id: snap.id, ...snap.data(), time: timeAgo(snap.data().createdAt) };
+        POSTS.push(post);
+      }
+    } catch(e) {}
+  }
+  if (!post) { showToast('Post not found', 'error'); return; }
   activeDetailId = postId;
 
   // Featured에서 숨긴 댓글 섹션 복원

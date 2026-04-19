@@ -5679,25 +5679,32 @@ function initPostsListener() {
   setupInfiniteScroll();
 }
 
-// Pinned 글 항상 상단 고정 — 별도 쿼리로 먼저 로드
+// Pinned 글 항상 상단 고정 — role:admin 또는 isPinned:true 글만 로드
 async function loadPinnedPosts() {
   if (!firebaseOk) return;
   try {
-    const q = query(
-      collection(db, 'posts'),
-      where('isPinned', '==', true),
-      orderBy('createdAt', 'desc')
-    );
-    const snap = await getDocs(q);
-    snap.docs.forEach(d => {
+    // role === 'admin' 쿼리 (인덱스 불필요)
+    const q1 = query(collection(db, 'posts'), where('role', '==', 'admin'));
+    const snap1 = await getDocs(q1);
+    snap1.docs.forEach(d => {
       if (!dbPostIds.has(d.id)) {
         dbPostIds.add(d.id);
         POSTS.push({ id: d.id, ...d.data(), time: timeAgo(d.data().createdAt) });
       }
     });
-    console.log('[Pinned] 로드:', snap.docs.length, '개');
+
+    // isPinned === true 쿼리 (단일 필드 — 자동 인덱스)
+    const q2 = query(collection(db, 'posts'), where('isPinned', '==', true));
+    const snap2 = await getDocs(q2);
+    snap2.docs.forEach(d => {
+      if (!dbPostIds.has(d.id)) {
+        dbPostIds.add(d.id);
+        POSTS.push({ id: d.id, ...d.data(), time: timeAgo(d.data().createdAt) });
+      }
+    });
+    console.log('[Pinned] 로드 완료:', POSTS.length, '개');
   } catch(e) {
-    console.warn('[Pinned] 쿼리 실패:', e.message);
+    console.warn('[Pinned] 쿼리 실패 (무시하고 계속):', e.message);
   }
 }
 
@@ -6530,8 +6537,15 @@ function renderFeed() {
   // ── POSTS + ADS 인터리빙 ──
   // ── 이원화 구조: 운영자 글 / 커뮤니티 글 분리 ──
   // 운영자 글: role === 'admin' OR isPinned === true
+  // pinned/admin 글 상단 고정 — 클라이언트 정렬 (인덱스 불필요)
   const officialPosts = filtered.filter(p => p.role === 'admin' || p.isPinned === true);
-  const communityPosts = filtered.filter(p => p.role !== 'admin' && !p.isPinned);
+  const communityPosts = filtered
+    .filter(p => p.role !== 'admin' && !p.isPinned)
+    .sort(function(a, b) {
+      const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
 
   // ── 가로형 카드 렌더 함수 ──
   function makePostCard(p, i, isOfficial) {

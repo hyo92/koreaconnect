@@ -9561,21 +9561,90 @@ const OUTFIT_GUIDE = [
 ];
 
 // 목업 날씨 데이터 (실제 API 연동 시 교체)
-// TODO: OpenWeatherMap API 연동 — api.openweathermap.org/data/2.5/weather?q={city}&appid={key}
-// 목업 날씨 + AQI 데이터
-// TODO: 실제 API 연동 시 아래 두 곳 교체
-// 날씨: api.openweathermap.org/data/2.5/weather?q=Seoul&appid={KEY}&units=metric
-// AQI:  api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={KEY}
+// ── 실시간 날씨 연동 — Open-Meteo (완전 무료, API 키 불필요) ──
+// open-meteo.com — 상업적 사용 가능, 분당 10,000 요청
+async function fetchRealWeather(lat, lon) {
+  const la = lat || 37.5665;
+  const lo = lon || 126.9780;
+
+  try {
+    // 날씨 + 대기질 동시 호출
+    const [wxRes, aqiRes] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&timezone=auto`),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${la}&longitude=${lo}&current=pm2_5,pm10&timezone=auto`)
+    ]);
+
+    if (!wxRes.ok) throw new Error('Weather API error');
+    const wx  = await wxRes.json();
+    const aqi = aqiRes.ok ? await aqiRes.json() : null;
+
+    // WMO weather code → description + condition 매핑
+    const WMO_MAP = {
+      0:  { desc: 'Clear sky',          condition: 'clear'  },
+      1:  { desc: 'Mainly clear',       condition: 'clear'  },
+      2:  { desc: 'Partly cloudy',      condition: 'cloudy' },
+      3:  { desc: 'Overcast',           condition: 'cloudy' },
+      45: { desc: 'Foggy',              condition: 'cloudy' },
+      48: { desc: 'Icy fog',            condition: 'cloudy' },
+      51: { desc: 'Light drizzle',      condition: 'rain'   },
+      53: { desc: 'Drizzle',            condition: 'rain'   },
+      55: { desc: 'Heavy drizzle',      condition: 'rain'   },
+      61: { desc: 'Slight rain',        condition: 'rain'   },
+      63: { desc: 'Rain',               condition: 'rain'   },
+      65: { desc: 'Heavy rain',         condition: 'rain'   },
+      71: { desc: 'Slight snow',        condition: 'snow'   },
+      73: { desc: 'Snow',               condition: 'snow'   },
+      75: { desc: 'Heavy snow',         condition: 'snow'   },
+      77: { desc: 'Snow grains',        condition: 'snow'   },
+      80: { desc: 'Slight showers',     condition: 'rain'   },
+      81: { desc: 'Showers',            condition: 'rain'   },
+      82: { desc: 'Heavy showers',      condition: 'rain'   },
+      85: { desc: 'Snow showers',       condition: 'snow'   },
+      86: { desc: 'Heavy snow showers', condition: 'snow'   },
+      95: { desc: 'Thunderstorm',       condition: 'rain'   },
+      96: { desc: 'Thunderstorm',       condition: 'rain'   },
+      99: { desc: 'Thunderstorm',       condition: 'rain'   },
+    };
+
+    const code    = wx.current?.weather_code ?? 0;
+    const wmoInfo = WMO_MAP[code] || { desc: 'Partly cloudy', condition: 'cloudy' };
+    const temp    = Math.round(wx.current?.temperature_2m    ?? 0);
+
+    // 기온에 따라 condition 보정
+    let condition = wmoInfo.condition;
+    if (condition === 'clear' && temp >= 28) condition = 'hot';
+    if (condition === 'clear' && temp <= 5)  condition = 'cold';
+
+    const weatherData = {
+      temp,
+      feelsLike: Math.round(wx.current?.apparent_temperature ?? temp),
+      desc:      wmoInfo.desc,
+      condition,
+      location:  'Current Location',
+      humidity:  wx.current?.relative_humidity_2m  ?? 0,
+      windSpeed: Math.round((wx.current?.wind_speed_10m ?? 0)),
+    };
+
+    const aqiData = {
+      pm25: Math.round(aqi?.current?.pm2_5 ?? 0),
+      pm10: Math.round(aqi?.current?.pm10  ?? 0),
+    };
+
+    return { weatherData, aqiData };
+
+  } catch(err) {
+    console.warn('[Weather] API 실패, 목업 사용:', err.message);
+    return { weatherData: MOCK_WEATHER, aqiData: MOCK_AQI };
+  }
+}
+
+// fallback 목업
 const MOCK_WEATHER = {
   temp: 14, feelsLike: 11,
-  desc: 'Partly cloudy',
-  condition: 'cloudy', // clear | cloudy | rain | snow | hot
+  desc: 'Partly cloudy', condition: 'cloudy',
   location: 'Seoul, Korea',
 };
-const MOCK_AQI = {
-  pm25: 18,  // µg/m³
-  pm10: 32,
-};
+const MOCK_AQI = { pm25: 18, pm10: 32 };
 
 // ── 미세먼지 등급 기준 (WHO 기준 참고) ──
 const AQI_LEVELS = [
@@ -9652,9 +9721,24 @@ const WEATHER_PROMO = {
   cloudy: { show: false },
 };
 
-window.loadTodaysLook = function(weatherData, aqiData) {
-  const w   = weatherData || MOCK_WEATHER;
-  const aqi = aqiData     || MOCK_AQI;
+window.loadTodaysLook = async function(weatherData, aqiData) {
+  // 인자 없으면 실제 API 호출
+  if (!weatherData) {
+    const lat = userLat  || null;
+    const lon = userLng  || null;
+    try {
+      const result = await fetchRealWeather(lat, lon);
+      weatherData = result.weatherData;
+      aqiData     = result.aqiData;
+    } catch(e) {
+      weatherData = MOCK_WEATHER;
+      aqiData     = MOCK_AQI;
+    }
+  }
+  aqiData = aqiData || MOCK_AQI;
+
+  const w   = weatherData;
+  const aqi = aqiData;
   const temp = Math.round(w.temp);
 
   // ── 날씨: 기온 → 가이드 선택 ──
@@ -10097,7 +10181,7 @@ initPostsListener();
 renderChatList();
 setTimeout(() => {
   setSideNav('home');
-  loadTodaysLook(); // Today's Look 초기 로드 (목업)
+  loadTodaysLook(); // 실시간 날씨 API 호출
 }, 100);
 
 // ── Sticky Tabs: 스크롤 시 그림자 토글 ──

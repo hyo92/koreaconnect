@@ -5704,7 +5704,7 @@ async function loadPinnedPosts() {
     const q1 = query(collection(db, 'posts'), where('role', '==', 'admin'));
     const snap1 = await getDocs(q1);
     snap1.docs.forEach(d => {
-      if (!dbPostIds.has(d.id)) {
+      if (!dbPostIds.has(d.id) && !d.data().deleted) {
         dbPostIds.add(d.id);
         const p = { id: d.id, ...d.data(), time: timeAgo(d.data().createdAt) };
         POSTS.push(p);
@@ -5716,7 +5716,7 @@ async function loadPinnedPosts() {
     const q2 = query(collection(db, 'posts'), where('isPinned', '==', true));
     const snap2 = await getDocs(q2);
     snap2.docs.forEach(d => {
-      if (!dbPostIds.has(d.id)) {
+      if (!dbPostIds.has(d.id) && !d.data().deleted) {
         dbPostIds.add(d.id);
         const p = { id: d.id, ...d.data(), time: timeAgo(d.data().createdAt) };
         POSTS.push(p);
@@ -5793,7 +5793,7 @@ async function loadNextPage(isFirst = false) {
       time: timeAgo(d.data().createdAt),
     }));
 
-    const unique = newPosts.filter(p => !dbPostIds.has(p.id));
+    const unique = newPosts.filter(p => !dbPostIds.has(p.id) && !p.deleted);
     unique.forEach(p => dbPostIds.add(p.id));
     POSTS = [...POSTS, ...unique];
 
@@ -6138,7 +6138,7 @@ function renderSearchResults(results, kw) {
           <button class="upvote-btn ${voteState[p.id]==='up'?'active':''}" onclick="castVote(event,'${p.id}','up');event.stopPropagation()">
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 2L13 9H1L7 2Z" fill="currentColor"/></svg>
           </button>
-          <span class="vote-count ${voteState[p.id]==='up'?'up':voteState[p.id]==='down'?'down':''}">${formatVotes((p.votes||1)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}</span>
+          <span class="vote-count ${voteState[p.id]==='up'?'up':voteState[p.id]==='down'?'down':''}">${formatVotes((p.votes||0)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}</span>
           <button class="downvote-btn ${voteState[p.id]==='down'?'active':''}" onclick="castVote(event,'${p.id}','down');event.stopPropagation()">
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 12L1 5H13L7 12Z" fill="currentColor"/></svg>
           </button>
@@ -6445,7 +6445,7 @@ function renderFeed() {
   const list = document.getElementById('feedList');
   const b = BANNER_CONFIG[currentTab] || BANNER_CONFIG.all;
 
-  let filtered = [...POSTS];
+  let filtered = POSTS.filter(p => !p.deleted);
 
   if (isHomeMode) {
     // ── Home 모드: 전체 글 혼합, Nearby면 위치 필터만 적용 ──
@@ -6682,7 +6682,7 @@ function renderFeed() {
             <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
               <path d="M7 2L13 9H1L7 2Z" fill="currentColor" opacity="0.5"/>
             </svg>
-            ${formatVotes((p.votes||1)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}
+            ${formatVotes((p.votes||0)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}
           </div>
           <!-- 댓글 수 -->
           <div class="hcard-stat">
@@ -6914,7 +6914,7 @@ window.castVote = async function(e, postId, dir) {
       const delta = (dir === 'up' ? 1 : -1) * (prev === dir ? -1 : 1)
                   + (prev && prev !== dir ? (prev === 'up' ? -1 : 1) : 0);
       await updateDoc(doc(db, 'posts', postId), { votes: increment(delta) });
-      post.votes = (post.votes || 1) + delta;
+      post.votes = (post.votes || 0) + delta;
       _syncWidgetStats();
 
       // 좋아요 알림 — 본인 글이 아니고, 새로 upvote하는 경우에만
@@ -7076,7 +7076,7 @@ window.openDetail = async function(postId) {
       </button>
       <span class="vote-count ${vs==='up'?'up':vs==='down'?'down':''}"
             id="sheet-vc-${postId}">
-        ${formatVotes(post.votes||1)}
+        ${formatVotes(post.votes||0)}
       </span>
       <button class="downvote-btn ${vs==='down'?'active':''}"
               onclick="castVote(event,'${postId}','down');refreshSheetVote('${postId}')">
@@ -7132,7 +7132,7 @@ function refreshSheetVote(postId) {
   const el = document.getElementById(`sheet-vc-${postId}`);
   if (el) {
     // post.votes는 castVote에서 이미 delta 반영됨 — 그대로 표시
-    el.textContent = formatVotes(post.votes || 1);
+    el.textContent = formatVotes(post.votes || 0);
     el.className = `vote-count ${vs==='up'?'up':vs==='down'?'down':''}`;
   }
 }
@@ -7334,7 +7334,7 @@ function renderNearby() {
             <button class="upvote-btn ${voteState[p.id]==='up'?'active':''}" onclick="castVote(event,'${p.id}','up')">
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 2L13 9H1L7 2Z" fill="currentColor"/></svg>
             </button>
-            <span class="vote-count ${voteState[p.id]==='up'?'up':voteState[p.id]==='down'?'down':''}" id="vc-nearby-${p.id}">${formatVotes((p.votes||1)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}</span>
+            <span class="vote-count ${voteState[p.id]==='up'?'up':voteState[p.id]==='down'?'down':''}" id="vc-nearby-${p.id}">${formatVotes((p.votes||0)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}</span>
             <button class="downvote-btn ${voteState[p.id]==='down'?'active':''}" onclick="castVote(event,'${p.id}','down')">
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 12L1 5H13L7 12Z" fill="currentColor"/></svg>
             </button>
@@ -7618,7 +7618,7 @@ window.publishPost = async function() {
     topic,                                        // Firestore topic 필드 — 카테고리 필터링 핵심
     title,
     preview: body,
-    votes: 1,
+    votes: 0,
     commentCount: 0,
     // ── 위치 데이터 (Nearby 필터링용) ──
     ...(userDistrict ? { district: userDistrict } : {}),
@@ -9023,7 +9023,7 @@ window.publishFromEditor = async function() {
     topic, title,
     preview: bodyHtml,      // HTML 그대로 저장 (색상, Bold 등 유지)
     previewText: bodyText,  // 검색/피드 미리보기용 plain text
-    votes: 1, commentCount: 0,
+    votes: 0, commentCount: 0,
     ...(userDistrict ? { district: userDistrict } : {}),
     ...(userCity     ? { city: userCity }         : {}),
     ...(locationStr  ? { location: locationStr }  : {}),

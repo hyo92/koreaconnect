@@ -7223,31 +7223,30 @@ window.submitComment = async function() {
 
   const postId = activeDetailId;
 
-  // 내 댓글 이력 저장 — localStorage + Firestore userActivity
-  const commentEntry = {
-    id: 'c_' + Date.now(),
-    text,
-    postId: String(postId),
-    postTitle: POSTS.find(p => String(p.id) === String(postId))?.title || '',
-    createdAt: Date.now(),
-  };
-  // localStorage (즉시, 오프라인도 동작)
-  try {
-    const cache = JSON.parse(localStorage.getItem('kc_my_comments') || '[]');
-    cache.unshift(commentEntry);
-    localStorage.setItem('kc_my_comments', JSON.stringify(cache.slice(0, 100)));
-  } catch(e) {}
-  // Firestore userActivity (로그인 세션 간 동기화)
-  if (firebaseOk && currentUser) {
-    setDoc(doc(db, 'userActivity', currentUser.uid), {
-      comments: arrayUnion(commentEntry)
-    }, { merge: true }).catch(() => {});
-  }
-
   if (firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
     try {
-      await addDoc(collection(db, 'posts', postId, 'comments'), commentData);
+      const docRef = await addDoc(collection(db, 'posts', postId, 'comments'), commentData);
       await updateDoc(doc(db, 'posts', postId), { commentCount: increment(1) });
+
+      // Firestore ID로 댓글 이력 저장
+      const commentEntry = {
+        id: docRef.id,
+        text,
+        postId: String(postId),
+        postTitle: POSTS.find(p => String(p.id) === String(postId))?.title || '',
+        createdAt: Date.now(),
+      };
+      // 인메모리 캐시
+      if (!_myCommentsCache) _myCommentsCache = [];
+      _myCommentsCache.unshift(commentEntry);
+      // localStorage
+      try {
+        localStorage.setItem('kc_my_comments', JSON.stringify(_myCommentsCache.slice(0, 100)));
+      } catch(e) {}
+      // Firestore userActivity
+      setDoc(doc(db, 'userActivity', currentUser.uid), {
+        comments: arrayUnion(commentEntry)
+      }, { merge: true }).catch(() => {});
 
       // 댓글 알림 — 본인 글이 아닌 경우에만
       const post = POSTS.find(p => String(p.id) === String(postId));
@@ -9218,34 +9217,53 @@ window.confirmDeleteComment = async function() {
   closeCommentMenu();
   if (!commentId || !postId || !currentUser) return;
 
+  // 1. Firestore 댓글 삭제
   if (firebaseOk && !String(postId).startsWith('seed_')) {
     try {
       await updateDoc(doc(db, 'posts', postId, 'comments', commentId), { deleted: true });
-      await updateDoc(doc(db, 'posts', postId), { commentCount: increment(-1) });
-      showToast('Comment deleted', 'info');
     } catch(e) { showToast('Delete failed', 'error'); return; }
   }
 
-  // localStorage에서도 제거
+  // 2. POSTS 배열 commentCount 즉시 업데이트
+  const post = POSTS.find(p => String(p.id) === String(postId));
+  if (post) {
+    post.commentCount = Math.max(0, (post.commentCount || 1) - 1);
+    // 피드 카드 댓글 수 DOM 즉시 갱신
+    const ccEl = document.getElementById(`cc-${postId}`);
+    if (ccEl) ccEl.textContent = post.commentCount;
+  }
+  // Firestore commentCount도 동기화 (fire-and-forget)
+  if (firebaseOk) {
+    updateDoc(doc(db, 'posts', postId), { commentCount: increment(-1) }).catch(() => {});
+  }
+
+  // 3. 인메모리 캐시에서 제거
+  if (_myCommentsCache) {
+    _myCommentsCache = _myCommentsCache.filter(c => c.id !== commentId);
+  }
+
+  // 4. localStorage에서 제거
   try {
     const cache = JSON.parse(localStorage.getItem('kc_my_comments') || '[]');
     localStorage.setItem('kc_my_comments', JSON.stringify(cache.filter(c => c.id !== commentId)));
   } catch(e) {}
 
-  // Firestore userActivity에서도 제거
+  // 5. Firestore userActivity에서 제거
   if (firebaseOk && currentUser) {
     try {
       const actSnap = await getDoc(doc(db, 'userActivity', currentUser.uid));
       if (actSnap.exists()) {
-        const comments = (actSnap.data().comments || []).filter(c => c.id !== commentId);
-        await setDoc(doc(db, 'userActivity', currentUser.uid), { comments }, { merge: true });
+        const updated = (actSnap.data().comments || []).filter(c => c.id !== commentId);
+        setDoc(doc(db, 'userActivity', currentUser.uid), { comments: updated }, { merge: true }).catch(() => {});
       }
     } catch(e) {}
   }
 
-  // My Activity가 열려있으면 Comments 탭 갱신
-  const actContent = document.getElementById('activityContent');
-  if (actContent && actContent.querySelector('.tag[style*="blue"]')) {
+  showToast('Comment deleted', 'info');
+
+  // 6. My Activity Comments 탭이 활성화되어 있으면 갱신
+  const actTabComments = document.getElementById('actTab-comments');
+  if (actTabComments && actTabComments.dataset.active === 'true') {
     switchActivityTab('comments');
   }
   _loadCommentCount();
@@ -9767,6 +9785,7 @@ window.refreshSheetSave = function(postId) {
 // 사이드바 My Activity / 프로필 탭 / 어디서든 호출 가능
 // ── My Activity 캐시 (탭 전환 시 재사용) ──
 let _activityCache = null;
+let _myCommentsCache = null; // { id (Firestore ID), text, postId, postTitle, createdAt }
 
 window.showMyPosts = async function(tab) {
   setSideNav('activity');
@@ -9893,9 +9912,10 @@ window.switchActivityTab = async function(tab) {
     const el = document.getElementById('actTab-' + t);
     if (!el) return;
     const isActive = t === tab;
-    el.style.background     = isActive ? 'var(--green-light)' : 'var(--surface)';
-    el.style.border         = isActive ? '1.5px solid var(--green)' : '1px solid var(--border)';
-    el.querySelector('div:last-child').style.color = isActive ? 'var(--green-dark)' : 'var(--text-3)';
+    el.dataset.active        = isActive ? 'true' : 'false';
+    el.style.background      = isActive ? 'var(--green-light)' : 'var(--surface)';
+    el.style.border          = isActive ? '1.5px solid var(--green)' : '1px solid var(--border)';
+    el.querySelector('div:last-child').style.color      = isActive ? 'var(--green-dark)' : 'var(--text-3)';
     el.querySelector('div:last-child').style.fontWeight = isActive ? '600' : '400';
   });
 
@@ -9940,30 +9960,40 @@ window.switchActivityTab = async function(tab) {
     content.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-3);font-size:13px">Loading…</div>`;
     let myComments = [];
 
-    // ① Firestore userActivity/{uid} (가장 신뢰할 수 있는 소스)
-    if (firebaseOk && currentUser) {
+    // ① 인메모리 캐시 우선 (가장 최신 상태)
+    if (_myCommentsCache !== null) {
+      myComments = _myCommentsCache.map(c => ({
+        ...c,
+        time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
+      }));
+    }
+
+    // ② 캐시 없으면 Firestore userActivity 로드
+    if (myComments.length === 0 && firebaseOk && currentUser) {
       try {
         const actSnap = await getDoc(doc(db, 'userActivity', currentUser.uid));
         if (actSnap.exists()) {
           const data = actSnap.data().comments || [];
-          myComments = [...data]
-            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-            .map(c => ({
-              ...c,
-              time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
-            }));
+          _myCommentsCache = [...data].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          myComments = _myCommentsCache.map(c => ({
+            ...c,
+            time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
+          }));
         }
       } catch(e) {}
     }
 
-    // ② Firestore 실패 또는 결과 없으면 localStorage fallback
+    // ③ 그래도 없으면 localStorage fallback
     if (myComments.length === 0) {
       try {
         const cached = JSON.parse(localStorage.getItem('kc_my_comments') || '[]');
-        myComments = cached.map(c => ({
-          ...c,
-          time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
-        }));
+        if (cached.length) {
+          _myCommentsCache = cached;
+          myComments = cached.map(c => ({
+            ...c,
+            time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
+          }));
+        }
       } catch(e) {}
     }
 

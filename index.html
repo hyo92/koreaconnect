@@ -5026,7 +5026,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {
   getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, increment,
-  query, orderBy, where, limit, startAfter, getDocs, serverTimestamp, onSnapshot
+  query, orderBy, where, limit, startAfter, getDocs, getDoc, serverTimestamp, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect,
@@ -9516,7 +9516,7 @@ function showFeedPlaceholder({ icon, title, desc, ctaLabel, ctaAction, extras = 
 // 로컬스토리지에 저장된 postId 목록을 읽어서 현재 로드된 POSTS와 매칭
 // TODO: Firestore users/{uid}/saved 서브컬렉션으로 마이그레이션 시
 //       getDocs(collection(db,`users/${uid}/saved`)) → postId 목록 → 각 doc fetch
-window.goSaved = function() {
+window.goSaved = async function() {
   setSideNav('saved');
   isHomeMode = false;
 
@@ -9540,57 +9540,97 @@ window.goSaved = function() {
       desc: 'Tap the bookmark icon on any post to save it here for later.',
       ctaLabel: 'Browse posts',
       ctaAction: 'goHome()',
-      extras: `<div style="margin-top:16px;padding:12px 16px;background:var(--surface);
-                border:0.5px solid var(--border);border-radius:12px;
-                font-size:12px;color:var(--text-3);max-width:260px;line-height:1.5">
-                💡 Coming soon: Sync saved posts across devices with your account.
-               </div>`,
     });
     return;
   }
 
-  // 현재 로드된 POSTS에서 매칭
-  const filtered = POSTS.filter(p => saved.includes(String(p.id)));
-  const list = document.getElementById('feedList');
   goTo('feed');
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-
+  const list = document.getElementById('feedList');
   if (!list) return;
 
-  if (filtered.length === 0) {
-    // 저장은 됐지만 현재 세션에 로드 안 됨
+  // 로딩 표시
+  list.innerHTML = `<div style="padding:48px 20px;text-align:center;color:var(--text-3);font-size:13px">Loading saved posts…</div>`;
+
+  // saved ID를 featured와 일반 포스트로 분리
+  const featuredIds = saved.filter(id => id.startsWith('featured_')).map(id => id.replace('featured_', ''));
+  const postIds     = saved.filter(id => !id.startsWith('featured_'));
+
+  // ① 이미 POSTS에 있는 것
+  const fromCache = POSTS.filter(p => postIds.includes(String(p.id)));
+  const cachedIds = new Set(fromCache.map(p => String(p.id)));
+
+  // ② POSTS에 없는 것은 Firestore에서 직접 fetch
+  const missingIds = postIds.filter(id => !cachedIds.has(id));
+  let fetched = [];
+  if (firebaseOk && missingIds.length > 0) {
+    try {
+      const fetches = missingIds.map(id => getDoc(doc(db, 'posts', id)));
+      const snaps = await Promise.all(fetches);
+      snaps.forEach(snap => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (!data.deleted) {
+            const p = { id: snap.id, ...data };
+            p.time = p.createdAt ? timeAgo(p.createdAt) : 'Some time ago';
+            fetched.push(p);
+            // POSTS 캐시에 추가
+            if (!POSTS.find(x => x.id === p.id)) POSTS.push(p);
+          }
+        }
+      });
+    } catch(e) {
+      console.warn('Saved posts fetch error:', e);
+    }
+  }
+
+  // ③ Featured 포스트
+  const featuredPosts = featuredIds
+    .map(fid => FEATURED_CACHE.find(f => f.id === fid))
+    .filter(Boolean);
+
+  const regularPosts = [...fromCache, ...fetched];
+
+  if (regularPosts.length === 0 && featuredPosts.length === 0) {
     showFeedPlaceholder({
       icon: '🔖',
-      title: `${saved.length} saved post${saved.length > 1 ? 's' : ''}`,
-      desc: 'Your saved posts aren\'t loaded in this session. Refresh the page to load them.',
-      ctaLabel: 'Refresh & load',
-      ctaAction: 'location.reload()',
-      extras: `<div style="margin-top:8px;font-size:11px;color:var(--text-3)">${saved.length} post ID${saved.length > 1 ? 's' : ''} saved locally</div>`,
+      title: 'Saved posts not found',
+      desc: 'These posts may have been deleted.',
+      ctaLabel: 'Browse posts',
+      ctaAction: 'goHome()',
     });
     return;
   }
 
+  function renderSavedCard(p, isFeatured) {
+    const id      = isFeatured ? 'featured_' + p.id : p.id;
+    const openFn  = isFeatured ? `openFeaturedDetail('${p.id}')` : `openDetail('${p.id}')`;
+    const preview = (p.previewText || p.preview || '').replace(/<[^>]*>/g, '').slice(0, 120);
+    return `
+      <div class="post-card" style="cursor:pointer" onclick="${openFn}">
+        <div class="post-meta">
+          <span class="comm-name">${p.comm || 'KoreaConnect'}</span>
+          <div class="meta-dot"></div>
+          <span class="meta-time">${isFeatured ? 'Featured' : (p.time || 'Just now')}</span>
+          <span class="tag tag-${p.topic}">${capTopic(p.topic)}</span>
+        </div>
+        <div class="post-title">${p.title}</div>
+        <div class="post-preview">${preview}</div>
+        <div class="post-actions" style="margin-top:8px">
+          <button class="action-btn" style="color:#E24B4A" onclick="event.stopPropagation();removeSavedPost('${id}');goSaved()">🗑 Remove</button>
+        </div>
+      </div>`;
+  }
+
+  const total = regularPosts.length + featuredPosts.length;
   list.innerHTML = `
     <div style="padding:12px 16px 4px;display:flex;align-items:center;gap:6px">
       <span style="font-size:15px">🔖</span>
       <span style="font-size:13px;font-weight:600;color:var(--text)">Saved Posts</span>
-      <span style="margin-left:auto;font-size:11px;color:var(--text-3)">${filtered.length} post${filtered.length > 1 ? 's' : ''}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text-3)">${total} post${total !== 1 ? 's' : ''}</span>
     </div>
-    ${filtered.map((p, i) => `
-      <div class="post-card" style="animation-delay:${i * 0.03}s">
-        <div class="post-meta">
-          <span class="comm-name">${p.comm || 'KoreaConnect'}</span>
-          <div class="meta-dot"></div>
-          <span class="meta-time">${p.time || 'Just now'}</span>
-          <span class="tag tag-${p.topic}">${capTopic(p.topic)}</span>
-        </div>
-        <div class="post-title" onclick="openDetail('${p.id}')" style="cursor:pointer">${p.title}</div>
-        <div class="post-preview" onclick="openDetail('${p.id}')" style="cursor:pointer">${p.preview}</div>
-        <div class="post-actions" style="margin-top:8px">
-          <button class="action-btn" style="color:#E24B4A"
-            onclick="removeSavedPost('${p.id}');goSaved()">🗑 Remove</button>
-        </div>
-      </div>`).join('')}`;
+    ${featuredPosts.map(p => renderSavedCard(p, true)).join('')}
+    ${regularPosts.map(p => renderSavedCard(p, false)).join('')}`;
 }
 
 // 저장 목록에서 특정 포스트 제거

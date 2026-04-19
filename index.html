@@ -6906,6 +6906,7 @@ window.castVote = async function(e, postId, dir) {
 
   renderFeed();
   renderNearby();
+  _syncWidgetStats();
 
   if (firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
     try {
@@ -6913,6 +6914,7 @@ window.castVote = async function(e, postId, dir) {
                   + (prev && prev !== dir ? (prev === 'up' ? -1 : 1) : 0);
       await updateDoc(doc(db, 'posts', postId), { votes: increment(delta) });
       post.votes = (post.votes || 1) + delta;
+      _syncWidgetStats();
 
       // 좋아요 알림 — 본인 글이 아니고, 새로 upvote하는 경우에만
       const isNewUpvote = dir === 'up' && prev !== 'up';
@@ -9211,10 +9213,10 @@ window.closeCommentMenu = function() {
 }
 
 window.confirmDeleteComment = async function() {
-  closeCommentMenu();
-  if (!activeCommentId || !activeDetailId || !currentUser) return;
-  const postId = activeDetailId;
+  const postId    = activeDetailId;
   const commentId = activeCommentId;
+  closeCommentMenu();
+  if (!commentId || !postId || !currentUser) return;
 
   if (firebaseOk && !String(postId).startsWith('seed_')) {
     try {

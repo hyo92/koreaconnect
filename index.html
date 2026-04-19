@@ -5005,38 +5005,14 @@ const googleProvider = new GoogleAuthProvider();
 // SEED_POSTS 제거 — 실제 DB 데이터만 사용
 const SEED_POSTS = []; // kept for legacy guard checks, no data
 
-// ── 관리자/공지 목업 데이터 (Firestore에 실제 admin 글이 없을 때 화면 확인용) ──
-// 운영 시 Firestore에서 role:'admin' 또는 isPinned:true 글로 대체됨
-// Firestore에 데이터 있으면 이 배열은 자동으로 무시됨 (loadNextPage에서 POSTS에 추가 안 됨)
-const ADMIN_MOCK_POSTS = [
-  {
-    id: 'admin_welcome',
-    comm: 'KoreaConnect',
-    author: 'KoreaConnect Team',
-    authorId: '__admin__',
-    role: 'admin',
-    topic: 'tips',
-    title: '👋 Welcome to KoreaConnect — How to get the most out of this community',
-    preview: 'Hi everyone! We\'re a community built for expats living in or moving to Korea. Here\'s a quick guide: use category tabs to filter posts, enable Nearby to see local discussions, and tap Write to share your experience.',
-    votes: 0, commentCount: 0,
-    time: 'Pinned',
-    createdAt: null,
-  },
-  {
-    id: 'admin_rules',
-    comm: 'KoreaConnect',
-    author: 'KoreaConnect Team',
-    authorId: '__admin__',
-    role: 'admin',
-    isPinned: true,
-    topic: 'visa',
-    title: '📋 Community Rules & Posting Guidelines',
-    preview: 'Keep it helpful and respectful. No spam, no misinformation. Visa advice should mention your specific situation. Housing posts — please include district and price range.',
-    votes: 0, commentCount: 0,
-    time: 'Pinned',
-    createdAt: null,
-  },
+// ── 오너 이메일 — 이 계정으로 쓴 글은 자동으로 상단 고정됨 ──
+const OWNER_EMAILS = [
+  'hyoyoungnicoleahan@gmail.com',
+  'andhaw89@gmail.com',
 ];
+
+// 더미 admin 목업 글 제거
+const ADMIN_MOCK_POSTS = [];
 
 const CHATS = [
   {id:1,name:'Sarah K.',initials:'SK',bg:'#E6F1FB',color:'#0C447C',dist:'0.8km · Yeonnam-dong',time:'2m ago',preview:'Is the room still available? I can visit this week',unread:true,messages:[{from:'them',text:'Hi! I saw your post about the sublet in Yeonnam. Is it still available?',time:'10:23 AM'},{from:'me',text:'Yes it is! Available from next month. 550,000/month, 2-month deposit.',time:'10:31 AM'},{from:'them',text:'That sounds great. Is the landlord okay with foreigners? I have an F-2 visa.',time:'10:33 AM'},{from:'me',text:'Totally fine — she\'s had foreign tenants before. Want to visit this week?',time:'10:35 AM'},{from:'them',text:'Is the room still available? I can visit this week',time:'Just now'}]},
@@ -7334,11 +7310,14 @@ window.publishPost = async function() {
     ? `${userDistrict}, ${userCity}`
     : userDistrict || userCity || null;
 
+  const isOwnerPost = OWNER_EMAILS.includes(currentUser.email);
   const newPost = {
     comm: selectedComm,
     author: authorName,
     authorId: currentUser.uid,
+    authorEmail: currentUser.email || null,
     authorPhoto: currentUser.photoURL || null,
+    ...(isOwnerPost ? { isPinned: true, role: 'admin' } : {}),
     topic,                                        // Firestore topic 필드 — 카테고리 필터링 핵심
     title,
     preview: body,

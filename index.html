@@ -5665,18 +5665,21 @@ function resetImageUpload() {
 }
 
 // ── FIREBASE: 첫 페이지 로드 ──
-function initPostsListener() {
+async function initPostsListener() {
   setLoading(true);
   POSTS = [];
   dbPostIds = new Set();
   lastVisible = null;
   hasMore = true;
-
-  // pinned 글 먼저 로드 후 일반 글 로드
-  loadPinnedPosts().then(function() {
-    loadNextPage(true);
-  });
   setupInfiniteScroll();
+  // 일반 글 먼저 로드
+  await loadNextPage(true);
+  // pinned 글 로드 후 앞으로 재정렬
+  await loadPinnedPosts();
+  const pinned = POSTS.filter(p => p.isPinned || p.role === 'admin');
+  const normal = POSTS.filter(p => !p.isPinned && p.role !== 'admin');
+  POSTS = [...pinned, ...normal];
+  renderFeed();
 }
 
 // Pinned 글 항상 상단 고정 — role:admin 또는 isPinned:true 글만 로드
@@ -6140,7 +6143,7 @@ window.onSearchResultClick = function(postId) {
   setTimeout(() => openDetail(postId), 50);
 }
 
-window.setTab = function(el, tab) {
+window.setTab = async function(el, tab) {
   if (isSearchMode) clearSearch();
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
@@ -6152,11 +6155,15 @@ window.setTab = function(el, tab) {
   lastVisible = null;
   hasMore = true;
   setLoading(true);
-  // pinned 글 먼저, 그 다음 일반 글
-  loadPinnedPosts().then(function() {
-    loadNextPage(true);
-  });
   setupInfiniteScroll();
+  // 일반 글 먼저 로드 완료 후 pinned 앞에 붙이기
+  await loadNextPage(true);
+  await loadPinnedPosts();
+  // pinned/admin 글을 맨 앞으로 재정렬
+  const pinned = POSTS.filter(p => p.isPinned || p.role === 'admin');
+  const normal = POSTS.filter(p => !p.isPinned && p.role !== 'admin');
+  POSTS = [...pinned, ...normal];
+  renderFeed();
 }
 
 // 탭별 배너 설정 (9개 카테고리)

@@ -3321,14 +3321,10 @@
     background: var(--surface);
   }
   .profile-tab {
-    flex: 1; text-align: center; padding: 14px 0;
+    flex: 1; text-align: center; padding: 11px 0;
     font-size: 13px; color: var(--text-3); cursor: pointer;
     border-bottom: 2px solid transparent; transition: all 0.15s;
     font-family: var(--font);
-    -webkit-tap-highlight-color: rgba(0,0,0,0.05);
-    touch-action: manipulation;
-    user-select: none;
-    position: relative; z-index: 1;
   }
   .profile-tab.active { color: var(--green); border-bottom-color: var(--green); font-weight: 500; }
   .my-posts-list { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
@@ -3936,10 +3932,10 @@
         Edit
       </button>
     </div>
-    <div style="display:none">
-      <span id="statPosts">0</span>
-      <span id="statUpvotes">0</span>
-      <span id="statComments">0</span>
+    <div class="profile-stats">
+      <div class="stat-card"><div class="stat-num" id="statPosts">0</div><div class="stat-label">Posts</div></div>
+      <div class="stat-card"><div class="stat-num" id="statUpvotes">0</div><div class="stat-label">Upvotes</div></div>
+      <div class="stat-card"><div class="stat-num" id="statComments">0</div><div class="stat-label">Comments</div></div>
     </div>
 
     <!-- 탭: Account / My Posts -->
@@ -5009,14 +5005,38 @@ const googleProvider = new GoogleAuthProvider();
 // SEED_POSTS 제거 — 실제 DB 데이터만 사용
 const SEED_POSTS = []; // kept for legacy guard checks, no data
 
-// ── 오너 이메일 — 이 계정으로 쓴 글은 자동으로 상단 고정됨 ──
-const OWNER_EMAILS = [
-  'hyoyoungnicoleahan@gmail.com',
-  'andhaw89@gmail.com',
+// ── 관리자/공지 목업 데이터 (Firestore에 실제 admin 글이 없을 때 화면 확인용) ──
+// 운영 시 Firestore에서 role:'admin' 또는 isPinned:true 글로 대체됨
+// Firestore에 데이터 있으면 이 배열은 자동으로 무시됨 (loadNextPage에서 POSTS에 추가 안 됨)
+const ADMIN_MOCK_POSTS = [
+  {
+    id: 'admin_welcome',
+    comm: 'KoreaConnect',
+    author: 'KoreaConnect Team',
+    authorId: '__admin__',
+    role: 'admin',
+    topic: 'tips',
+    title: '👋 Welcome to KoreaConnect — How to get the most out of this community',
+    preview: 'Hi everyone! We\'re a community built for expats living in or moving to Korea. Here\'s a quick guide: use category tabs to filter posts, enable Nearby to see local discussions, and tap Write to share your experience.',
+    votes: 0, commentCount: 0,
+    time: 'Pinned',
+    createdAt: null,
+  },
+  {
+    id: 'admin_rules',
+    comm: 'KoreaConnect',
+    author: 'KoreaConnect Team',
+    authorId: '__admin__',
+    role: 'admin',
+    isPinned: true,
+    topic: 'visa',
+    title: '📋 Community Rules & Posting Guidelines',
+    preview: 'Keep it helpful and respectful. No spam, no misinformation. Visa advice should mention your specific situation. Housing posts — please include district and price range.',
+    votes: 0, commentCount: 0,
+    time: 'Pinned',
+    createdAt: null,
+  },
 ];
-
-// 더미 admin 목업 글 제거
-const ADMIN_MOCK_POSTS = [];
 
 const CHATS = [
   {id:1,name:'Sarah K.',initials:'SK',bg:'#E6F1FB',color:'#0C447C',dist:'0.8km · Yeonnam-dong',time:'2m ago',preview:'Is the room still available? I can visit this week',unread:true,messages:[{from:'them',text:'Hi! I saw your post about the sublet in Yeonnam. Is it still available?',time:'10:23 AM'},{from:'me',text:'Yes it is! Available from next month. 550,000/month, 2-month deposit.',time:'10:31 AM'},{from:'them',text:'That sounds great. Is the landlord okay with foreigners? I have an F-2 visa.',time:'10:33 AM'},{from:'me',text:'Totally fine — she\'s had foreign tenants before. Want to visit this week?',time:'10:35 AM'},{from:'them',text:'Is the room still available? I can visit this week',time:'Just now'}]},
@@ -7314,14 +7334,11 @@ window.publishPost = async function() {
     ? `${userDistrict}, ${userCity}`
     : userDistrict || userCity || null;
 
-  const isOwnerPost = OWNER_EMAILS.includes(currentUser.email);
   const newPost = {
     comm: selectedComm,
     author: authorName,
     authorId: currentUser.uid,
-    authorEmail: currentUser.email || null,
     authorPhoto: currentUser.photoURL || null,
-    ...(isOwnerPost ? { isPinned: true, role: 'admin' } : {}),
     topic,                                        // Firestore topic 필드 — 카테고리 필터링 핵심
     title,
     preview: body,
@@ -7624,79 +7641,6 @@ window.switchProfileTab = function(tab) {
 
 // renderMyPosts → showMyPosts로 통합 (하위 호환 래퍼)
 async function renderMyPosts() { showMyPosts(); }
-
-// ── My Posts 스탯 카드 클릭 필터 ──
-let _myPostsCache = [];
-let _myPostsActiveFilter = 'posts';
-
-window.filterMyPostsBy = function(type) {
-  _myPostsActiveFilter = type;
-
-  ['posts','upvotes','comments'].forEach(function(t) {
-    var el = document.getElementById('mpstat-' + t);
-    if (!el) return;
-    el.style.background  = t === type ? 'var(--green-light)' : 'var(--surface)';
-    el.style.borderColor = t === type ? 'var(--green)' : 'rgba(0,0,0,0.08)';
-  });
-
-  var list = document.getElementById('feedList');
-  if (!list || !_myPostsCache.length) return;
-
-  var sorted = _myPostsCache.slice();
-  var filterLabel = '';
-
-  if (type === 'upvotes') {
-    sorted = sorted.filter(function(p){ return (p.votes||0) > 0; })
-                   .sort(function(a,b){ return (b.votes||0)-(a.votes||0); });
-    filterLabel = '▲ Sorted by upvotes';
-  } else if (type === 'comments') {
-    sorted = sorted.filter(function(p){ return (p.commentCount||0) > 0; })
-                   .sort(function(a,b){ return (b.commentCount||0)-(a.commentCount||0); });
-    filterLabel = '💬 Sorted by comments';
-  } else {
-    sorted = sorted.sort(function(a,b){
-      var ta = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : 0;
-      var tb = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : 0;
-      return tb - ta;
-    });
-    filterLabel = 'All posts';
-  }
-
-  var postsListEl = list.querySelector('[data-my-posts-list]');
-  if (!postsListEl) return;
-
-  if (sorted.length === 0) {
-    postsListEl.innerHTML = '<div style="padding:32px 20px;text-align:center;color:var(--text-3);font-size:13px">No posts yet for this filter</div>';
-    return;
-  }
-
-  var rows = sorted.map(function(p) {
-    var pid = String(p.id);
-    return '<div class="post-card" data-post-id="' + pid + '">' +
-      '<div class="post-meta">' +
-        '<span class="tag tag-' + p.topic + '">' + capTopic(p.topic) + '</span>' +
-        '<div class="meta-dot"></div>' +
-        '<span class="meta-time">' + (p.time || 'Just now') + '</span>' +
-        '<span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:600">▲ ' + (p.votes||0) + '</span>' +
-      '</div>' +
-      '<div class="post-title" onclick="openDetail('' + pid + '')" style="cursor:pointer">' + p.title + '</div>' +
-      '<div class="post-preview" onclick="openDetail('' + pid + '')" style="cursor:pointer">' + p.preview + '</div>' +
-      '<div class="post-actions" style="margin-top:8px">' +
-        '<button class="action-btn" onclick="openDetail('' + pid + '')">' +
-          '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 2H2C1.4 2 1 2.4 1 3v8c0 .6.4 1 1 1h2v3l3.5-3H14c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1z" stroke="currentColor" stroke-width="1.3"/></svg>' +
-          (p.commentCount||0) +
-        '</button>' +
-        '<div class="spacer"></div>' +
-        '<button class="action-btn" style="color:#E24B4A" onclick="event.stopPropagation();confirmDeletePost('' + pid + '')">' +
-          '<svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M6 6v4M8 6v4M3 3l1 9h6l1-9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>' +
-          'Delete' +
-        '</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  postsListEl.innerHTML = '<div style="padding:4px 16px 8px;font-size:11px;color:var(--text-3);font-weight:600">' + filterLabel + '</div>' + rows;
-};
 
 // ── POST MENU (점 3개) ──
 window.openPostMenu = function(e) {
@@ -9349,17 +9293,11 @@ window.showMyPosts = async function() {
   const totalVotes    = myPosts.reduce((s, p) => s + (p.votes || 0), 0);
   const totalComments = myPosts.reduce((s, p) => s + (p.commentCount || 0), 0);
 
-  // 캐시 저장 — 스탯 카드 필터링에 사용
-  _myPostsCache = myPosts;
-  _myPostsActiveFilter = 'posts';
-
   // 프로필 화면 통계도 동기화
   const statPostsEl   = document.getElementById('statPosts');
   const statUpvotesEl = document.getElementById('statUpvotes');
-  const statCmEl      = document.getElementById('statComments');
   if (statPostsEl)   statPostsEl.textContent   = myPosts.length;
   if (statUpvotesEl) statUpvotesEl.textContent = formatVotes(totalVotes);
-  if (statCmEl)      statCmEl.textContent      = totalComments;
 
   list.innerHTML = `
     <!-- 헤더 -->
@@ -9378,17 +9316,17 @@ window.showMyPosts = async function() {
       </button>
     </div>
 
-    <!-- 스탯 카드 3개 — 클릭하면 해당 기준으로 필터링 -->
+    <!-- 스탯 카드 3개 -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 14px">
-      <div id="mpstat-posts" onclick="filterMyPostsBy('posts')" style="background:var(--green-light);border:0.5px solid var(--green);border-radius:10px;padding:10px;text-align:center;cursor:pointer;touch-action:manipulation">
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center">
         <div style="font-size:20px;font-weight:700;color:var(--green)">${myPosts.length}</div>
         <div style="font-size:10px;color:var(--text-3);margin-top:2px">Posts</div>
       </div>
-      <div id="mpstat-upvotes" onclick="filterMyPostsBy('upvotes')" style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;touch-action:manipulation">
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center">
         <div style="font-size:20px;font-weight:700;color:var(--green)">${formatVotes(totalVotes)}</div>
         <div style="font-size:10px;color:var(--text-3);margin-top:2px">Upvotes</div>
       </div>
-      <div id="mpstat-comments" onclick="filterMyPostsBy('comments')" style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;touch-action:manipulation">
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center">
         <div style="font-size:20px;font-weight:700;color:var(--green)">${totalComments}</div>
         <div style="font-size:10px;color:var(--text-3);margin-top:2px">Comments</div>
       </div>
@@ -9623,24 +9561,32 @@ const OUTFIT_GUIDE = [
 
 // 목업 날씨 데이터 (실제 API 연동 시 교체)
 // ── 미세먼지 AQI 실시간 연동 ──
-// 1순위: Firebase Functions → 에어코리아 실측 데이터
+// 1순위: IQAir (실측, CORS 허용, 무료 10,000콜/월)
 // 2순위: Open-Meteo AQI (무제한 무료, 예보 모델 기반)
-const FIREBASE_AQI_URL = 'https://us-central1-koreaconnect-81f3b.cloudfunctions.net/getAQI';
+const IQAIR_API_KEY = 'YOUR_IQAIR_KEY'; // ← iqair.com 무료 키 (선택)
 
 async function fetchAQI(lat, lon) {
-  try {
-    const r = await fetch(`${FIREBASE_AQI_URL}?lat=${lat}&lon=${lon}`);
-    if (r.ok) {
-      const data = await r.json();
-      if (data.error) throw new Error(data.error);
-      const pm25 = Math.round(data.pm25 ?? data.pm2_5 ?? 0);
-      const pm10 = Math.round(data.pm10 ?? 0);
-      console.log('[AQI] Firebase Functions 응답:', { pm25, pm10 });
-      return { pm25, pm10 };
-    }
-  } catch(e) { console.warn('[AQI] Firebase Functions 실패, fallback:', e.message); }
+  // IQAir — 에어코리아 관측소 포함, 가장 정확
+  if (IQAIR_API_KEY !== 'YOUR_IQAIR_KEY') {
+    try {
+      const r = await fetch(
+        `https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${IQAIR_API_KEY}`
+      );
+      if (r.ok) {
+        const d = await r.json();
+        const p = d.data?.current?.pollution;
+        if (p) {
+          console.log('[AQI] IQAir 응답:', p);
+          return {
+            pm25: Math.round(p.p2 ?? 0),
+            pm10: Math.round(p.p1 ?? 0),
+          };
+        }
+      }
+    } catch(e) { console.warn('[AQI] IQAir 실패:', e.message); }
+  }
 
-  // Open-Meteo fallback
+  // Open-Meteo AQI — 무제한 무료 fallback
   try {
     const r = await fetch(
       `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,pm10&timezone=Asia%2FSeoul`
@@ -9649,7 +9595,7 @@ async function fetchAQI(lat, lon) {
       const a = await r.json();
       const pm25 = Math.round(a?.current?.pm2_5 ?? 0);
       const pm10 = Math.round(a?.current?.pm10  ?? 0);
-      console.log('[AQI] Open-Meteo fallback 응답:', { pm25, pm10 });
+      console.log('[AQI] Open-Meteo 응답:', { pm25, pm10 });
       return { pm25, pm10 };
     }
   } catch(e) { console.warn('[AQI] Open-Meteo 실패:', e.message); }

@@ -4986,7 +4986,7 @@ import {
 // ────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey:            "AIzaSyD-JgVkX693KDK9ArZNkSw8EYTdj0YANfo",
-  authDomain:        "koreaconnect-81f3b.firebaseapp.com",
+  authDomain:        "koreaconnect.app",
   projectId:         "koreaconnect-81f3b",
   storageBucket:     "koreaconnect-81f3b.firebasestorage.app",
   messagingSenderId: "1031892307775",
@@ -9560,6 +9560,49 @@ const OUTFIT_GUIDE = [
 ];
 
 // 목업 날씨 데이터 (실제 API 연동 시 교체)
+// ── 미세먼지 AQI 실시간 연동 ──
+// 1순위: IQAir (실측, CORS 허용, 무료 10,000콜/월)
+// 2순위: Open-Meteo AQI (무제한 무료, 예보 모델 기반)
+const IQAIR_API_KEY = 'YOUR_IQAIR_KEY'; // ← iqair.com 무료 키 (선택)
+
+async function fetchAQI(lat, lon) {
+  // IQAir — 에어코리아 관측소 포함, 가장 정확
+  if (IQAIR_API_KEY !== 'YOUR_IQAIR_KEY') {
+    try {
+      const r = await fetch(
+        `https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${IQAIR_API_KEY}`
+      );
+      if (r.ok) {
+        const d = await r.json();
+        const p = d.data?.current?.pollution;
+        if (p) {
+          console.log('[AQI] IQAir 응답:', p);
+          return {
+            pm25: Math.round(p.p2 ?? 0),
+            pm10: Math.round(p.p1 ?? 0),
+          };
+        }
+      }
+    } catch(e) { console.warn('[AQI] IQAir 실패:', e.message); }
+  }
+
+  // Open-Meteo AQI — 무제한 무료 fallback
+  try {
+    const r = await fetch(
+      `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,pm10&timezone=Asia%2FSeoul`
+    );
+    if (r.ok) {
+      const a = await r.json();
+      const pm25 = Math.round(a?.current?.pm2_5 ?? 0);
+      const pm10 = Math.round(a?.current?.pm10  ?? 0);
+      console.log('[AQI] Open-Meteo 응답:', { pm25, pm10 });
+      return { pm25, pm10 };
+    }
+  } catch(e) { console.warn('[AQI] Open-Meteo 실패:', e.message); }
+
+  return MOCK_AQI;
+}
+
 // ── 실시간 날씨 — WeatherAPI.com ──
 // 네이버 날씨와 동일한 실측 데이터 기반
 // 무료 키 발급: weatherapi.com → Sign Up → API Key 복사
@@ -9599,8 +9642,7 @@ async function fetchRealWeather(lat, lon) {
       // AQI — Open-Meteo (무료, 제한 없음)
       let aqiData = MOCK_AQI;
       try {
-        const ar = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${la}&longitude=${lo}&current=pm2_5,pm10&timezone=Asia%2FSeoul`);
-        if (ar.ok) { const a = await ar.json(); aqiData = { pm25: Math.round(a?.current?.pm2_5 ?? 0), pm10: Math.round(a?.current?.pm10 ?? 0) }; }
+        aqiData = await fetchAQI(la, lo);
       } catch(e) {}
 
       console.log('[Weather] WeatherAPI 응답:', { temp, feelsLike, desc });
@@ -9635,11 +9677,7 @@ async function fetchRealWeather(lat, lon) {
     if (condition === 'clear' && temp <= 5)  condition = 'cold';
 
     // AQI
-    let aqiData = MOCK_AQI;
-    try {
-      const ar = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${la}&longitude=${lo}&current=pm2_5,pm10&timezone=Asia%2FSeoul`);
-      if (ar.ok) { const a = await ar.json(); aqiData = { pm25: Math.round(a?.current?.pm2_5 ?? 0), pm10: Math.round(a?.current?.pm10 ?? 0) }; }
-    } catch(e) {}
+    const aqiData = await fetchAQI(la, lo);
 
     console.log('[Weather] wttr.in 응답:', { temp, desc });
     return {
@@ -10005,8 +10043,7 @@ window.showWeatherModal = function() {
   // 배경 단순화
   if (tipBox) { const c = guide.bg.match(/#[A-Fa-f0-9]{6}/); if(c) tipBox.style.background = c[0]+'22'; }
   set('wxTipIcon', guide.adviceIcon);
-  set('wxTipMain', guide.advice.split('.')[0] + '!'); // 첫 문장을 팁 헤드로
-  set('wxTipSub',  guide.advice);
+  set('wxTipMain', guide.advice.split('.')[0]);
   const chips = document.getElementById('wxOutfitChips');
   if (chips) chips.innerHTML = guide.chips.map(c => `<span class="wx-chip">${c}</span>`).join('');
 
@@ -10282,7 +10319,6 @@ setTimeout(() => {
           <div class="wx-tip-icon" id="wxTipIcon">🧥</div>
           <div>
             <div class="wx-tip-main" id="wxTipMain">A light jacket is your best friend today!</div>
-            <div class="wx-tip-sub" id="wxTipSub">Cool in the morning, comfortable afternoon. Bring a layer for the evening drop in temperature.</div>
           </div>
         </div>
         <div class="wx-outfit-chips" id="wxOutfitChips">

@@ -10077,20 +10077,35 @@ window.switchActivityTab = async function(tab) {
         if (p) postTitleMap[pid] = p.title;
       }
     });
-    // ③ 그래도 없으면 Firestore fetch
+    // ③ 그래도 없으면 Firestore fetch (featured_ prefix 구분)
     const missingPosts = postIdSet.filter(pid => !postTitleMap[pid]);
     if (firebaseOk && missingPosts.length > 0) {
       try {
-        const snaps = await Promise.all(missingPosts.map(id => getDoc(doc(db, 'posts', id))));
-        snaps.forEach(s => { if (s.exists()) postTitleMap[s.id] = s.data().title || 'Untitled'; });
+        const fetches = missingPosts.map(pid => {
+          if (pid.startsWith('featured_')) {
+            const fid = pid.replace('featured_', '');
+            const cached = FEATURED_CACHE.find(f => f.id === fid);
+            if (cached) return Promise.resolve({ id: pid, title: cached.title });
+            return getDoc(doc(db, 'featured', fid)).then(s => s.exists() ? { id: pid, title: s.data().title || 'Featured Post' } : null);
+          }
+          return getDoc(doc(db, 'posts', pid)).then(s => s.exists() ? { id: pid, title: s.data().title || 'Untitled' } : null);
+        });
+        const results = await Promise.all(fetches);
+        results.forEach(r => { if (r) postTitleMap[r.id] = r.title; });
       } catch(e) {}
     }
 
-    content.innerHTML = myComments.map((c, i) => `
+    content.innerHTML = myComments.map((c, i) => {
+      const isFeatured = c.postId?.startsWith('featured_');
+      const featuredRealId = isFeatured ? c.postId.replace('featured_', '') : null;
+      const openFn = c.postId
+        ? (isFeatured ? `openFeaturedDetail('${featuredRealId}')` : `openDetail('${c.postId}')`)
+        : '';
+      return `
       <div class="post-card" style="animation-delay:${i*0.03}s;cursor:pointer"
-           onclick="${c.postId ? `openDetail('${c.postId}')` : ''}">
+           onclick="${openFn}">
         <div class="post-meta">
-          <span class="tag" style="background:var(--blue-light);color:var(--blue)">Comment</span>
+          <span class="tag" style="background:var(--blue-light);color:var(--blue)">${isFeatured ? 'Featured' : 'Comment'}</span>
           <div class="meta-dot"></div>
           <span class="meta-time">${c.time || 'Just now'}</span>
         </div>
@@ -10100,7 +10115,8 @@ window.switchActivityTab = async function(tab) {
           on: <span style="color:var(--text-2);font-weight:500">${postTitleMap[c.postId]}</span>
         </div>` : ''}
         <div class="post-title" style="font-size:14px">${c.text || ''}</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 };
 

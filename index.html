@@ -7752,15 +7752,30 @@ window.openEditPost = function() {
   editingPostId = post.id;
   activeDetailId = String(targetId);
 
-  const titleEl  = document.getElementById('editTitleInput');
+  const titleEl    = document.getElementById('editTitleInput');
   const bodyEditor = document.getElementById('editBodyEditor');
   titleEl.value = post.title;
-  // 본문을 contenteditable에 로드 (이미 HTML이면 그대로, plain text면 줄바꿈 변환)
+
   if (bodyEditor) {
+    // 본문 HTML 로드
     const isHtml = /<[a-z][\s\S]*>/i.test(post.preview || '');
-    bodyEditor.innerHTML = isHtml
+    let bodyHtml = isHtml
       ? (post.preview || '')
       : (post.preview || '').replace(/\n/g, '<br>');
+
+    // 기존 업로드 이미지를 fe-img-block으로 추가
+    const imgUrls = post.imageURLs?.length
+      ? post.imageURLs
+      : (post.imageURL ? [post.imageURL] : []);
+
+    const imgBlocksHtml = imgUrls.map(url => `
+      <div class="fe-img-block ep-server-img" contenteditable="false" data-server-url="${url}">
+        <img src="${url}" alt="" loading="lazy">
+        <button class="fe-img-remove" type="button"
+          onmousedown="epRemoveServerImage(this, event)">✕</button>
+      </div>`).join('<p><br></p>');
+
+    bodyEditor.innerHTML = bodyHtml + (imgBlocksHtml ? '<p><br></p>' + imgBlocksHtml : '');
   }
   document.getElementById('editPostOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -7777,6 +7792,7 @@ window.closeEditPost = function() {
   document.getElementById('editPostOverlay').classList.remove('open');
   document.body.style.overflow = '';
   editingPostId = null;
+  window.epLocalImages = []; // 로컬 이미지 참조 초기화
 }
 
 // ══ Edit Post 툴바 함수 (fe_ 미러링) ══
@@ -7867,9 +7883,11 @@ window.epInsertImage = function(e) {
   const files = Array.from(e.target.files || []);
   e.target.value = '';
   if (!files.length) return;
+  if (!window.epLocalImages) window.epLocalImages = [];
   files.forEach(file => {
     if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB per image', 'error'); return; }
     const localUrl = URL.createObjectURL(file);
+    window.epLocalImages.push({ localUrl, file });
     const editor = document.getElementById('editBodyEditor');
     if (!editor) return;
     editor.focus();
@@ -7883,6 +7901,10 @@ window.epInsertImage = function(e) {
 window.epRemoveImage = function(btn, localUrl) {
   btn.closest('.fe-img-block')?.remove();
   URL.revokeObjectURL(localUrl);
+}
+window.epRemoveServerImage = function(btn, event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  btn.closest('.fe-img-block')?.remove();
 }
 
 window.checkEditReady = function() {
@@ -7949,9 +7971,28 @@ window.saveEditPost = async function(newTopic) {
   }
   const newTitle = document.getElementById('editTitleInput').value.trim();
   const editor   = document.getElementById('editBodyEditor');
-  const newBody  = editor ? editor.innerHTML.trim() : '';
+
+  // 이미지 블록 제거 후 순수 본문 HTML만 추출
+  const bodyClone = editor ? editor.cloneNode(true) : null;
+  bodyClone?.querySelectorAll('.fe-img-block').forEach(el => el.remove());
+  const newBody     = bodyClone ? bodyClone.innerHTML.trim() : '';
   const newBodyText = editor ? (editor.innerText || '').trim() : '';
-  if (!newTitle || !newBodyText) return;
+  if (!newTitle) return;
+
+  // 에디터에 남아있는 서버 이미지 URL 추출 (삭제하지 않은 것만)
+  const remainingImgUrls = [];
+  editor?.querySelectorAll('.fe-img-block[data-server-url]').forEach(block => {
+    const url = block.getAttribute('data-server-url');
+    if (url) remainingImgUrls.push(url);
+  });
+
+  // 새로 업로드한 로컬 이미지 파일도 업로드
+  const newLocalFiles = [];
+  editor?.querySelectorAll('.fe-img-block[data-local]').forEach(block => {
+    const localUrl = block.getAttribute('data-local');
+    const match = (window.epLocalImages || []).find(img => img.localUrl === localUrl);
+    if (match) newLocalFiles.push(match.file);
+  });
 
   const topic = newTopic || post.topic || 'social';
 
@@ -7959,13 +8000,37 @@ window.saveEditPost = async function(newTopic) {
   btn.textContent = 'Saving...';
   btn.classList.remove('ready');
 
-  post.title   = newTitle;
-  post.preview = newBody;
-  post.topic   = topic;
+  // 새 이미지 업로드
+  let uploadedUrls = [];
+  if (newLocalFiles.length > 0) {
+    try {
+      const uploads = await Promise.all(newLocalFiles.map(async (f, i) => {
+        const compressed = await compressImage(f);
+        return uploadImageToStorage(compressed, `edit_${editingPostId}_${i}`);
+      }));
+      uploadedUrls = uploads.filter(Boolean);
+    } catch(e) { console.warn('Image upload failed', e); }
+  }
+
+  const allImgUrls = [...remainingImgUrls, ...uploadedUrls];
+  const imageURL  = allImgUrls[0] || null;
+  const imageURLs = allImgUrls.length > 1 ? allImgUrls : undefined;
+
+  post.title    = newTitle;
+  post.preview  = newBody;
+  post.topic    = topic;
+  if (imageURL !== undefined)  post.imageURL  = imageURL;
+  if (imageURLs !== undefined) post.imageURLs = imageURLs;
+
+  const updateData = {
+    title: newTitle, preview: newBody, topic,
+    imageURL:  imageURL  ?? null,
+    ...(imageURLs ? { imageURLs } : { imageURLs: [] }),
+  };
 
   if (firebaseOk && !String(editingPostId).startsWith('seed_') && !String(editingPostId).startsWith('local_')) {
     try {
-      await updateDoc(doc(db, 'posts', editingPostId), { title: newTitle, preview: newBody, topic });
+      await updateDoc(doc(db, 'posts', editingPostId), updateData);
       showToast('Post updated! ✓', 'success');
     } catch(e) {
       console.error('Update failed:', e);

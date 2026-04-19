@@ -5103,6 +5103,7 @@ let activePostMenuId = null;   // 피드 카드 ⋯ 메뉴용
 let activeFeaturedId = null;   // Featured 카드 관리 메뉴용
 let editingPostId = null;      // 글 수정용
 let commentUnsubscribe = null;
+let postDocUnsubscribe = null;
 let currentUser = null;
 let selectedImageFile = null;   // 하위 호환용
 let selectedImageURL  = null;
@@ -7093,20 +7094,36 @@ window.openDetail = async function(postId) {
   document.getElementById('commentSendBtn').classList.remove('ready');
 
   // Load comments with real-time listener
-  if (commentUnsubscribe) commentUnsubscribe();
+  if (commentUnsubscribe) { commentUnsubscribe(); commentUnsubscribe = null; }
+  if (postDocUnsubscribe) { postDocUnsubscribe(); postDocUnsubscribe = null; }
 
   if (firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
-    const q = query(
-      collection(db, 'posts', postId, 'comments'),
-      orderBy('createdAt', 'asc')
-    );
+    // 댓글 실시간
+    const q = query(collection(db, 'posts', postId, 'comments'), orderBy('createdAt', 'asc'));
     commentUnsubscribe = onSnapshot(q, (snap) => {
       const comments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderComments(comments, postId);
-      // Update comment count badge in feed
-      const ccEl = document.getElementById(`cc-${postId}`);
-      if (ccEl) ccEl.textContent = comments.length;
     }, () => renderComments([], postId));
+
+    // 포스트 votes 실시간
+    postDocUnsubscribe = onSnapshot(doc(db, 'posts', postId), (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      // POSTS 캐시 업데이트
+      const p = POSTS.find(x => x.id === postId);
+      if (p) p.votes = data.votes ?? p.votes;
+      // detail 뷰 vote 카운트 즉시 갱신
+      const vs = voteState[postId];
+      const el = document.getElementById(`sheet-vc-${postId}`);
+      if (el) {
+        const base = data.votes ?? 1;
+        el.textContent = formatVotes(base + (vs === 'up' ? 1 : vs === 'down' ? -1 : 0));
+        el.className = `vote-count ${vs === 'up' ? 'up' : vs === 'down' ? 'down' : ''}`;
+      }
+      // 피드 카드 vote 뱃지 갱신
+      const hcardVote = document.querySelector(`[onclick*="openDetail('${postId}')"] .hcard-stat`);
+      _syncWidgetStats();
+    }, () => {});
   } else {
     renderComments([], postId);
   }
@@ -7126,13 +7143,23 @@ function refreshSheetVote(postId) {
 function renderComments(comments, postId) {
   const list = document.getElementById('commentList');
   const header = document.getElementById('commentsHeader');
-  header.textContent = comments.length > 0 ? `${comments.length} comment${comments.length>1?'s':''}` : 'Comments';
+  const visible = comments.filter(c => !c.deleted);
+  const cnt = visible.length;
 
-  if (!comments.length) {
+  header.textContent = cnt > 0 ? `${cnt} comment${cnt > 1 ? 's' : ''}` : 'Comments';
+
+  // 피드 카드 댓글 수 뱃지 갱신
+  const ccEl = document.getElementById(`cc-${postId}`);
+  if (ccEl) ccEl.textContent = cnt;
+  // POSTS 캐시 동기화
+  const cached = POSTS.find(p => String(p.id) === String(postId));
+  if (cached) cached.commentCount = cnt;
+
+  if (!cnt) {
     list.innerHTML = '<div class="no-comments">No comments yet — be the first!</div>';
     return;
   }
-  list.innerHTML = comments.filter(c => !c.deleted).map((c, i) => {
+  list.innerHTML = visible.map((c, i) => {
     const initials = getInitials(c.author || 'Anonymous');
     const colors = ['#E1F5EE/#085041','#E6F1FB/#0C447C','#FAEEDA/#633806','#FBEAF0/#72243E','#EAF3DE/#27500A'];
     const [bg, col] = colors[i % colors.length].split('/');
@@ -7179,7 +7206,8 @@ window.voteComment = async function(postId, commentId, dir, btn) {
 window.closeDetail = function() {
   document.getElementById('postDetailOverlay').classList.remove('open');
   document.body.style.overflow = '';
-  if (commentUnsubscribe) { commentUnsubscribe(); commentUnsubscribe = null; }
+  if (commentUnsubscribe)  { commentUnsubscribe();  commentUnsubscribe  = null; }
+  if (postDocUnsubscribe)  { postDocUnsubscribe();  postDocUnsubscribe  = null; }
   activeDetailId = null;
 }
 

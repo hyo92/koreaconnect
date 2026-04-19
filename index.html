@@ -7076,7 +7076,7 @@ window.openDetail = async function(postId) {
       </button>
       <span class="vote-count ${vs==='up'?'up':vs==='down'?'down':''}"
             id="sheet-vc-${postId}">
-        ${formatVotes((post.votes||1)+(vs==='up'?1:vs==='down'?-1:0))}
+        ${formatVotes(post.votes||1)}
       </span>
       <button class="downvote-btn ${vs==='down'?'active':''}"
               onclick="castVote(event,'${postId}','down');refreshSheetVote('${postId}')">
@@ -7105,23 +7105,19 @@ window.openDetail = async function(postId) {
       renderComments(comments, postId);
     }, () => renderComments([], postId));
 
-    // 포스트 votes 실시간
+    // 포스트 votes 실시간 — data.votes는 Firestore 집계값이므로 직접 사용
     postDocUnsubscribe = onSnapshot(doc(db, 'posts', postId), (snap) => {
       if (!snap.exists()) return;
       const data = snap.data();
+      const newVotes = data.votes ?? 1;
       // POSTS 캐시 업데이트
       const p = POSTS.find(x => x.id === postId);
-      if (p) p.votes = data.votes ?? p.votes;
-      // detail 뷰 vote 카운트 즉시 갱신
-      const vs = voteState[postId];
+      if (p) p.votes = newVotes;
+      // detail 뷰 vote 카운트 갱신 (voteState 조정 없이 집계값 그대로)
       const el = document.getElementById(`sheet-vc-${postId}`);
-      if (el) {
-        const base = data.votes ?? 1;
-        el.textContent = formatVotes(base + (vs === 'up' ? 1 : vs === 'down' ? -1 : 0));
-        el.className = `vote-count ${vs === 'up' ? 'up' : vs === 'down' ? 'down' : ''}`;
-      }
+      if (el) el.textContent = formatVotes(newVotes);
       // 피드 카드 vote 뱃지 갱신
-      const hcardVote = document.querySelector(`[onclick*="openDetail('${postId}')"] .hcard-stat`);
+      const ccVote = document.getElementById(`cc-${postId}`);
       _syncWidgetStats();
     }, () => {});
   } else {
@@ -7135,7 +7131,8 @@ function refreshSheetVote(postId) {
   const vs = voteState[postId];
   const el = document.getElementById(`sheet-vc-${postId}`);
   if (el) {
-    el.textContent = formatVotes((post.votes||1)+(vs==='up'?1:vs==='down'?-1:0));
+    // post.votes는 castVote에서 이미 delta 반영됨 — 그대로 표시
+    el.textContent = formatVotes(post.votes || 1);
     el.className = `vote-count ${vs==='up'?'up':vs==='down'?'down':''}`;
   }
 }
@@ -7617,7 +7614,7 @@ window.publishPost = async function() {
     authorId: currentUser.uid,
     authorEmail: currentUser.email || null,
     authorPhoto: currentUser.photoURL || null,
-    ...(isOwnerPost ? { isPinned: true, role: 'admin' } : {}),
+    ...(isOwnerPost && isFeaturedMode ? { isPinned: true, role: 'admin' } : {}),
     topic,                                        // Firestore topic 필드 — 카테고리 필터링 핵심
     title,
     preview: body,
@@ -9022,7 +9019,7 @@ window.publishFromEditor = async function() {
     comm: selectedComm || 'KoreaConnect',
     author: authorName, authorId: currentUser.uid,
     authorPhoto: currentUser.photoURL || null,
-    ...(isOwnerPost ? { isPinned: true, role: 'admin' } : {}),
+    ...(isOwnerPost && isFeaturedMode ? { isPinned: true, role: 'admin' } : {}),
     topic, title,
     preview: bodyHtml,      // HTML 그대로 저장 (색상, Bold 등 유지)
     previewText: bodyText,  // 검색/피드 미리보기용 plain text

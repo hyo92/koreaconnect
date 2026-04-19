@@ -7219,6 +7219,22 @@ window.submitComment = async function() {
 
   const postId = activeDetailId;
 
+  // 내 댓글 localStorage 캐시 (Activity Comments 탭 fallback용)
+  try {
+    const myCommentCache = JSON.parse(localStorage.getItem('kc_my_comments') || '[]');
+    const post = POSTS.find(p => String(p.id) === String(postId));
+    myCommentCache.unshift({
+      id: 'local_' + Date.now(),
+      text,
+      postId: String(postId),
+      postTitle: post?.title || '',
+      authorId: currentUser.uid,
+      createdAt: Date.now(),
+    });
+    // 최대 100개 보관
+    localStorage.setItem('kc_my_comments', JSON.stringify(myCommentCache.slice(0, 100)));
+  } catch(e) {}
+
   if (firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
     try {
       await addDoc(collection(db, 'posts', postId, 'comments'), commentData);
@@ -9758,11 +9774,19 @@ window.showMyPosts = async function(tab) {
   }
 
   const totalVotes = myPosts.reduce((s, p) => s + (p.votes || 0), 0);
-  // 프로필 통계 동기화
+  // 프로필 / 위젯 통계 동기화
   const statPostsEl   = document.getElementById('statPosts');
   const statUpvotesEl = document.getElementById('statUpvotes');
-  if (statPostsEl)   statPostsEl.textContent   = myPosts.length;
-  if (statUpvotesEl) statUpvotesEl.textContent = formatVotes(totalVotes);
+  const statCommentsEl = document.getElementById('statComments');
+  const totalComments = myPosts.reduce((s, p) => s + (p.commentCount || 0), 0);
+  if (statPostsEl)    statPostsEl.textContent   = myPosts.length;
+  if (statUpvotesEl)  statUpvotesEl.textContent = formatVotes(totalVotes);
+  if (statCommentsEl) statCommentsEl.textContent = totalComments;
+  // 위젯도 동기화
+  const wsp = document.getElementById('widgetStatPosts');
+  const wsu = document.getElementById('widgetStatUpvotes');
+  if (wsp) wsp.textContent = myPosts.length;
+  if (wsu) wsu.textContent = formatVotes(totalVotes);
 
   _activityCache = { myPosts, totalVotes };
 
@@ -9902,6 +9926,19 @@ window.switchActivityTab = async function(tab) {
       }
     }
 
+    // collectionGroup 실패 또는 결과 없으면 localStorage fallback
+    if (myComments.length === 0) {
+      try {
+        const cached = JSON.parse(localStorage.getItem('kc_my_comments') || '[]');
+        if (cached.length > 0) {
+          myComments = cached.map(c => ({
+            ...c,
+            time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
+          }));
+        }
+      } catch(e) {}
+    }
+
     // comment count 업데이트
     const countEl = document.getElementById('actCommentCount');
     if (countEl) countEl.textContent = myComments.length;
@@ -9911,13 +9948,19 @@ window.switchActivityTab = async function(tab) {
       return;
     }
 
-    // 댓글이 달린 포스트 제목 가져오기 (캐시 우선)
+    // 댓글이 달린 포스트 제목 가져오기
     const postIdSet = [...new Set(myComments.map(c => c.postId).filter(Boolean))];
     const postTitleMap = {};
+    // ① localStorage 캐시의 postTitle 우선 활용
+    myComments.forEach(c => { if (c.postId && c.postTitle) postTitleMap[c.postId] = c.postTitle; });
+    // ② POSTS 배열
     postIdSet.forEach(pid => {
-      const p = POSTS.find(x => x.id === pid);
-      if (p) postTitleMap[pid] = p.title;
+      if (!postTitleMap[pid]) {
+        const p = POSTS.find(x => x.id === pid);
+        if (p) postTitleMap[pid] = p.title;
+      }
     });
+    // ③ 그래도 없으면 Firestore fetch
     const missingPosts = postIdSet.filter(pid => !postTitleMap[pid]);
     if (firebaseOk && missingPosts.length > 0) {
       try {
@@ -10713,10 +10756,29 @@ function updateDesktopUserWidget(user) {
     document.getElementById('widgetUserName').textContent  = user.displayName || 'Anonymous';
     document.getElementById('widgetUserEmail').textContent = user.email || '';
 
-    // 내 글 통계
-    const myPosts = POSTS.filter(p => p.authorId === user.uid);
-    document.getElementById('widgetStatPosts').textContent   = myPosts.length;
-    document.getElementById('widgetStatUpvotes').textContent = formatVotes(myPosts.reduce((s,p)=>s+(p.votes||1),0));
+    // 캐시 먼저 즉시 표시
+    const cached = POSTS.filter(p => p.authorId === user.uid && !p.deleted);
+    if (cached.length) {
+      document.getElementById('widgetStatPosts').textContent   = cached.length;
+      document.getElementById('widgetStatUpvotes').textContent = formatVotes(cached.reduce((s,p)=>s+(p.votes||0),0));
+    }
+
+    // Firestore에서 정확한 수치 비동기 fetch
+    if (firebaseOk) {
+      getDocs(query(collection(db, 'posts'), where('authorId', '==', user.uid)))
+        .then(snap => {
+          const posts = snap.docs.map(d => d.data()).filter(p => !p.deleted);
+          const cnt   = posts.length;
+          const votes = formatVotes(posts.reduce((s,p) => s+(p.votes||0), 0));
+          document.getElementById('widgetStatPosts').textContent   = cnt;
+          document.getElementById('widgetStatUpvotes').textContent = votes;
+          const sp = document.getElementById('statPosts');
+          const su = document.getElementById('statUpvotes');
+          if (sp) sp.textContent = cnt;
+          if (su) su.textContent = votes;
+        })
+        .catch(() => {});
+    }
   } else {
     guestCta.style.display  = '';
     userRow.style.display   = 'none';

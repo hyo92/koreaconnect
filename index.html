@@ -6144,7 +6144,12 @@ window.setTab = function(el, tab) {
   dbPostIds = new Set();
   lastVisible = null;
   hasMore = true;
-  initPostsListener();
+  setLoading(true);
+  // pinned 글 먼저, 그 다음 일반 글
+  loadPinnedPosts().then(function() {
+    loadNextPage(true);
+  });
+  setupInfiniteScroll();
 }
 
 // 탭별 배너 설정 (9개 카테고리)

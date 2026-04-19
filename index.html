@@ -6532,7 +6532,6 @@ function renderFeed() {
         <div class="post-title">${cfg.title}</div>
         <div class="post-preview">${cfg.preview}</div>
         <div class="post-actions" style="margin-top:10px">
-          <button style="background:var(--green);color:#fff;border:none;border-radius:var(--radius-pill);padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)" onclick="event.stopPropagation();openFeaturedDetail('${cfg.id}')">${cfg.cta}</button>
           <div class="spacer"></div>
           <span style="font-size:11px;color:var(--text-3)">by ${cfg.author}</span>
         </div>
@@ -6994,10 +6993,29 @@ window.openFeaturedDetail = function(featuredId) {
       </button>
     </div>`;
 
-  // 댓글 섹션 숨기기
-  document.getElementById('commentsHeader').style.display = 'none';
-  document.getElementById('commentList').innerHTML = '';
-  document.querySelector('.comment-input-wrap').style.display = 'none';
+  // 댓글 섹션 표시
+  const commentsHeader = document.getElementById('commentsHeader');
+  const commentInputWrap = document.querySelector('.comment-input-wrap');
+  if (commentsHeader) commentsHeader.style.display = '';
+  if (commentInputWrap) commentInputWrap.style.display = '';
+  document.getElementById('commentList').innerHTML = '<div class="loading-comments">Loading comments...</div>';
+  document.getElementById('commentInput').value = '';
+  document.getElementById('commentSendBtn').classList.remove('ready');
+
+  // 기존 리스너 해제
+  if (commentUnsubscribe) { commentUnsubscribe(); commentUnsubscribe = null; }
+  if (postDocUnsubscribe) { postDocUnsubscribe(); postDocUnsubscribe = null; }
+
+  // featured/{id}/comments 실시간 리스너
+  if (firebaseOk) {
+    const q = query(collection(db, 'featured', featuredId, 'comments'), orderBy('createdAt', 'asc'));
+    commentUnsubscribe = onSnapshot(q, snap => {
+      const comments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderComments(comments, syntheticId);
+    }, () => renderComments([], syntheticId));
+  } else {
+    renderComments([], syntheticId);
+  }
 
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -7247,18 +7265,27 @@ window.submitComment = async function() {
   };
 
   const postId = activeDetailId;
+  const isFeaturedPost = String(postId).startsWith('featured_');
+  const featuredRealId  = isFeaturedPost ? String(postId).replace('featured_', '') : null;
 
   if (firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
     try {
-      const docRef = await addDoc(collection(db, 'posts', postId, 'comments'), commentData);
-      await updateDoc(doc(db, 'posts', postId), { commentCount: increment(1) });
+      let docRef;
+      if (isFeaturedPost) {
+        // featured/{id}/comments
+        docRef = await addDoc(collection(db, 'featured', featuredRealId, 'comments'), commentData);
+      } else {
+        docRef = await addDoc(collection(db, 'posts', postId, 'comments'), commentData);
+        await updateDoc(doc(db, 'posts', postId), { commentCount: increment(1) });
+      }
 
       // Firestore ID로 댓글 이력 저장
+      const featuredCfg = isFeaturedPost ? FEATURED_CACHE.find(f => f.id === featuredRealId) : null;
       const commentEntry = {
         id: docRef.id,
         text,
         postId: String(postId),
-        postTitle: POSTS.find(p => String(p.id) === String(postId))?.title || '',
+        postTitle: featuredCfg?.title || POSTS.find(p => String(p.id) === String(postId))?.title || '',
         createdAt: Date.now(),
       };
       // 인메모리 캐시
@@ -9242,24 +9269,31 @@ window.confirmDeleteComment = async function() {
   closeCommentMenu();
   if (!commentId || !postId || !currentUser) return;
 
+  const isFeaturedComment = String(postId).startsWith('featured_');
+  const featuredRealId    = isFeaturedComment ? String(postId).replace('featured_', '') : null;
+
   // 1. Firestore 댓글 삭제
-  if (firebaseOk && !String(postId).startsWith('seed_')) {
+  if (firebaseOk) {
     try {
-      await updateDoc(doc(db, 'posts', postId, 'comments', commentId), { deleted: true });
+      if (isFeaturedComment) {
+        await updateDoc(doc(db, 'featured', featuredRealId, 'comments', commentId), { deleted: true });
+      } else {
+        await updateDoc(doc(db, 'posts', postId, 'comments', commentId), { deleted: true });
+      }
     } catch(e) { showToast('Delete failed', 'error'); return; }
   }
 
-  // 2. POSTS 배열 commentCount 즉시 업데이트
-  const post = POSTS.find(p => String(p.id) === String(postId));
-  if (post) {
-    post.commentCount = Math.max(0, (post.commentCount || 1) - 1);
-    // 피드 카드 댓글 수 DOM 즉시 갱신
-    const ccEl = document.getElementById(`cc-${postId}`);
-    if (ccEl) ccEl.textContent = post.commentCount;
-  }
-  // Firestore commentCount도 동기화 (fire-and-forget)
-  if (firebaseOk) {
-    updateDoc(doc(db, 'posts', postId), { commentCount: increment(-1) }).catch(() => {});
+  // 2. 일반 포스트만 commentCount 업데이트
+  if (!isFeaturedComment) {
+    const post = POSTS.find(p => String(p.id) === String(postId));
+    if (post) {
+      post.commentCount = Math.max(0, (post.commentCount || 1) - 1);
+      const ccEl = document.getElementById(`cc-${postId}`);
+      if (ccEl) ccEl.textContent = post.commentCount;
+    }
+    if (firebaseOk) {
+      updateDoc(doc(db, 'posts', postId), { commentCount: increment(-1) }).catch(() => {});
+    }
   }
 
   // 3. 인메모리 캐시에서 제거

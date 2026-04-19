@@ -6515,8 +6515,8 @@ function renderFeed() {
   }
 
   let featuredHtml = '';
-  if (isHomeMode) {
-    // Home: 모든 Featured 카드 표시 (Firestore 캐시 기준)
+  if (isHomeMode || currentTab === 'all') {
+    // Home 또는 All 탭: 모든 Featured 카드 표시
     featuredHtml = FEATURED_CACHE.map(makeFeaturedCard).join('');
   } else {
     // 카테고리 탭: 해당 탭 Featured만

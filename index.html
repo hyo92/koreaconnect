@@ -9561,32 +9561,25 @@ const OUTFIT_GUIDE = [
 
 // 목업 날씨 데이터 (실제 API 연동 시 교체)
 // ── 미세먼지 AQI 실시간 연동 ──
-// 1순위: IQAir (실측, CORS 허용, 무료 10,000콜/월)
+// 1순위: Firebase Functions → 에어코리아 실측 데이터
 // 2순위: Open-Meteo AQI (무제한 무료, 예보 모델 기반)
-const IQAIR_API_KEY = 'YOUR_IQAIR_KEY'; // ← iqair.com 무료 키 (선택)
+const FIREBASE_AQI_URL = 'https://us-central1-koreaconnect-81f3b.cloudfunctions.net/getAQI';
 
 async function fetchAQI(lat, lon) {
-  // IQAir — 에어코리아 관측소 포함, 가장 정확
-  if (IQAIR_API_KEY !== 'YOUR_IQAIR_KEY') {
-    try {
-      const r = await fetch(
-        `https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${IQAIR_API_KEY}`
-      );
-      if (r.ok) {
-        const d = await r.json();
-        const p = d.data?.current?.pollution;
-        if (p) {
-          console.log('[AQI] IQAir 응답:', p);
-          return {
-            pm25: Math.round(p.p2 ?? 0),
-            pm10: Math.round(p.p1 ?? 0),
-          };
-        }
-      }
-    } catch(e) { console.warn('[AQI] IQAir 실패:', e.message); }
-  }
+  // 1순위: Firebase Functions (에어코리아 연동)
+  try {
+    const r = await fetch(`${FIREBASE_AQI_URL}?lat=${lat}&lon=${lon}`);
+    if (r.ok) {
+      const data = await r.json();
+      if (data.error) throw new Error(data.error);
+      const pm25 = Math.round(data.pm25 ?? data.pm2_5 ?? 0);
+      const pm10 = Math.round(data.pm10 ?? 0);
+      console.log('[AQI] Firebase Functions 응답:', { pm25, pm10 });
+      return { pm25, pm10 };
+    }
+  } catch(e) { console.warn('[AQI] Firebase Functions 실패, fallback 시도:', e.message); }
 
-  // Open-Meteo AQI — 무제한 무료 fallback
+  // 2순위: Open-Meteo AQI — 무제한 무료 fallback
   try {
     const r = await fetch(
       `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,pm10&timezone=Asia%2FSeoul`
@@ -9595,7 +9588,7 @@ async function fetchAQI(lat, lon) {
       const a = await r.json();
       const pm25 = Math.round(a?.current?.pm2_5 ?? 0);
       const pm10 = Math.round(a?.current?.pm10  ?? 0);
-      console.log('[AQI] Open-Meteo 응답:', { pm25, pm10 });
+      console.log('[AQI] Open-Meteo fallback 응답:', { pm25, pm10 });
       return { pm25, pm10 };
     }
   } catch(e) { console.warn('[AQI] Open-Meteo 실패:', e.message); }

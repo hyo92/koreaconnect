@@ -5025,7 +5025,7 @@
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {
-  getFirestore, collection, addDoc, doc, updateDoc, increment,
+  getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, increment,
   query, orderBy, where, limit, startAfter, getDocs, serverTimestamp, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import {
@@ -5099,6 +5099,7 @@ let activeChatId = null;
 let firebaseOk = true;
 let activeDetailId = null;
 let activePostMenuId = null;   // 피드 카드 ⋯ 메뉴용
+let activeFeaturedId = null;   // Featured 카드 관리 메뉴용
 let editingPostId = null;      // 글 수정용
 let commentUnsubscribe = null;
 let currentUser = null;
@@ -6489,12 +6490,22 @@ function renderFeed() {
   // 나중에 Firestore 'featured' 컬렉션으로 관리 가능
   // ═══════════════════════════════════════════════
   function makeFeaturedCard(cfg) {
+    const isOwner = currentUser && OWNER_EMAILS.includes(currentUser.email);
     return `
     <div class="featured-post">
-      <div class="featured-badge-bar">
+      <div class="featured-badge-bar" style="display:flex;align-items:center;">
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.8 4H14l-3.4 2.6 1.3 4L8 9.4l-3.9 2.2 1.3-4L2 5h4.2z" fill="white"/></svg>
         <span class="featured-badge-text">Featured</span>
         <span style="margin-left:6px;font-size:10px;opacity:0.85">${capTopic(cfg.topic)}</span>
+        ${isOwner ? `
+        <button class="post-menu-btn" style="margin-left:auto;color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.15);border-radius:6px;"
+                onclick="event.stopPropagation();showFeaturedMenu(event,'${cfg.id}')">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+            <circle cx="5" cy="10" r="1.5" fill="currentColor"/>
+            <circle cx="10" cy="10" r="1.5" fill="currentColor"/>
+            <circle cx="15" cy="10" r="1.5" fill="currentColor"/>
+          </svg>
+        </button>` : ''}
       </div>
       <div class="post-card" style="border:none;border-radius:0;margin:0;cursor:pointer">
         <div class="post-meta">
@@ -7806,9 +7817,110 @@ window.openPostMenuFromProfile = function(e, postId) {
   showActionMenu(e, postId);
 }
 
+// ── FEATURED POST MENU ──
+let activeFeaturedMenuId = null;
+
+window.showFeaturedMenu = function(e, featuredId) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  if (!currentUser || !OWNER_EMAILS.includes(currentUser.email)) return;
+  activeFeaturedMenuId = featuredId;
+
+  const menu    = document.getElementById('actionMenu');
+  const overlay = document.getElementById('actionMenuOverlay');
+  if (!menu || !overlay) return;
+
+  // Save 숨기기 (featured는 bookmark 불필요)
+  const saveItem = document.getElementById('actionMenuSaveItem');
+  const saveSep  = saveItem?.nextElementSibling;
+  if (saveItem) saveItem.style.display = 'none';
+  if (saveSep && saveSep.classList.contains('action-menu-sep')) saveSep.style.display = 'none';
+
+  // Edit / Delete 항상 표시 (오너 전용 메뉴)
+  ['actionMenuEditItem','actionMenuEditSep','actionMenuDeleteItem'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = '';
+  });
+
+  // Edit 핸들러 교체
+  const editEl = document.getElementById('actionMenuEditItem');
+  if (editEl) {
+    editEl.onclick = function() { closeActionMenu(); openEditFeatured(activeFeaturedMenuId); activeFeaturedMenuId = null; };
+  }
+  // Delete 핸들러 교체
+  const delEl = document.getElementById('actionMenuDeleteItem');
+  if (delEl) {
+    delEl.onclick = function() { closeActionMenu(); confirmDeleteFeatured(activeFeaturedMenuId); activeFeaturedMenuId = null; };
+  }
+
+  const btn = e ? (e.currentTarget || e.target)?.closest('button') || e.target : null;
+  if (btn) {
+    const rect = btn.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top   = (rect.bottom + 4) + 'px';
+    menu.style.right = Math.max(8, window.innerWidth - rect.right) + 'px';
+    menu.style.left  = 'auto';
+  } else {
+    menu.style.position = 'fixed';
+    menu.style.top   = '80px';
+    menu.style.right = '16px';
+    menu.style.left  = 'auto';
+  }
+  overlay.classList.add('open');
+};
+
+// Featured 삭제 확인
+let pendingDeleteFeaturedId = null;
+window.confirmDeleteFeatured = function(featuredId) {
+  pendingDeleteFeaturedId = featuredId;
+  document.getElementById('deleteConfirmOverlay').classList.add('open');
+};
+
+
+// Featured 수정 — Full Editor를 기존 내용으로 pre-fill
+let editingFeaturedId = null;
+window.openEditFeatured = function(featuredId) {
+  const cfg = FEATURED_CACHE.find(f => f.id === featuredId);
+  if (!cfg) { showToast('Featured post not found', 'error'); return; }
+  editingFeaturedId = featuredId;
+  isFeaturedMode = true;
+  // toggleFeaturedMode UI 동기화
+  ['featuredToggleBtn','featuredToggleBtnModal'].forEach(function(id) {
+    const btn = document.getElementById(id);
+    if (btn) btn.className = 'featured-toggle-btn on';
+  });
+  openFullEditor();
+  setTimeout(function() {
+    const titleEl = document.getElementById('feTitleInput');
+    const bodyEl  = document.getElementById('feEditor');
+    if (titleEl) { titleEl.value = cfg.title || ''; feAutoResize(titleEl); }
+    if (bodyEl)  bodyEl.innerHTML = cfg.preview || '';
+    // 토픽 칩 선택
+    document.querySelectorAll('.fe-chip').forEach(function(c) {
+      if (c.dataset.topic === cfg.topic) {
+        c.classList.add('selected');
+        feTopic = cfg.topic;
+        selectedFlair = cfg.topic;
+      } else {
+        c.classList.remove('selected');
+      }
+    });
+    feCheckReady();
+  }, 150);
+};
+
 window.showActionMenu = function(e, postId) {
   if (e && e.stopPropagation) e.stopPropagation();
   if (!postId) return;
+
+  // Featured 메뉴에서 변경된 핸들러를 원래대로 복원
+  const _editEl = document.getElementById('actionMenuEditItem');
+  if (_editEl) _editEl.onclick = function() { openEditPost(); };
+  const _delEl = document.getElementById('actionMenuDeleteItem');
+  if (_delEl) _delEl.onclick = function() { openDeleteConfirm(); };
+  const _saveItem = document.getElementById('actionMenuSaveItem');
+  const _saveSep  = _saveItem?.nextElementSibling;
+  if (_saveItem) _saveItem.style.display = '';
+  if (_saveSep && _saveSep.classList.contains('action-menu-sep')) _saveSep.style.display = '';
 
   // 로그인 필요
   if (!currentUser) { showToast('Sign in to save or manage posts', 'error'); return; }
@@ -8238,6 +8350,22 @@ window.closeDeleteConfirm = function() {
 }
 
 window.executeDeletePost = async function() {
+  // Featured 글 삭제 처리
+  if (pendingDeleteFeaturedId) {
+    const fid = pendingDeleteFeaturedId;
+    pendingDeleteFeaturedId = null;
+    closeDeleteConfirm();
+    if (firebaseOk) {
+      try {
+        await deleteDoc(doc(db, 'featured', fid));
+      } catch(e) { console.error('Featured 삭제 실패:', e); }
+    }
+    FEATURED_CACHE = FEATURED_CACHE.filter(f => f.id !== fid);
+    renderFeed();
+    showToast('Featured post deleted', 'info');
+    return;
+  }
+
   if (!activeDetailId || !currentUser) return;
   const post = POSTS.find(p => String(p.id) === String(activeDetailId));
   if (!post || post.authorId !== currentUser.uid) {
@@ -8309,6 +8437,7 @@ window.openFullEditor = function() {
 
 // ── 닫기 ──
 window.closeFullEditor = function() {
+  editingFeaturedId = null;
   const overlay = document.getElementById('fullEditorOverlay');
   if (overlay) {
     overlay.classList.remove('open');
@@ -8709,33 +8838,46 @@ window.publishFromEditor = async function() {
   // Featured 모드: Firestore 'featured' 컬렉션에 저장 후 종료
   if (OWNER_EMAILS.includes(currentUser.email) && isFeaturedMode) {
     try {
-      await addDoc(collection(db, 'featured'), {
+      const featuredData = {
         topic, title,
         preview: bodyText,
         comm: 'r/KoreaConnect',
         author: authorName,
         cta: 'Read Guide',
         active: true,
-        createdAt: serverTimestamp(),
-      });
+      };
+      if (editingFeaturedId) {
+        // 기존 Featured 글 수정
+        await updateDoc(doc(db, 'featured', editingFeaturedId), featuredData);
+        editingFeaturedId = null;
+        showToast('⭐ Featured post updated!', 'success');
+      } else {
+        // 새 Featured 글 발행
+        featuredData.createdAt = serverTimestamp();
+        await addDoc(collection(db, 'featured'), featuredData);
+        showToast('⭐ Featured post published!', 'success');
+      }
       await loadFeaturedFromFirestore();
+      isFeaturedMode = false;
       if (btn) { btn.textContent = 'Publish'; btn.classList.remove('ready'); }
       localStorage.removeItem(FE_DRAFT_KEY);
       feResetEditor();
       closeFullEditor();
-      showToast('⭐ Featured post published!', 'success');
     } catch(e) {
       console.error('Featured 저장 실패:', e);
-      showToast('Failed to publish featured post', 'error');
+      showToast('Failed to save featured post', 'error');
       if (btn) btn.textContent = 'Publish';
     }
     return;
   }
 
+  const isOwnerPost = OWNER_EMAILS.includes(currentUser.email);
+
   const newPost = {
     comm: selectedComm || 'KoreaConnect',
     author: authorName, authorId: currentUser.uid,
     authorPhoto: currentUser.photoURL || null,
+    ...(isOwnerPost ? { isPinned: true, role: 'admin' } : {}),
     topic, title,
     preview: bodyHtml,      // HTML 그대로 저장 (색상, Bold 등 유지)
     previewText: bodyText,  // 검색/피드 미리보기용 plain text

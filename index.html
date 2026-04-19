@@ -7641,70 +7641,69 @@ let _myPostsActiveFilter = 'posts';
 window.filterMyPostsBy = function(type) {
   _myPostsActiveFilter = type;
 
-  // 카드 활성 스타일
-  ['posts','upvotes','comments'].forEach(t => {
-    const el = document.getElementById('mpstat-' + t);
+  ['posts','upvotes','comments'].forEach(function(t) {
+    var el = document.getElementById('mpstat-' + t);
     if (!el) return;
-    el.style.background   = t === type ? 'var(--green-light)' : 'var(--surface)';
-    el.style.borderColor  = t === type ? 'var(--green)'       : 'var(--border)';
+    el.style.background  = t === type ? 'var(--green-light)' : 'var(--surface)';
+    el.style.borderColor = t === type ? 'var(--green)'       : 'var(--border-mid)';
   });
 
-  const list = document.getElementById('feedList');
+  var list = document.getElementById('feedList');
   if (!list || !_myPostsCache.length) return;
 
-  let sorted = [..._myPostsCache];
-  let filterLabel = '';
+  var sorted = _myPostsCache.slice();
+  var filterLabel = '';
 
   if (type === 'upvotes') {
-    sorted = sorted.filter(p => (p.votes || 0) > 0).sort((a,b) => (b.votes||0)-(a.votes||0));
+    sorted = sorted.filter(function(p){ return (p.votes||0) > 0; })
+                   .sort(function(a,b){ return (b.votes||0)-(a.votes||0); });
     filterLabel = '▲ Sorted by upvotes';
   } else if (type === 'comments') {
-    sorted = sorted.filter(p => (p.commentCount || 0) > 0).sort((a,b) => (b.commentCount||0)-(a.commentCount||0));
+    sorted = sorted.filter(function(p){ return (p.commentCount||0) > 0; })
+                   .sort(function(a,b){ return (b.commentCount||0)-(a.commentCount||0); });
     filterLabel = '💬 Sorted by comments';
   } else {
-    sorted = sorted.sort((a,b) => {
-      const ta = a.createdAt?.toMillis?.() || 0;
-      const tb = b.createdAt?.toMillis?.() || 0;
+    sorted = sorted.sort(function(a,b){
+      var ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+      var tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
       return tb - ta;
     });
     filterLabel = 'All posts';
   }
 
-  const postsListEl = list.querySelector('[data-my-posts-list]');
+  var postsListEl = list.querySelector('[data-my-posts-list]');
   if (!postsListEl) return;
 
   if (sorted.length === 0) {
-    postsListEl.innerHTML = `<div style="padding:32px 20px;text-align:center;color:var(--text-3);font-size:13px">
-      No posts with ${type} yet</div>`;
+    postsListEl.innerHTML = '<div style="padding:32px 20px;text-align:center;color:var(--text-3);font-size:13px">No posts yet</div>';
     return;
   }
 
-  postsListEl.innerHTML = `
-    <div style="padding:4px 16px 8px;font-size:11px;color:var(--text-3);font-weight:600">${filterLabel}</div>
-    ${sorted.map((p, i) => \`
-    <div class="post-card" style="animation-delay:\${i*0.03}s" data-post-id="\${p.id}">
-      <div class="post-meta">
-        <span class="tag tag-\${p.topic}">\${capTopic(p.topic)}</span>
-        <div class="meta-dot"></div>
-        <span class="meta-time">\${p.time || 'Just now'}</span>
-        <span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:600">▲ \${p.votes || 0}</span>
-      </div>
-      <div class="post-title" onclick="openDetail('\${p.id}')" style="cursor:pointer">\${p.title}</div>
-      <div class="post-preview" onclick="openDetail('\${p.id}')" style="cursor:pointer">\${p.preview}</div>
-      <div class="post-actions" style="margin-top:8px">
-        <button class="action-btn" onclick="openDetail('\${p.id}')">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 2H2C1.4 2 1 2.4 1 3v8c0 .6.4 1 1 1h2v3l3.5-3H14c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1z" stroke="currentColor" stroke-width="1.3"/></svg>
-          \${p.commentCount || 0}
-        </button>
-        <div class="spacer"></div>
-        <button class="action-btn" style="color:#E24B4A"
-          onclick="event.stopPropagation();confirmDeletePost('\${p.id}')">
-          <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M6 6v4M8 6v4M3 3l1 9h6l1-9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-          Delete
-        </button>
-      </div>
-    </div>\`).join('')}
-  `;
+  var rows = sorted.map(function(p, i) {
+    return '<div class="post-card" data-post-id="' + p.id + '">' +
+      '<div class="post-meta">' +
+        '<span class="tag tag-' + p.topic + '">' + capTopic(p.topic) + '</span>' +
+        '<div class="meta-dot"></div>' +
+        '<span class="meta-time">' + (p.time || 'Just now') + '</span>' +
+        '<span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:600">▲ ' + (p.votes||0) + '</span>' +
+      '</div>' +
+      '<div class="post-title" onclick="openDetail('' + p.id + '')" style="cursor:pointer">' + p.title + '</div>' +
+      '<div class="post-preview" onclick="openDetail('' + p.id + '')" style="cursor:pointer">' + p.preview + '</div>' +
+      '<div class="post-actions" style="margin-top:8px">' +
+        '<button class="action-btn" onclick="openDetail('' + p.id + '')">' +
+          '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 2H2C1.4 2 1 2.4 1 3v8c0 .6.4 1 1 1h2v3l3.5-3H14c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1z" stroke="currentColor" stroke-width="1.3"/></svg>' +
+          (p.commentCount||0) +
+        '</button>' +
+        '<div class="spacer"></div>' +
+        '<button class="action-btn" style="color:#E24B4A" onclick="event.stopPropagation();confirmDeletePost('' + p.id + '')">' +
+          '<svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M6 6v4M8 6v4M3 3l1 9h6l1-9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>' +
+          'Delete' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  postsListEl.innerHTML = '<div style="padding:4px 16px 8px;font-size:11px;color:var(--text-3);font-weight:600">' + filterLabel + '</div>' + rows;
 };
 
 // ── POST MENU (점 3개) ──

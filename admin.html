@@ -329,6 +329,45 @@
   .preview-badge.discount { background: #FCE4EC; color: #E91E63; }
   .preview-badge.slots { background: var(--green-light); color: var(--green-dark); }
 
+  /* ── SERVICE OPTIONS ── */
+  .options-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+  .option-item {
+    background: var(--bg); border: 1px solid var(--border-mid);
+    border-radius: var(--radius-xs); padding: 12px 14px;
+    display: grid; grid-template-columns: 1fr 100px 100px 100px 32px;
+    gap: 8px; align-items: center;
+  }
+  .option-item input {
+    padding: 7px 10px; font-size: 13px;
+    border: 1px solid var(--border-mid); border-radius: 6px;
+    font-family: var(--font); background: var(--surface);
+    color: var(--text); outline: none;
+  }
+  .option-item input:focus { border-color: var(--green); }
+  .option-item input::placeholder { color: var(--text-3); }
+  .btn-add-option {
+    width: 100%; padding: 9px;
+    background: none; border: 1.5px dashed var(--border-mid);
+    border-radius: var(--radius-xs);
+    font-size: 13px; font-weight: 600; color: var(--green);
+    cursor: pointer; font-family: var(--font);
+    transition: all 0.15s;
+  }
+  .btn-add-option:hover { border-color: var(--green); background: var(--green-light); }
+  .btn-remove-option {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--red-light); color: var(--red);
+    border: none; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .option-header {
+    display: grid; grid-template-columns: 1fr 100px 100px 100px 32px;
+    gap: 8px; margin-bottom: 4px;
+    font-size: 10px; font-weight: 700; color: var(--text-3);
+    letter-spacing: 0.4px; text-transform: uppercase; padding: 0 2px;
+  }
+
   /* ── SUBMIT BTN ── */
   .btn-submit {
     width: 100%; padding: 14px;
@@ -598,6 +637,31 @@
         </div>
       </div>
 
+      <!-- Service Options -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M4 10h12M4 14h8" stroke="#1D9E75" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+          <div class="card-title">Service Options</div>
+          <div style="margin-left:auto;font-size:11px;color:var(--text-3)">Optional</div>
+        </div>
+        <div class="card-body">
+          <div style="font-size:12px;color:var(--text-2);margin-bottom:12px">
+            Add individual services (e.g. Men's Cut, Women's Cut). Each option can have its own price and duration.
+          </div>
+          <div class="option-header">
+            <span>Service Name</span>
+            <span>Duration (min)</span>
+            <span>Price (₩)</span>
+            <span>Sale Price (₩)</span>
+            <span></span>
+          </div>
+          <div class="options-list" id="optionsList"></div>
+          <button class="btn-add-option" onclick="addOption()">+ Add Service Option</button>
+        </div>
+      </div>
+
       <!-- Location -->
       <div class="card" style="margin-bottom:20px">
         <div class="card-header">
@@ -802,6 +866,48 @@ window.signOut = async function() {
   await fbSignOut(auth);
 };
 
+// ── SERVICE OPTIONS ──
+let serviceOptions = []; // { name, duration, price, salePrice }
+
+window.addOption = function() {
+  const idx = serviceOptions.length;
+  serviceOptions.push({ name: '', duration: '', price: '', salePrice: '' });
+  renderOptions();
+};
+
+window.removeOption = function(idx) {
+  serviceOptions.splice(idx, 1);
+  renderOptions();
+};
+
+window.updateOption = function(idx, field, val) {
+  serviceOptions[idx][field] = val;
+  generateJson();
+};
+
+function renderOptions() {
+  const list = document.getElementById('optionsList');
+  if (!list) return;
+  list.innerHTML = serviceOptions.map((opt, i) => `
+    <div class="option-item">
+      <input type="text" placeholder="e.g. Women's Cut"
+        value="${opt.name}"
+        oninput="updateOption(${i},'name',this.value)">
+      <input type="number" placeholder="e.g. 40"
+        value="${opt.duration}"
+        oninput="updateOption(${i},'duration',this.value)">
+      <input type="number" placeholder="e.g. 80000"
+        value="${opt.price}"
+        oninput="updateOption(${i},'price',this.value)">
+      <input type="number" placeholder="e.g. 55000"
+        value="${opt.salePrice}"
+        oninput="updateOption(${i},'salePrice',this.value)">
+      <button class="btn-remove-option" onclick="removeOption(${i})">✕</button>
+    </div>
+  `).join('');
+  generateJson();
+}
+
 // ── CATEGORY ──
 window.selectCategory = function(el, cat) {
   document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
@@ -933,6 +1039,16 @@ function buildObject() {
     mapUrl:          document.getElementById('bizMapUrl').value.trim(),
     photos:          [],   // filled after upload
     active:          true,
+    options: serviceOptions
+      .filter(o => o.name.trim())
+      .map(o => ({
+        name:      o.name.trim(),
+        duration:  o.duration ? Number(o.duration) : null,
+        price:     o.price    ? Number(o.price)    : null,
+        salePrice: o.salePrice ? Number(o.salePrice) : null,
+        discountPct: (o.price && o.salePrice)
+          ? Math.round((1 - o.salePrice / o.price) * 100) : null,
+      })),
   };
 }
 
@@ -1064,6 +1180,15 @@ window.editBusiness = function(id, data) {
   photoFiles = (data.photos || []).map(url => ({ file: null, localUrl: url }));
   renderPhotoPreviews();
 
+  // 서비스 옵션 로드
+  serviceOptions = (data.options || []).map(o => ({
+    name:      o.name      || '',
+    duration:  o.duration  ? String(o.duration)  : '',
+    price:     o.price     ? String(o.price)     : '',
+    salePrice: o.salePrice ? String(o.salePrice) : '',
+  }));
+  renderOptions();
+
   document.getElementById('submitBtn').style.display = 'none';
   document.getElementById('updateBtn').style.display = '';
 
@@ -1083,6 +1208,8 @@ window.resetForm = function() {
    'slotsPerHour','sessionDuration','bookingUrl','bizAddress','bizDistrict','bizMapUrl'
   ].forEach(id => { document.getElementById(id).value = ''; });
 
+  serviceOptions = [];
+  renderOptions();
   document.querySelectorAll('.cat-chip, .platform-chip').forEach(c => c.classList.remove('selected'));
   document.getElementById('photoPreviews').innerHTML = '';
   document.getElementById('submitBtn').style.display = '';

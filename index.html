@@ -4009,6 +4009,12 @@
           </div>
           <span class="pr-label" style="color:#A32D2D">Sign out</span>
         </div>
+        <div class="profile-row" onclick="openDeleteAllDataConfirm()" style="cursor:pointer">
+          <div class="pr-icon" style="background:#FCEBEB">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10" stroke="#A32D2D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="pr-label" style="color:#A32D2D">Delete all my data</span>
+        </div>
       </div>
     </div>
 
@@ -4159,6 +4165,21 @@
     <div class="confirm-btns">
       <button class="confirm-btn-cancel" onclick="closeDeleteConfirm()">Cancel</button>
       <button class="confirm-btn-delete" onclick="executeDeletePost()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete All My Data 확인 모달 -->
+<div class="confirm-overlay" id="deleteAllDataOverlay">
+  <div class="confirm-card">
+    <div class="confirm-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#E24B4A" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    <div class="confirm-title">Delete all my data?</div>
+    <div class="confirm-sub">This will permanently delete all your posts, comments, and upvote history. This can't be undone.</div>
+    <div class="confirm-btns">
+      <button class="confirm-btn-cancel" onclick="closeDeleteAllDataConfirm()">Cancel</button>
+      <button class="confirm-btn-delete" id="deleteAllDataBtn" onclick="executeDeleteAllData()">Delete everything</button>
     </div>
   </div>
 </div>
@@ -5423,6 +5444,49 @@ window.signOutUser = async function() {
     goTo('feed');
   } catch(e) {
     showToast('Sign out failed', 'error');
+  }
+}
+
+// ── DELETE ALL MY DATA ──
+window.openDeleteAllDataConfirm = function() {
+  document.getElementById('deleteAllDataOverlay').classList.add('open');
+}
+window.closeDeleteAllDataConfirm = function() {
+  document.getElementById('deleteAllDataOverlay').classList.remove('open');
+}
+window.executeDeleteAllData = async function() {
+  if (!currentUser) return;
+  const btn = document.getElementById('deleteAllDataBtn');
+  btn.textContent = 'Deleting…';
+  btn.disabled = true;
+
+  try {
+    // 1. 내 포스팅 소프트 삭제
+    const postsSnap = await getDocs(query(collection(db, 'posts'), where('authorId', '==', currentUser.uid)));
+    for (const d of postsSnap.docs) {
+      await updateDoc(doc(db, 'posts', d.id), { deleted: true });
+    }
+
+    // 2. 내 댓글 삭제
+    const commentsSnap = await getDocs(query(collectionGroup(db, 'comments'), where('authorId', '==', currentUser.uid)));
+    for (const d of commentsSnap.docs) {
+      await deleteDoc(d.ref);
+    }
+
+    // 3. localStorage 초기화
+    localStorage.removeItem('kc_votes');
+    localStorage.removeItem('kc_my_comments');
+    localStorage.removeItem('kc_saved');
+
+    closeDeleteAllDataConfirm();
+    POSTS = POSTS.filter(p => p.authorId !== currentUser.uid);
+    renderFeed();
+    showToast('All your data has been deleted');
+  } catch(e) {
+    console.error('Delete all data failed:', e);
+    showToast('Delete failed. Please try again.', 'error');
+    btn.textContent = 'Delete everything';
+    btn.disabled = false;
   }
 }
 

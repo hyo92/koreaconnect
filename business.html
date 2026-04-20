@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KoreaConnect — Business</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green:        #1D9E75;
+    --green-light:  #E1F5EE;
+    --green-mid:    #9FE1CB;
+    --green-dark:   #0F6E56;
+    --green-deeper: #085041;
+    --bg:           #F5F5F0;
+    --surface:      #FFFFFF;
+    --border:       rgba(0,0,0,0.08);
+    --border-mid:   rgba(0,0,0,0.13);
+    --text:         #1A1A18;
+    --text-2:       #5A5A56;
+    --text-3:       #9A9A96;
+    --radius:       20px;
+    --radius-sm:    14px;
+    --radius-xs:    10px;
+    --font:         'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    height: 56px;
+    display: flex; align-items: center;
+    padding: 0 20px; gap: 12px;
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: none;
+    font-size: 14px; font-weight: 500;
+    color: var(--text-2); cursor: pointer;
+    font-family: var(--font); padding: 6px 0;
+    transition: color 0.15s;
+  }
+  .back-btn:hover { color: var(--text); }
+  .topbar-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px; color: var(--green-deeper);
+    text-decoration: none; margin-left: auto;
+  }
+  .topbar-logo span { color: var(--green); }
+
+  /* ── LOADING / ERROR ── */
+  .state-wrap {
+    min-height: calc(100vh - 56px);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px;
+    color: var(--text-3); font-size: 14px; text-align: center;
+    padding: 40px;
+  }
+  .state-icon { font-size: 40px; margin-bottom: 4px; }
+
+  /* ── MAIN LAYOUT ── */
+  .page-wrap {
+    max-width: 960px; margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .hero-gallery {
+    position: relative;
+    aspect-ratio: 16/7;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .hero-gallery img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: none;
+  }
+  .hero-gallery img.active { display: block; }
+  .hero-gallery-empty {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px;
+  }
+  .gallery-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    display: flex; justify-content: space-between;
+    width: 100%; padding: 0 12px; pointer-events: none;
+  }
+  .gallery-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    border: none; cursor: pointer; pointer-events: all;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: background 0.15s; font-size: 14px;
+  }
+  .gallery-btn:hover { background: #fff; }
+  .gallery-dots {
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px;
+  }
+  .gallery-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.5); cursor: pointer;
+    transition: background 0.15s;
+  }
+  .gallery-dot.active { background: #fff; }
+
+  .hero-body { padding: 24px; }
+  .hero-cat-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .cat-badge {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--green);
+    background: var(--green-light);
+    padding: 4px 10px; border-radius: 999px;
+  }
+  .platform-badge {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--text-3);
+    background: var(--bg); border: 1px solid var(--border-mid);
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .hero-name {
+    font-size: 26px; font-weight: 700; line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .hero-tagline {
+    font-size: 15px; color: var(--text-2); line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  .hero-meta {
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: wrap;
+  }
+  .hero-meta-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-2);
+  }
+  .hero-meta-item svg { flex-shrink: 0; }
+
+  /* ── GRID ── */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .card:last-child { margin-bottom: 0; }
+  .card-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px; font-weight: 700;
+    color: var(--text-2); letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .card-body { padding: 20px; }
+
+  /* ── DESCRIPTION ── */
+  .desc-text {
+    font-size: 14px; color: var(--text-2);
+    line-height: 1.7; white-space: pre-wrap;
+  }
+
+  /* ── SLOTS INFO ── */
+  .slots-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .slot-item {
+    background: var(--bg);
+    border-radius: var(--radius-xs);
+    padding: 14px; text-align: center;
+  }
+  .slot-val {
+    font-size: 22px; font-weight: 700;
+    color: var(--green); margin-bottom: 2px;
+  }
+  .slot-label { font-size: 11px; color: var(--text-3); }
+
+  /* ── LOCATION ── */
+  .location-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    margin-bottom: 14px;
+  }
+  .location-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--green-light);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .location-label { font-size: 11px; color: var(--text-3); margin-bottom: 3px; }
+  .location-val { font-size: 14px; color: var(--text); font-weight: 500; line-height: 1.4; }
+  .btn-map {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 11px;
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--border-mid);
+    border-radius: 999px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: var(--font); text-decoration: none;
+    transition: background 0.15s;
+  }
+  .btn-map:hover { background: var(--green-light); border-color: var(--green-mid); }
+
+  /* ── SIDEBAR ── */
+  .sidebar-sticky { position: sticky; top: 76px; }
+
+  /* ── PRICE CARD ── */
+  .price-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .price-header {
+    background: var(--green);
+    padding: 16px 20px;
+    color: #fff;
+  }
+  .price-label { font-size: 11px; font-weight: 600; opacity: 0.8; margin-bottom: 4px; }
+  .price-main {
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .price-sale { font-size: 28px; font-weight: 700; }
+  .price-original {
+    font-size: 14px; text-decoration: line-through; opacity: 0.6;
+  }
+  .price-discount {
+    background: rgba(255,255,255,0.2);
+    font-size: 12px; font-weight: 700;
+    padding: 2px 8px; border-radius: 999px;
+  }
+  .price-body { padding: 16px 20px; }
+  .btn-book {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 14px;
+    background: var(--green); color: #fff;
+    border: none; border-radius: 999px;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: var(--font);
+    text-decoration: none;
+    transition: background 0.15s;
+    margin-bottom: 10px;
+  }
+  .btn-book:hover { background: var(--green-dark); }
+  .btn-book-sub {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 11px;
+    background: none; color: var(--text-2);
+    border: 1px solid var(--border-mid); border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: var(--font);
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .btn-book-sub:hover { background: var(--bg); }
+  .price-note {
+    text-align: center; font-size: 11px; color: var(--text-3);
+    margin-top: 10px; line-height: 1.5;
+  }
+
+  /* ── SHARE ── */
+  .share-row {
+    display: flex; gap: 8px; margin-top: 12px;
+  }
+  .share-btn {
+    flex: 1; padding: 8px;
+    background: var(--bg); border: 1px solid var(--border-mid);
+    border-radius: var(--radius-xs);
+    font-size: 12px; font-weight: 600; color: var(--text-2);
+    cursor: pointer; font-family: var(--font);
+    transition: all 0.15s; text-align: center;
+  }
+  .share-btn:hover { background: var(--green-light); border-color: var(--green-mid); color: var(--green-dark); }
+
+  /* ── THUMBNAIL STRIP ── */
+  .thumb-strip {
+    display: flex; gap: 8px; margin-top: 12px;
+    overflow-x: auto; padding-bottom: 2px;
+  }
+  .thumb-strip::-webkit-scrollbar { display: none; }
+  .thumb-item {
+    width: 56px; height: 56px; border-radius: 8px;
+    overflow: hidden; flex-shrink: 0; cursor: pointer;
+    border: 2px solid transparent; transition: border-color 0.15s;
+  }
+  .thumb-item.active { border-color: var(--green); }
+  .thumb-item img { width: 100%; height: 100%; object-fit: cover; }
+
+  @media (max-width: 720px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .sidebar-sticky { position: static; }
+    .hero-name { font-size: 22px; }
+    .hero-gallery { aspect-ratio: 4/3; }
+    .page-wrap { padding: 16px 16px 80px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-btn" onclick="history.back()">
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+      <path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Back
+  </button>
+  <a class="topbar-logo" href="index.html">Korea<span>Connect</span></a>
+</div>
+
+<!-- Loading -->
+<div class="state-wrap" id="stateLoading">
+  <div class="state-icon">⏳</div>
+  Loading business details...
+</div>
+
+<!-- Error -->
+<div class="state-wrap" id="stateError" style="display:none">
+  <div class="state-icon">😕</div>
+  <div style="font-size:16px;font-weight:600;color:var(--text)">Business not found</div>
+  <div>It may have been removed or the link is incorrect.</div>
+  <a href="index.html" style="margin-top:8px;color:var(--green);font-weight:600;text-decoration:none">← Back to Home</a>
+</div>
+
+<!-- Main content -->
+<div class="page-wrap" id="pageWrap" style="display:none">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-gallery" id="heroGallery">
+      <div class="hero-gallery-empty" id="galleryEmpty">🏪</div>
+      <div class="gallery-nav" id="galleryNav" style="display:none">
+        <button class="gallery-btn" onclick="galleryNav(-1)">‹</button>
+        <button class="gallery-btn" onclick="galleryNav(1)">›</button>
+      </div>
+      <div class="gallery-dots" id="galleryDots"></div>
+    </div>
+    <!-- Thumbnail strip -->
+    <div class="thumb-strip" id="thumbStrip" style="padding:0 16px 12px;display:none"></div>
+
+    <div class="hero-body">
+      <div class="hero-cat-row">
+        <span class="cat-badge" id="heroCat">Category</span>
+        <span class="platform-badge" id="heroPlatform" style="display:none"></span>
+      </div>
+      <div class="hero-name" id="heroName">—</div>
+      <div class="hero-tagline" id="heroTagline"></div>
+      <div class="hero-meta" id="heroMeta"></div>
+    </div>
+  </div>
+
+  <div class="content-grid">
+
+    <!-- Left -->
+    <div>
+
+      <!-- Description -->
+      <div class="card" id="descCard" style="display:none">
+        <div class="card-header">About</div>
+        <div class="card-body">
+          <div class="desc-text" id="descText"></div>
+        </div>
+      </div>
+
+      <!-- Slots -->
+      <div class="card" id="slotsCard" style="display:none">
+        <div class="card-header">Availability</div>
+        <div class="card-body">
+          <div class="slots-grid" id="slotsGrid"></div>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="card" id="locationCard" style="display:none">
+        <div class="card-header">Location</div>
+        <div class="card-body">
+          <div id="locationContent"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar-sticky">
+
+      <!-- Price & Book -->
+      <div class="price-card" id="priceCard">
+        <div class="price-header" id="priceHeader">
+          <div class="price-label">Price</div>
+          <div class="price-main" id="priceMain">
+            <span class="price-sale" id="priceSale">—</span>
+          </div>
+        </div>
+        <div class="price-body">
+          <a class="btn-book" id="btnBook" href="#" target="_blank">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" stroke="white" stroke-width="1.5"/>
+              <path d="M10 6v4l3 2" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Book Now
+          </a>
+          <button class="btn-book-sub" onclick="copyLink()">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M6 4H4a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2v-2M10 2h4v4M14 2L8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Copy Link
+          </button>
+          <div class="price-note" id="priceNote"></div>
+        </div>
+      </div>
+
+      <!-- KoreaConnect badge -->
+      <div class="card">
+        <div class="card-body" style="display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;border-radius:12px;background:var(--green-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2C6.7 2 4 4.7 4 8c0 4 6 8 6 8s6-4 6-8c0-3.3-2.7-6-6-6z" stroke="#1D9E75" stroke-width="1.5"/>
+              <circle cx="10" cy="8" r="2" stroke="#1D9E75" stroke-width="1.3"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">Listed on KoreaConnect</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:2px">Curated for expats in Korea</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:#1A1A18;color:#fff;padding:10px 18px;border-radius:999px;
+  font-size:13px;font-weight:500;opacity:0;transition:opacity 0.2s;
+  pointer-events:none;z-index:999;white-space:nowrap;
+"></div>
+
+<script type="module">
+import { initializeApp }  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyD-JgVkX693KDK9ArZNkSw8EYTdj0YANfo",
+  authDomain:        "koreaconnect-81f3b.firebaseapp.com",
+  projectId:         "koreaconnect-81f3b",
+  storageBucket:     "koreaconnect-81f3b.firebasestorage.app",
+  messagingSenderId: "1031892307775",
+  appId:             "1:1031892307775:web:0a177496122172483c0d8a",
+  measurementId:     "G-N2W46F27NR"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── URL params ──
+const params = new URLSearchParams(window.location.search);
+const bizId  = params.get('id');
+
+if (!bizId) {
+  showError();
+} else {
+  loadBusiness(bizId);
+}
+
+async function loadBusiness(id) {
+  try {
+    const snap = await getDoc(doc(db, 'businesses', id));
+    if (!snap.exists()) { showError(); return; }
+    renderBusiness({ id: snap.id, ...snap.data() });
+  } catch(e) {
+    console.error(e);
+    showError();
+  }
+}
+
+function renderBusiness(biz) {
+  document.title = (biz.name || 'Business') + ' — KoreaConnect';
+
+  // ── Gallery ──
+  const photos = biz.photos || (biz.photoMain ? [biz.photoMain] : []);
+  const gallery = document.getElementById('heroGallery');
+  const empty   = document.getElementById('galleryEmpty');
+  const nav     = document.getElementById('galleryNav');
+  const dots    = document.getElementById('galleryDots');
+  const thumbStrip = document.getElementById('thumbStrip');
+
+  const catEmoji = { beauty:'💄', tour:'✈️', food:'🍜', stay:'🏨', goods:'🛍️' };
+
+  if (photos.length > 0) {
+    empty.style.display = 'none';
+    photos.forEach((url, i) => {
+      const img = document.createElement('img');
+      img.src = url; img.alt = biz.name || '';
+      if (i === 0) img.classList.add('active');
+      gallery.insertBefore(img, nav);
+    });
+    if (photos.length > 1) {
+      nav.style.display = '';
+      dots.innerHTML = photos.map((_, i) =>
+        `<div class="gallery-dot${i===0?' active':''}" onclick="goToSlide(${i})"></div>`
+      ).join('');
+      // Thumbnail strip
+      thumbStrip.style.display = 'flex';
+      thumbStrip.innerHTML = photos.map((url, i) =>
+        `<div class="thumb-item${i===0?' active':''}" onclick="goToSlide(${i})">
+          <img src="${url}" alt="">
+        </div>`
+      ).join('');
+    }
+  } else {
+    empty.textContent = catEmoji[biz.category] || '🏪';
+  }
+
+  // ── Hero info ──
+  const catMap = { beauty:'💄 Beauty', tour:'✈️ Tour', food:'🍜 Food', stay:'🏨 Stay', goods:'🛍️ Goods' };
+  document.getElementById('heroCat').textContent = catMap[biz.category] || biz.category || '—';
+
+  if (biz.platform) {
+    const platEl = document.getElementById('heroPlatform');
+    platEl.textContent = biz.platform;
+    platEl.style.display = '';
+  }
+
+  document.getElementById('heroName').textContent    = biz.name    || '—';
+  document.getElementById('heroTagline').textContent = biz.tagline || '';
+
+  // Meta row
+  const meta = [];
+  if (biz.district || biz.address) {
+    meta.push(`<div class="hero-meta-item">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1C5.8 1 4 2.8 4 5c0 3.3 4 8 4 8s4-4.7 4-8c0-2.2-1.8-4-4-4z" stroke="currentColor" stroke-width="1.3"/>
+        <circle cx="8" cy="5" r="1.3" stroke="currentColor" stroke-width="1.1"/>
+      </svg>
+      ${biz.district || biz.address}
+    </div>`);
+  }
+  if (biz.slotsPerHour) {
+    meta.push(`<div class="hero-meta-item">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M8 5v3l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      ${biz.slotsPerHour} slots/hr
+    </div>`);
+  }
+  document.getElementById('heroMeta').innerHTML = meta.join('');
+
+  // ── Description ──
+  if (biz.description) {
+    document.getElementById('descText').textContent = biz.description;
+    document.getElementById('descCard').style.display = '';
+  }
+
+  // ── Slots ──
+  const slotsItems = [];
+  if (biz.slotsPerHour) slotsItems.push({ val: biz.slotsPerHour, label: 'Slots per hour' });
+  if (biz.sessionDuration) slotsItems.push({ val: biz.sessionDuration + ' min', label: 'Session duration' });
+  if (slotsItems.length > 0) {
+    document.getElementById('slotsGrid').innerHTML = slotsItems.map(s =>
+      `<div class="slot-item">
+        <div class="slot-val">${s.val}</div>
+        <div class="slot-label">${s.label}</div>
+      </div>`
+    ).join('');
+    document.getElementById('slotsCard').style.display = '';
+  }
+
+  // ── Location ──
+  const locItems = [];
+  if (biz.address)  locItems.push({ label: 'Address', val: biz.address });
+  if (biz.district) locItems.push({ label: 'District', val: biz.district });
+  if (locItems.length > 0 || biz.mapUrl) {
+    let html = locItems.map(l => `
+      <div class="location-row">
+        <div class="location-icon">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+            <path d="M9 1C6.2 1 4 3.2 4 6c0 4 5 10 5 10s5-6 5-10c0-2.8-2.2-5-5-5z" stroke="#1D9E75" stroke-width="1.4"/>
+            <circle cx="9" cy="6" r="2" stroke="#1D9E75" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="location-label">${l.label}</div>
+          <div class="location-val">${l.val}</div>
+        </div>
+      </div>`).join('');
+    if (biz.mapUrl) {
+      html += `<a href="${biz.mapUrl}" target="_blank" class="btn-map">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1C5.2 1 3 3.2 3 6c0 3.7 5 9 5 9s5-5.3 5-9c0-2.8-2.2-5-5-5z" stroke="currentColor" stroke-width="1.3"/>
+          <circle cx="8" cy="6" r="1.8" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+        Open in Google Maps
+      </a>`;
+    }
+    document.getElementById('locationContent').innerHTML = html;
+    document.getElementById('locationCard').style.display = '';
+  }
+
+  // ── Price ──
+  if (biz.priceSale || biz.priceOriginal) {
+    const saleStr = biz.priceSale ? '₩' + Number(biz.priceSale).toLocaleString() : '';
+    const origStr = biz.priceOriginal ? '₩' + Number(biz.priceOriginal).toLocaleString() : '';
+    const disc    = biz.discountPct  ? biz.discountPct + '% OFF' : '';
+
+    let priceHtml = '';
+    if (saleStr) priceHtml += `<span class="price-sale">${saleStr}</span>`;
+    if (origStr) priceHtml += `<span class="price-original">${origStr}</span>`;
+    if (disc)    priceHtml += `<span class="price-discount">${disc}</span>`;
+    document.getElementById('priceMain').innerHTML = priceHtml;
+
+    if (biz.sessionDuration) {
+      document.getElementById('priceNote').textContent = `Per ${biz.sessionDuration}-minute session`;
+    }
+  } else {
+    document.getElementById('priceHeader').style.background = 'var(--green-light)';
+    document.getElementById('priceSale').style.color = 'var(--green-deeper)';
+    document.getElementById('priceSale').textContent = 'Contact for pricing';
+  }
+
+  // ── Book button ──
+  const bookBtn = document.getElementById('btnBook');
+  if (biz.bookingUrl) {
+    bookBtn.href = biz.bookingUrl;
+  } else {
+    bookBtn.style.display = 'none';
+  }
+
+  // ── Show page ──
+  document.getElementById('stateLoading').style.display = 'none';
+  document.getElementById('pageWrap').style.display = '';
+}
+
+// ── Gallery navigation ──
+let currentSlide = 0;
+
+window.galleryNav = function(dir) {
+  const imgs = document.querySelectorAll('.hero-gallery img');
+  if (!imgs.length) return;
+  imgs[currentSlide].classList.remove('active');
+  document.querySelectorAll('.gallery-dot')[currentSlide]?.classList.remove('active');
+  document.querySelectorAll('.thumb-item')[currentSlide]?.classList.remove('active');
+  currentSlide = (currentSlide + dir + imgs.length) % imgs.length;
+  imgs[currentSlide].classList.add('active');
+  document.querySelectorAll('.gallery-dot')[currentSlide]?.classList.add('active');
+  document.querySelectorAll('.thumb-item')[currentSlide]?.classList.add('active');
+};
+
+window.goToSlide = function(i) {
+  const imgs = document.querySelectorAll('.hero-gallery img');
+  if (!imgs.length) return;
+  imgs[currentSlide].classList.remove('active');
+  document.querySelectorAll('.gallery-dot')[currentSlide]?.classList.remove('active');
+  document.querySelectorAll('.thumb-item')[currentSlide]?.classList.remove('active');
+  currentSlide = i;
+  imgs[i].classList.add('active');
+  document.querySelectorAll('.gallery-dot')[i]?.classList.add('active');
+  document.querySelectorAll('.thumb-item')[i]?.classList.add('active');
+};
+
+// ── Copy link ──
+window.copyLink = function() {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    showToast('Link copied! 🔗');
+  });
+};
+
+function showError() {
+  document.getElementById('stateLoading').style.display = 'none';
+  document.getElementById('stateError').style.display = '';
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 2500);
+}
+</script>
+</body>
+</html>

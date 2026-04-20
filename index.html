@@ -5085,6 +5085,7 @@ const CHATS = [
 let POSTS = [];
 let locOn = false;
 let FEATURED_CACHE = []; // Firestore 'featured' 컬렉션 캐시
+let FIRESTORE_DEALS = []; // Firestore 'businesses' 컬렉션 캐시
 let isHomeMode = true; // Home 모드 여부 — true: 로비 뷰, false: 카테고리 필터 뷰
 let userDistrict = null;   // 예: "Mapo-gu"
 let userCity    = null;    // 예: "Seoul"
@@ -6388,6 +6389,30 @@ const HOT_DEALS = {
 // Firebase 콘솔 → Firestore → featured 컬렉션에서 직접 수정 가능
 // 각 문서 필드: topic, title, preview, comm, author, cta, href(선택), active(true/false)
 const FEATURED_CONFIG = {}; // Firestore 로드 전 빈 객체
+
+async function loadBusinessesFromFirestore() {
+  if (!firebaseOk) return;
+  try {
+    const snap = await getDocs(collection(db, 'businesses'));
+    FIRESTORE_DEALS = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if (data.active !== false) {
+        FIRESTORE_DEALS.push({ id: d.id, ...data });
+      }
+    });
+    console.log('[Businesses] Firestore에서 로드:', FIRESTORE_DEALS.length, '개');
+    // 핫딜 페이지가 열려있으면 갱신
+    const activeDealsTab = document.querySelector('.deals-tab.active');
+    if (activeDealsTab) {
+      renderDealsGrid(activeDealsTab.id.replace('deals-tab-', '') || 'all');
+    }
+    // 피드 핫딜 위젯도 갱신
+    renderFeed();
+  } catch(e) {
+    console.warn('[Businesses] 로드 실패:', e.message);
+  }
+}
 
 async function loadFeaturedFromFirestore() {
   if (!firebaseOk) return;
@@ -9154,10 +9179,52 @@ function renderDealsGrid(tab) {
   const grid = document.getElementById('dealsGrid');
   if (!grid) return;
 
-  // 'all' 탭이면 전체 합치기
-  let deals;
+  // Firestore 비즈니스 데이터를 핫딜 형식으로 변환
+  function firestoreToHotDeal(biz) {
+    const catMap = { beauty:'Beauty', tour:'Tour', food:'Food', stay:'Stay', goods:'Goods' };
+    const bgMap  = {
+      beauty: 'linear-gradient(135deg,#FADADD,#F5B8C4)',
+      tour:   'linear-gradient(135deg,#A5D6A7,#81C784)',
+      food:   'linear-gradient(135deg,#FFE082,#FFD54F)',
+      stay:   'linear-gradient(135deg,#BBDEFB,#90CAF9)',
+      goods:  'linear-gradient(135deg,#E1BEE7,#CE93D8)',
+    };
+    const emojiMap = { beauty:'💄', tour:'✈️', food:'🍜', stay:'🏨', goods:'🛍️' };
+    const priceSale = biz.priceSale ? '₩' + Number(biz.priceSale).toLocaleString() : '';
+    const priceOrig = biz.priceOriginal ? '₩' + Number(biz.priceOriginal).toLocaleString() : '';
+    return {
+      id:          biz.id,
+      name:        biz.name || '',
+      location:    biz.district || biz.address || '',
+      emoji:       biz.photos && biz.photos.length ? null : (emojiMap[biz.category] || '🏪'),
+      photoMain:   biz.photoMain || null,
+      bg:          bgMap[biz.category] || 'linear-gradient(135deg,#E1F5EE,#9FE1CB)',
+      rating:      biz.rating || '—',
+      reviews:     biz.reviews || '—',
+      sold:        biz.sold || '',
+      best:        biz.discountPct >= 20,
+      discountPct: biz.discountPct || '',
+      price:       priceSale,
+      original:    priceOrig,
+      href:        biz.bookingUrl || '#',
+      category:    biz.category || '',
+      platform:    biz.platform || '',
+      _fromFirestore: true,
+    };
+  }
+
+  // Firestore 데이터를 탭에 맞게 필터
+  const tabAlias = { travel: 'tour' }; // index의 travel = admin의 tour
+  const normalizedTab = tabAlias[tab] || tab;
+
+  const firestoreDeals = FIRESTORE_DEALS
+    .filter(b => normalizedTab === 'all' || b.category === normalizedTab)
+    .map(firestoreToHotDeal);
+
+  // 하드코딩 딜 (Firestore에 없는 카테고리만 보충)
+  let hardcodedDeals = [];
   if (tab === 'all') {
-    deals = [
+    hardcodedDeals = [
       ...(HOT_DEALS.beauty || []),
       ...(HOT_DEALS.travel || []),
       ...(HOT_DEALS.food   || []),
@@ -9165,16 +9232,19 @@ function renderDealsGrid(tab) {
       ...(HOT_DEALS.goods  || []),
     ];
   } else {
-    deals = HOT_DEALS[tab] || [];
+    hardcodedDeals = HOT_DEALS[tab] || [];
   }
+
+  // Firestore 딜 먼저, 하드코딩 뒤에
+  const deals = [...firestoreDeals, ...hardcodedDeals];
 
   if (deals.length === 0) {
     grid.innerHTML = '<div class="deals-grid-empty">Coming soon — check back for deals!</div>';
     return;
   }
 
-  // 카테고리 레이블
-  const catMap = {
+  const catCapMap = { beauty:'Beauty', tour:'Tour', travel:'Tour', food:'Food', stay:'Stay', goods:'Goods' };
+  const hardcatMap = {
     bd1:'Beauty',bd2:'Beauty',bd3:'Beauty',bd4:'Beauty',bd5:'Beauty',bd6:'Beauty',
     td1:'Tour',  td2:'Tour',  td3:'Tour',  td4:'Tour',  td5:'Tour',  td6:'Tour',
     fd1:'Food',  fd2:'Food',  fd3:'Food',  fd4:'Food',  fd5:'Food',  fd6:'Food',
@@ -9182,30 +9252,47 @@ function renderDealsGrid(tab) {
   };
 
   grid.innerHTML = deals.map(function(d) {
-    const catName = tab === 'all' ? (catMap[d.id] || '') : d.location;
-    const badgeHtml = d.best
-      ? '<div class="deal-badge-best">Best</div><div class="deal-discount-overlay">' + d.discountPct + '%</div>'
-      : '<div class="deal-full-img-badge">' + d.discountPct + '%</div>';
+    const catName = d._fromFirestore
+      ? (catCapMap[d.category] || d.category)
+      : (tab === 'all' ? (hardcatMap[d.id] || '') : d.location);
+
+    const discBadge = d.discountPct
+      ? (d.best
+          ? '<div class="deal-badge-best">Best</div><div class="deal-discount-overlay">' + d.discountPct + '%</div>'
+          : '<div class="deal-full-img-badge">' + d.discountPct + '%</div>')
+      : '';
+
+    // 이미지 vs 이모지
+    const imgContent = (d._fromFirestore && d.photoMain)
+      ? '<img src="' + d.photoMain + '" alt="" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">'
+      : '<span class="deal-emoji-placeholder">' + (d.emoji || '🏪') + '</span>';
+
+    const platformHtml = d._fromFirestore && d.platform
+      ? '<div style="font-size:9px;font-weight:700;letter-spacing:0.5px;color:var(--text-3);margin-bottom:2px">' + d.platform + '</div>'
+      : '';
+
     return '<div class="deal-full-card" onclick="window.open(\'' + d.href + '\',\'_blank\')">'
-      + '<div class="deal-full-img" style="background:' + d.bg + '">'
-      + '<span class="deal-emoji-placeholder">' + d.emoji + '</span>'
-      + badgeHtml
+      + '<div class="deal-full-img" style="background:' + d.bg + ';position:relative">'
+      + imgContent
+      + discBadge
       + '<button class="deal-wish-btn" onclick="event.stopPropagation();this.textContent=this.textContent===\'\u{1F90D}\'?\'\u{2764}\uFE0F\':\'\u{1F90D}\'">\u{1F90D}</button>'
       + '</div>'
       + '<div class="deal-full-body">'
-      + '<div class="deal-full-location">' + catName + '</div>'
+      + platformHtml
+      + '<div class="deal-full-location">' + (d._fromFirestore ? (d.location || catName) : catName) + '</div>'
       + '<div class="deal-full-name">' + d.name + '</div>'
       + '<div class="deal-full-price-row">'
-      + '<span class="deal-full-discount-pct">' + d.discountPct + '%</span>'
-      + '<span class="deal-full-price">' + d.price + '</span>'
-      + '<span class="deal-full-original">' + d.original + '</span>'
+      + (d.discountPct ? '<span class="deal-full-discount-pct">' + d.discountPct + '%</span>' : '')
+      + (d.price ? '<span class="deal-full-price">' + d.price + '</span>' : '')
+      + (d.original ? '<span class="deal-full-original">' + d.original + '</span>' : '')
       + '</div>'
-      + '<div class="deal-full-rating">'
-      + '<span class="deal-full-rating-star">\u2605</span>'
-      + '<span class="deal-full-rating-score">' + d.rating + '</span>'
-      + '<span>(' + d.reviews + ')</span>'
-      + '<span style="margin-left:2px;font-size:10px">' + d.sold + '</span>'
-      + '</div></div></div>';
+      + (d.rating && d.rating !== '—' ? '<div class="deal-full-rating">'
+        + '<span class="deal-full-rating-star">\u2605</span>'
+        + '<span class="deal-full-rating-score">' + d.rating + '</span>'
+        + (d.reviews && d.reviews !== '—' ? '<span>(' + d.reviews + ')</span>' : '')
+        + (d.sold ? '<span style="margin-left:2px;font-size:10px">' + d.sold + '</span>' : '')
+        + '</div>' : '')
+      + '</div></div>';
   }).join('');
 }
 
@@ -10415,7 +10502,10 @@ isHomeMode = true;
 initPostsListener();
 renderChatList();
 // Featured는 약간 딜레이 후 로드 (Firestore 연결 안정화 후)
-setTimeout(function() { loadFeaturedFromFirestore(); }, 800);
+setTimeout(function() {
+  loadFeaturedFromFirestore();
+  loadBusinessesFromFirestore();
+}, 800);
 setTimeout(() => {
   setSideNav('home');
   loadTodaysLook(); // 실시간 날씨 API 호출

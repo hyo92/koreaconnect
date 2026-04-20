@@ -1155,7 +1155,13 @@ function showToast(msg, type) {
 // ── HELPERS ──
 function show(id) {
   const el = document.getElementById(id);
-  if (el) el.style.display = '';
+  if (!el) return;
+  // adminApp, accessDenied는 block, loginGate는 flex
+  if (id === 'loginGate' || id === 'accessDenied') {
+    el.style.display = 'flex';
+  } else {
+    el.style.display = 'block';
+  }
 }
 function hide(id) {
   const el = document.getElementById(id);

@@ -3975,9 +3975,9 @@
       </button>
     </div>
     <div class="profile-stats">
-      <div class="stat-card" onclick="showMyPosts('posts')" style="cursor:pointer"><div class="stat-num" id="statPosts">0</div><div class="stat-label">Posts</div></div>
-      <div class="stat-card" onclick="showMyPosts('upvotes')" style="cursor:pointer"><div class="stat-num" id="statUpvotes">0</div><div class="stat-label">Upvotes</div></div>
-      <div class="stat-card" onclick="showMyPosts('comments')" style="cursor:pointer"><div class="stat-num" id="statComments">0</div><div class="stat-label">Comments</div></div>
+      <div class="stat-card"><div class="stat-num" id="statPosts">0</div><div class="stat-label">Posts</div></div>
+      <div class="stat-card"><div class="stat-num" id="statUpvotes">0</div><div class="stat-label">Upvotes</div></div>
+      <div class="stat-card"><div class="stat-num" id="statComments">0</div><div class="stat-label">Comments</div></div>
     </div>
 
     <!-- 탭: Account / My Posts -->
@@ -4008,12 +4008,6 @@
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M13 3h4v14h-4M9 14l4-4-4-4M13 10H3" stroke="#A32D2D" stroke-width="1.5" stroke-linecap="round"/></svg>
           </div>
           <span class="pr-label" style="color:#A32D2D">Sign out</span>
-        </div>
-        <div class="profile-row" onclick="openDeleteAllDataConfirm()" style="cursor:pointer">
-          <div class="pr-icon" style="background:#FCEBEB">
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10" stroke="#A32D2D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <span class="pr-label" style="color:#A32D2D">Delete all my data</span>
         </div>
       </div>
     </div>
@@ -4165,21 +4159,6 @@
     <div class="confirm-btns">
       <button class="confirm-btn-cancel" onclick="closeDeleteConfirm()">Cancel</button>
       <button class="confirm-btn-delete" onclick="executeDeletePost()">Delete</button>
-    </div>
-  </div>
-</div>
-
-<!-- Delete All My Data 확인 모달 -->
-<div class="confirm-overlay" id="deleteAllDataOverlay">
-  <div class="confirm-card">
-    <div class="confirm-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#E24B4A" stroke-width="1.6" stroke-linecap="round"/></svg>
-    </div>
-    <div class="confirm-title">Delete all my data?</div>
-    <div class="confirm-sub">This will permanently delete all your posts, comments, and upvote history. This can't be undone.</div>
-    <div class="confirm-btns">
-      <button class="confirm-btn-cancel" onclick="closeDeleteAllDataConfirm()">Cancel</button>
-      <button class="confirm-btn-delete" id="deleteAllDataBtn" onclick="executeDeleteAllData()">Delete everything</button>
     </div>
   </div>
 </div>
@@ -4856,6 +4835,8 @@
               onclick="switchDealsTab('food')">🍜 Food</button>
       <button class="deals-tab" id="deals-tab-stay"
               onclick="switchDealsTab('stay')">🏨 Stay</button>
+      <button class="deals-tab" id="deals-tab-goods"
+              onclick="switchDealsTab('goods')">🛍️ Goods</button>
     </div>
 
     <!-- 딜 그리드 (JS로 채워짐) -->
@@ -5046,9 +5027,8 @@
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {
-  getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, increment,
-  query, orderBy, where, limit, startAfter, getDocs, getDoc, collectionGroup,
-  setDoc, arrayUnion, serverTimestamp, onSnapshot
+  getFirestore, collection, addDoc, doc, updateDoc, increment,
+  query, orderBy, where, limit, startAfter, getDocs, serverTimestamp, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect,
@@ -5066,12 +5046,12 @@ import {
 // ────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey:            "AIzaSyD-JgVkX693KDK9ArZNkSw8EYTdj0YANfo",
-  authDomain:        "koreaconnect.app",
+  authDomain:        "koreaconnect-81f3b.firebaseapp.com",
   projectId:         "koreaconnect-81f3b",
   storageBucket:     "koreaconnect-81f3b.firebasestorage.app",
   messagingSenderId: "1031892307775",
-  appId:             "1:1031892307775:web:e868b0d29917547b3c0d8a",
-  measurementId:     "G-BBPL3FP6EQ"
+  appId:             "1:1031892307775:web:0a177496122172483c0d8a",
+  measurementId:     "G-N2W46F27NR"
 };
 // ────────────────────────────────────────────────
 
@@ -5093,7 +5073,6 @@ const OWNER_EMAILS = [
 
 // 더미 admin 목업 글 제거
 const ADMIN_MOCK_POSTS = [];
-let PINNED_POSTS_CACHE = [];
 
 const CHATS = [
   {id:1,name:'Sarah K.',initials:'SK',bg:'#E6F1FB',color:'#0C447C',dist:'0.8km · Yeonnam-dong',time:'2m ago',preview:'Is the room still available? I can visit this week',unread:true,messages:[{from:'them',text:'Hi! I saw your post about the sublet in Yeonnam. Is it still available?',time:'10:23 AM'},{from:'me',text:'Yes it is! Available from next month. 550,000/month, 2-month deposit.',time:'10:31 AM'},{from:'them',text:'That sounds great. Is the landlord okay with foreigners? I have an F-2 visa.',time:'10:33 AM'},{from:'me',text:'Totally fine — she\'s had foreign tenants before. Want to visit this week?',time:'10:35 AM'},{from:'them',text:'Is the room still available? I can visit this week',time:'Just now'}]},
@@ -5113,7 +5092,7 @@ let userLat     = null;
 let userLng     = null;
 let currentTab = 'all';
 let votes = {};
-let voteState = (() => { try { return JSON.parse(localStorage.getItem('kc_votes') || '{}'); } catch(e) { return {}; } })();
+let voteState = {};
 let postCount = 0;
 let selectedComm = 'KoreaConnect';
 let selectedFlair = null;
@@ -5121,10 +5100,8 @@ let activeChatId = null;
 let firebaseOk = true;
 let activeDetailId = null;
 let activePostMenuId = null;   // 피드 카드 ⋯ 메뉴용
-let activeFeaturedId = null;   // Featured 카드 관리 메뉴용
 let editingPostId = null;      // 글 수정용
 let commentUnsubscribe = null;
-let postDocUnsubscribe = null;
 let currentUser = null;
 let selectedImageFile = null;   // 하위 호환용
 let selectedImageURL  = null;
@@ -5447,49 +5424,6 @@ window.signOutUser = async function() {
   }
 }
 
-// ── DELETE ALL MY DATA ──
-window.openDeleteAllDataConfirm = function() {
-  document.getElementById('deleteAllDataOverlay').classList.add('open');
-}
-window.closeDeleteAllDataConfirm = function() {
-  document.getElementById('deleteAllDataOverlay').classList.remove('open');
-}
-window.executeDeleteAllData = async function() {
-  if (!currentUser) return;
-  const btn = document.getElementById('deleteAllDataBtn');
-  btn.textContent = 'Deleting…';
-  btn.disabled = true;
-
-  try {
-    // 1. 내 포스팅 소프트 삭제
-    const postsSnap = await getDocs(query(collection(db, 'posts'), where('authorId', '==', currentUser.uid)));
-    for (const d of postsSnap.docs) {
-      await updateDoc(doc(db, 'posts', d.id), { deleted: true });
-    }
-
-    // 2. 내 댓글 삭제
-    const commentsSnap = await getDocs(query(collectionGroup(db, 'comments'), where('authorId', '==', currentUser.uid)));
-    for (const d of commentsSnap.docs) {
-      await deleteDoc(d.ref);
-    }
-
-    // 3. localStorage 초기화
-    localStorage.removeItem('kc_votes');
-    localStorage.removeItem('kc_my_comments');
-    localStorage.removeItem('kc_saved');
-
-    closeDeleteAllDataConfirm();
-    POSTS = POSTS.filter(p => p.authorId !== currentUser.uid);
-    renderFeed();
-    showToast('All your data has been deleted');
-  } catch(e) {
-    console.error('Delete all data failed:', e);
-    showToast('Delete failed. Please try again.', 'error');
-    btn.textContent = 'Delete everything';
-    btn.disabled = false;
-  }
-}
-
 // Profile dropdown
 window.toggleProfileDropdown = function() {
   const dd = document.getElementById('profileDropdown');
@@ -5740,9 +5674,10 @@ async function initPostsListener() {
   lastVisible = null;
   hasMore = true;
   setupInfiniteScroll();
-  // pinned 먼저 로드 후 일반 글 로드 (캐시 축적 시작)
-  await loadPinnedPosts();
+  // 일반 글 먼저 로드
   await loadNextPage(true);
+  // pinned 글 로드 후 앞으로 재정렬
+  await loadPinnedPosts();
   const pinned = POSTS.filter(p => p.isPinned || p.role === 'admin');
   const normal = POSTS.filter(p => !p.isPinned && p.role !== 'admin');
   POSTS = [...pinned, ...normal];
@@ -5751,28 +5686,15 @@ async function initPostsListener() {
 
 // Pinned 글 항상 상단 고정 — role:admin 또는 isPinned:true 글만 로드
 async function loadPinnedPosts() {
-  const addFromCache = () => {
-    PINNED_POSTS_CACHE.forEach(p => {
-      if (!dbPostIds.has(p.id)) {
-        dbPostIds.add(p.id);
-        POSTS.push({ ...p, time: timeAgo(p.createdAt) });
-      }
-    });
-  };
-
-  if (!firebaseOk) { addFromCache(); return; }
+  if (!firebaseOk) return;
   try {
-    const freshPinned = [];
-
     // role === 'admin' 쿼리 (인덱스 불필요)
     const q1 = query(collection(db, 'posts'), where('role', '==', 'admin'));
     const snap1 = await getDocs(q1);
     snap1.docs.forEach(d => {
-      if (!dbPostIds.has(d.id) && !d.data().deleted) {
+      if (!dbPostIds.has(d.id)) {
         dbPostIds.add(d.id);
-        const p = { id: d.id, ...d.data(), time: timeAgo(d.data().createdAt) };
-        POSTS.push(p);
-        freshPinned.push({ id: d.id, ...d.data() });
+        POSTS.push({ id: d.id, ...d.data(), time: timeAgo(d.data().createdAt) });
       }
     });
 
@@ -5780,19 +5702,14 @@ async function loadPinnedPosts() {
     const q2 = query(collection(db, 'posts'), where('isPinned', '==', true));
     const snap2 = await getDocs(q2);
     snap2.docs.forEach(d => {
-      if (!dbPostIds.has(d.id) && !d.data().deleted) {
+      if (!dbPostIds.has(d.id)) {
         dbPostIds.add(d.id);
-        const p = { id: d.id, ...d.data(), time: timeAgo(d.data().createdAt) };
-        POSTS.push(p);
-        freshPinned.push({ id: d.id, ...d.data() });
+        POSTS.push({ id: d.id, ...d.data(), time: timeAgo(d.data().createdAt) });
       }
     });
-
-    if (freshPinned.length > 0) PINNED_POSTS_CACHE = freshPinned;
     console.log('[Pinned] 로드 완료:', POSTS.length, '개');
   } catch(e) {
-    console.warn('[Pinned] 쿼리 실패 — 캐시 사용:', e.message);
-    addFromCache();
+    console.warn('[Pinned] 쿼리 실패 (무시하고 계속):', e.message);
   }
 }
 
@@ -5857,7 +5774,7 @@ async function loadNextPage(isFirst = false) {
       time: timeAgo(d.data().createdAt),
     }));
 
-    const unique = newPosts.filter(p => !dbPostIds.has(p.id) && !p.deleted);
+    const unique = newPosts.filter(p => !dbPostIds.has(p.id));
     unique.forEach(p => dbPostIds.add(p.id));
     POSTS = [...POSTS, ...unique];
 
@@ -5881,7 +5798,6 @@ async function loadNextPage(isFirst = false) {
     setLoading(false);
     renderFeed();
     renderNearby();
-    if (currentUser) _syncWidgetStats();
 
     if (!hasMore) setLoadMoreIndicator('end');
     else setLoadMoreIndicator('none');
@@ -6202,7 +6118,7 @@ function renderSearchResults(results, kw) {
           <button class="upvote-btn ${voteState[p.id]==='up'?'active':''}" onclick="castVote(event,'${p.id}','up');event.stopPropagation()">
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 2L13 9H1L7 2Z" fill="currentColor"/></svg>
           </button>
-          <span class="vote-count ${voteState[p.id]==='up'?'up':voteState[p.id]==='down'?'down':''}">${formatVotes((p.votes||0)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}</span>
+          <span class="vote-count ${voteState[p.id]==='up'?'up':voteState[p.id]==='down'?'down':''}">${formatVotes((p.votes||1)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}</span>
           <button class="downvote-btn ${voteState[p.id]==='down'?'active':''}" onclick="castVote(event,'${p.id}','down');event.stopPropagation()">
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 12L1 5H13L7 12Z" fill="currentColor"/></svg>
           </button>
@@ -6242,9 +6158,9 @@ window.setTab = async function(el, tab) {
   hasMore = true;
   setLoading(true);
   setupInfiniteScroll();
-  // pinned 먼저 로드 → 이후 renderFeed (내부 포함) 에서도 항상 표시됨
-  await loadPinnedPosts();
+  // 일반 글 먼저 로드 완료 후 pinned 앞에 붙이기
   await loadNextPage(true);
+  await loadPinnedPosts();
   // pinned/admin 글을 맨 앞으로 재정렬
   const pinned = POSTS.filter(p => p.isPinned || p.role === 'admin');
   const normal = POSTS.filter(p => !p.isPinned && p.role !== 'admin');
@@ -6509,7 +6425,7 @@ function renderFeed() {
   const list = document.getElementById('feedList');
   const b = BANNER_CONFIG[currentTab] || BANNER_CONFIG.all;
 
-  let filtered = POSTS.filter(p => !p.deleted);
+  let filtered = [...POSTS];
 
   if (isHomeMode) {
     // ── Home 모드: 전체 글 혼합, Nearby면 위치 필터만 적용 ──
@@ -6557,36 +6473,14 @@ function renderFeed() {
   // 나중에 Firestore 'featured' 컬렉션으로 관리 가능
   // ═══════════════════════════════════════════════
   function makeFeaturedCard(cfg) {
-    const isOwner = currentUser && OWNER_EMAILS.includes(currentUser.email);
-    const saved   = isSaved('featured_' + cfg.id);
     return `
-    <div class="featured-post" onclick="openFeaturedDetail('${cfg.id}')" style="cursor:pointer">
-      <div class="featured-badge-bar" style="display:flex;align-items:center;">
+    <div class="featured-post">
+      <div class="featured-badge-bar">
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.8 4H14l-3.4 2.6 1.3 4L8 9.4l-3.9 2.2 1.3-4L2 5h4.2z" fill="white"/></svg>
         <span class="featured-badge-text">Featured</span>
         <span style="margin-left:6px;font-size:10px;opacity:0.85">${capTopic(cfg.topic)}</span>
-        <button id="save-btn-featured_${cfg.id}"
-                class="save-btn${saved ? ' saved' : ''}"
-                onclick="event.stopPropagation();toggleSave(event,'featured_${cfg.id}')"
-                style="margin-left:auto;color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.15);border-radius:6px;border:none;padding:4px 6px;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;font-family:var(--font)">
-          <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-            <path d="M2 2h10a1 1 0 011 1v9l-5.5-3L2 12V3a1 1 0 011-1z"
-              stroke="currentColor" stroke-width="1.4"
-              fill="${saved ? 'currentColor' : 'none'}"/>
-          </svg>
-          ${saved ? 'Saved' : 'Save'}
-        </button>
-        ${isOwner ? `
-        <button class="post-menu-btn" style="margin-left:6px;color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.15);border-radius:6px;"
-                onclick="event.stopPropagation();showFeaturedMenu(event,'${cfg.id}')">
-          <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-            <circle cx="5" cy="10" r="1.5" fill="currentColor"/>
-            <circle cx="10" cy="10" r="1.5" fill="currentColor"/>
-            <circle cx="15" cy="10" r="1.5" fill="currentColor"/>
-          </svg>
-        </button>` : ''}
       </div>
-      <div class="post-card" style="border:none;border-radius:0;margin:0;">
+      <div class="post-card" style="border:none;border-radius:0;margin:0;cursor:pointer">
         <div class="post-meta">
           <span class="comm-name">${cfg.comm}</span>
           <div class="meta-dot"></div>
@@ -6596,6 +6490,7 @@ function renderFeed() {
         <div class="post-title">${cfg.title}</div>
         <div class="post-preview">${cfg.preview}</div>
         <div class="post-actions" style="margin-top:10px">
+          <button style="background:var(--green);color:#fff;border:none;border-radius:var(--radius-pill);padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)">${cfg.cta}</button>
           <div class="spacer"></div>
           <span style="font-size:11px;color:var(--text-3)">by ${cfg.author}</span>
         </div>
@@ -6604,8 +6499,8 @@ function renderFeed() {
   }
 
   let featuredHtml = '';
-  if (isHomeMode || currentTab === 'all') {
-    // Home 또는 All 탭: 모든 Featured 카드 표시
+  if (isHomeMode) {
+    // Home: 모든 Featured 카드 표시 (Firestore 캐시 기준)
     featuredHtml = FEATURED_CACHE.map(makeFeaturedCard).join('');
   } else {
     // 카테고리 탭: 해당 탭 Featured만
@@ -6745,7 +6640,7 @@ function renderFeed() {
             <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
               <path d="M7 2L13 9H1L7 2Z" fill="currentColor" opacity="0.5"/>
             </svg>
-            ${formatVotes((p.votes||0)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}
+            ${formatVotes((p.votes||1)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}
           </div>
           <!-- 댓글 수 -->
           <div class="hcard-stat">
@@ -6960,25 +6855,15 @@ window.castVote = async function(e, postId, dir) {
     voteState[postId] = dir;
   }
 
-  // 세션 간 투표 상태 유지
-  try {
-    const kv = JSON.parse(localStorage.getItem('kc_votes') || '{}');
-    if (voteState[postId]) kv[postId] = voteState[postId];
-    else delete kv[postId];
-    localStorage.setItem('kc_votes', JSON.stringify(kv));
-  } catch(e) {}
-
   renderFeed();
   renderNearby();
-  _syncWidgetStats();
 
   if (firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
     try {
       const delta = (dir === 'up' ? 1 : -1) * (prev === dir ? -1 : 1)
                   + (prev && prev !== dir ? (prev === 'up' ? -1 : 1) : 0);
       await updateDoc(doc(db, 'posts', postId), { votes: increment(delta) });
-      post.votes = (post.votes || 0) + delta;
-      _syncWidgetStats();
+      post.votes = (post.votes || 1) + delta;
 
       // 좋아요 알림 — 본인 글이 아니고, 새로 upvote하는 경우에만
       const isNewUpvote = dir === 'up' && prev !== 'up';
@@ -6999,126 +6884,17 @@ window.castVote = async function(e, postId, dir) {
 }
 
 // ── POST DETAIL + COMMENTS ──
-// ── Featured 글 전체화면 뷰 ──
-window.openFeaturedDetail = async function(featuredId) {
-  let cfg = FEATURED_CACHE.find(f => f.id === featuredId);
-  if (!cfg && firebaseOk) {
-    try {
-      const snap = await getDoc(doc(db, 'featured', featuredId));
-      if (snap.exists()) {
-        cfg = { id: snap.id, ...snap.data() };
-        FEATURED_CACHE.push(cfg);
-      }
-    } catch(e) {}
-  }
-  if (!cfg) { showToast('Post not found', 'error'); return; }
-
-  const syntheticId = 'featured_' + featuredId;
-  activeDetailId = syntheticId;
-
-  const overlay = document.getElementById('postDetailOverlay');
-  document.getElementById('sheetTitle').textContent = cfg.title;
-
-  // ⋯ 메뉴 버튼 — 오너만 표시
-  const menuBtn = document.getElementById('sheetMenuBtn');
-  if (menuBtn) {
-    const isOwner = currentUser && OWNER_EMAILS.includes(currentUser.email);
-    menuBtn.style.display = isOwner ? '' : 'none';
-    menuBtn.onclick = function(e) { e.stopPropagation(); showFeaturedMenu(e, featuredId); };
-  }
-
-  const saved = isSaved(syntheticId);
-  document.getElementById('sheetPostContent').innerHTML = `
-    <div class="pd-category">
-      <span class="tag tag-${cfg.topic}" style="font-size:12px">${capTopic(cfg.topic)}</span>
-      <span class="badge-official" style="margin-left:6px">
-        <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
-          <path d="M5 1l1.2 2.6L9 4.1 6.8 6.2l.5 2.8L5 7.5 2.7 9l.5-2.8L1 4.1l2.8-.5z" fill="currentColor"/>
-        </svg> Featured
-      </span>
-    </div>
-
-    <h1 class="pd-title">${cfg.title}</h1>
-
-    <div class="pd-author-row">
-      <div class="pd-avatar"><span>${(cfg.author||'?')[0].toUpperCase()}</span></div>
-      <div class="pd-author-info">
-        <span class="pd-author-name">${cfg.author || 'KoreaConnect'}</span>
-        <span class="pd-time">Pinned post</span>
-      </div>
-    </div>
-
-    <div class="pd-divider"></div>
-
-    <div class="pd-body">${cfg.preview || ''}</div>
-
-    <div class="pd-vote-bar" style="justify-content:flex-end">
-      <button id="sheet-save-btn-${syntheticId}"
-              class="save-btn${saved ? ' saved' : ''}"
-              onclick="toggleSave(event,'${syntheticId}')"
-              style="display:flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--border-mid);border-radius:var(--radius-pill);background:var(--surface);font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:var(--font)">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M2 2h10a1 1 0 011 1v9l-5.5-3L2 12V3a1 1 0 011-1z"
-            stroke="currentColor" stroke-width="1.4"
-            fill="${saved ? 'currentColor' : 'none'}"/>
-        </svg>
-        <span id="sheet-save-label-${syntheticId}">${saved ? 'Saved' : 'Save'}</span>
-      </button>
-    </div>`;
-
-  // 댓글 섹션 표시
-  const commentsHeader = document.getElementById('commentsHeader');
-  const commentInputWrap = document.querySelector('.comment-input-wrap');
-  if (commentsHeader) commentsHeader.style.display = '';
-  if (commentInputWrap) commentInputWrap.style.display = '';
-  document.getElementById('commentList').innerHTML = '<div class="loading-comments">Loading comments...</div>';
-  document.getElementById('commentInput').value = '';
-  document.getElementById('commentSendBtn').classList.remove('ready');
-
-  // 기존 리스너 해제
-  if (commentUnsubscribe) { commentUnsubscribe(); commentUnsubscribe = null; }
-  if (postDocUnsubscribe) { postDocUnsubscribe(); postDocUnsubscribe = null; }
-
-  // featured/{id}/comments 실시간 리스너
-  if (firebaseOk) {
-    const q = query(collection(db, 'featured', featuredId, 'comments'), orderBy('createdAt', 'asc'));
-    commentUnsubscribe = onSnapshot(q, snap => {
-      const comments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderComments(comments, syntheticId);
-    }, () => renderComments([], syntheticId));
-  } else {
-    renderComments([], syntheticId);
-  }
-
-  overlay.classList.add('open');
-  document.body.style.overflow = 'hidden';
-};
-
 window.openDetail = async function(postId) {
-  let post = POSTS.find(p => String(p.id) === String(postId));
-  if (!post && firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
-    try {
-      const snap = await getDoc(doc(db, 'posts', postId));
-      if (snap.exists() && !snap.data().deleted) {
-        post = { id: snap.id, ...snap.data(), time: timeAgo(snap.data().createdAt) };
-        POSTS.push(post);
-      }
-    } catch(e) {}
-  }
-  if (!post) { showToast('Post not found', 'error'); return; }
+  const post = POSTS.find(p => String(p.id) === String(postId));
+  if (!post) return;
   activeDetailId = postId;
-
-  // Featured에서 숨긴 댓글 섹션 복원
-  const commentsHeader = document.getElementById('commentsHeader');
-  const commentInputWrap = document.querySelector('.comment-input-wrap');
-  if (commentsHeader) commentsHeader.style.display = '';
-  if (commentInputWrap) commentInputWrap.style.display = '';
-  // sheetMenuBtn onclick 복원 (featured에서 바꿨을 수 있음)
-  const menuBtn = document.getElementById('sheetMenuBtn');
-  if (menuBtn) { menuBtn.style.display = ''; menuBtn.onclick = function(e) { openPostMenu(e); }; }
 
   const overlay = document.getElementById('postDetailOverlay');
   document.getElementById('sheetTitle').textContent = post.title;
+
+  // ⋯ 버튼: 항상 표시 (Save는 누구나, Edit/Delete는 본인만 - showActionMenu에서 제어)
+  const menuBtn = document.getElementById('sheetMenuBtn');
+  if (menuBtn) menuBtn.style.display = '';
 
   // Post content
   const vs = voteState[postId];
@@ -7176,7 +6952,7 @@ window.openDetail = async function(postId) {
       </button>
       <span class="vote-count ${vs==='up'?'up':vs==='down'?'down':''}"
             id="sheet-vc-${postId}">
-        ${formatVotes(post.votes||0)}
+        ${formatVotes((post.votes||1)+(vs==='up'?1:vs==='down'?-1:0))}
       </span>
       <button class="downvote-btn ${vs==='down'?'active':''}"
               onclick="castVote(event,'${postId}','down');refreshSheetVote('${postId}')">
@@ -7194,32 +6970,20 @@ window.openDetail = async function(postId) {
   document.getElementById('commentSendBtn').classList.remove('ready');
 
   // Load comments with real-time listener
-  if (commentUnsubscribe) { commentUnsubscribe(); commentUnsubscribe = null; }
-  if (postDocUnsubscribe) { postDocUnsubscribe(); postDocUnsubscribe = null; }
+  if (commentUnsubscribe) commentUnsubscribe();
 
   if (firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
-    // 댓글 실시간
-    const q = query(collection(db, 'posts', postId, 'comments'), orderBy('createdAt', 'asc'));
+    const q = query(
+      collection(db, 'posts', postId, 'comments'),
+      orderBy('createdAt', 'asc')
+    );
     commentUnsubscribe = onSnapshot(q, (snap) => {
       const comments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderComments(comments, postId);
+      // Update comment count badge in feed
+      const ccEl = document.getElementById(`cc-${postId}`);
+      if (ccEl) ccEl.textContent = comments.length;
     }, () => renderComments([], postId));
-
-    // 포스트 votes 실시간 — data.votes는 Firestore 집계값이므로 직접 사용
-    postDocUnsubscribe = onSnapshot(doc(db, 'posts', postId), (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-      const newVotes = data.votes ?? 1;
-      // POSTS 캐시 업데이트
-      const p = POSTS.find(x => x.id === postId);
-      if (p) p.votes = newVotes;
-      // detail 뷰 vote 카운트 갱신 (voteState 조정 없이 집계값 그대로)
-      const el = document.getElementById(`sheet-vc-${postId}`);
-      if (el) el.textContent = formatVotes(newVotes);
-      // 피드 카드 vote 뱃지 갱신
-      const ccVote = document.getElementById(`cc-${postId}`);
-      _syncWidgetStats();
-    }, () => {});
   } else {
     renderComments([], postId);
   }
@@ -7231,8 +6995,7 @@ function refreshSheetVote(postId) {
   const vs = voteState[postId];
   const el = document.getElementById(`sheet-vc-${postId}`);
   if (el) {
-    // post.votes는 castVote에서 이미 delta 반영됨 — 그대로 표시
-    el.textContent = formatVotes(post.votes || 0);
+    el.textContent = formatVotes((post.votes||1)+(vs==='up'?1:vs==='down'?-1:0));
     el.className = `vote-count ${vs==='up'?'up':vs==='down'?'down':''}`;
   }
 }
@@ -7240,27 +7003,21 @@ function refreshSheetVote(postId) {
 function renderComments(comments, postId) {
   const list = document.getElementById('commentList');
   const header = document.getElementById('commentsHeader');
-  const visible = comments.filter(c => !c.deleted);
-  const cnt = visible.length;
+  header.textContent = comments.length > 0 ? `${comments.length} comment${comments.length>1?'s':''}` : 'Comments';
 
-  header.textContent = cnt > 0 ? `${cnt} comment${cnt > 1 ? 's' : ''}` : 'Comments';
-
-  // 피드 카드 댓글 수 뱃지 갱신
-  const ccEl = document.getElementById(`cc-${postId}`);
-  if (ccEl) ccEl.textContent = cnt;
-  // POSTS 캐시 동기화
-  const cached = POSTS.find(p => String(p.id) === String(postId));
-  if (cached) cached.commentCount = cnt;
-
-  if (!cnt) {
+  if (!comments.length) {
     list.innerHTML = '<div class="no-comments">No comments yet — be the first!</div>';
     return;
   }
-  list.innerHTML = visible.map((c, i) => {
+  list.innerHTML = comments.filter(c => !c.deleted).map((c, i) => {
+    const initials = getInitials(c.author || 'Anonymous');
+    const colors = ['#E1F5EE/#085041','#E6F1FB/#0C447C','#FAEEDA/#633806','#FBEAF0/#72243E','#EAF3DE/#27500A'];
+    const [bg, col] = colors[i % colors.length].split('/');
     const isOwner = currentUser && c.authorId === currentUser.uid;
     return `
     <div class="comment-item">
       <div class="comment-top">
+        <div class="comment-avatar" style="background:${bg};color:${col}">${initials}</div>
         <span class="comment-author">${c.author || 'Anonymous'}</span>
         <span class="comment-time">${c.createdAt ? timeAgo(c.createdAt) : 'Just now'}</span>
         ${isOwner ? `
@@ -7299,8 +7056,7 @@ window.voteComment = async function(postId, commentId, dir, btn) {
 window.closeDetail = function() {
   document.getElementById('postDetailOverlay').classList.remove('open');
   document.body.style.overflow = '';
-  if (commentUnsubscribe)  { commentUnsubscribe();  commentUnsubscribe  = null; }
-  if (postDocUnsubscribe)  { postDocUnsubscribe();  postDocUnsubscribe  = null; }
+  if (commentUnsubscribe) { commentUnsubscribe(); commentUnsubscribe = null; }
   activeDetailId = null;
 }
 
@@ -7337,46 +7093,16 @@ window.submitComment = async function() {
     author:      authorName,
     authorId:    currentUser.uid,
     authorPhoto: currentUser.photoURL || null,
-    postId:      String(activeDetailId),
     votes:       0,
     createdAt:   serverTimestamp(),
   };
 
   const postId = activeDetailId;
-  const isFeaturedPost = String(postId).startsWith('featured_');
-  const featuredRealId  = isFeaturedPost ? String(postId).replace('featured_', '') : null;
 
   if (firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
     try {
-      let docRef;
-      if (isFeaturedPost) {
-        // featured/{id}/comments
-        docRef = await addDoc(collection(db, 'featured', featuredRealId, 'comments'), commentData);
-      } else {
-        docRef = await addDoc(collection(db, 'posts', postId, 'comments'), commentData);
-        await updateDoc(doc(db, 'posts', postId), { commentCount: increment(1) });
-      }
-
-      // Firestore ID로 댓글 이력 저장
-      const featuredCfg = isFeaturedPost ? FEATURED_CACHE.find(f => f.id === featuredRealId) : null;
-      const commentEntry = {
-        id: docRef.id,
-        text,
-        postId: String(postId),
-        postTitle: featuredCfg?.title || POSTS.find(p => String(p.id) === String(postId))?.title || '',
-        createdAt: Date.now(),
-      };
-      // 인메모리 캐시
-      if (!_myCommentsCache) _myCommentsCache = [];
-      _myCommentsCache.unshift(commentEntry);
-      // localStorage
-      try {
-        localStorage.setItem('kc_my_comments', JSON.stringify(_myCommentsCache.slice(0, 100)));
-      } catch(e) {}
-      // Firestore userActivity
-      setDoc(doc(db, 'userActivity', currentUser.uid), {
-        comments: arrayUnion(commentEntry)
-      }, { merge: true }).catch(() => {});
+      await addDoc(collection(db, 'posts', postId, 'comments'), commentData);
+      await updateDoc(doc(db, 'posts', postId), { commentCount: increment(1) });
 
       // 댓글 알림 — 본인 글이 아닌 경우에만
       const post = POSTS.find(p => String(p.id) === String(postId));
@@ -7405,8 +7131,10 @@ window.submitComment = async function() {
     if (noC) noC.remove();
     const div = document.createElement('div');
     div.className = 'comment-item';
+    const initials = getInitials(authorName);
     div.innerHTML = `
       <div class="comment-top">
+        <div class="comment-avatar" style="background:#E1F5EE;color:#085041">${initials}</div>
         <span class="comment-author">${authorName}</span>
         <span class="comment-time">Just now</span>
       </div>
@@ -7437,7 +7165,7 @@ function renderNearby() {
             <button class="upvote-btn ${voteState[p.id]==='up'?'active':''}" onclick="castVote(event,'${p.id}','up')">
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 2L13 9H1L7 2Z" fill="currentColor"/></svg>
             </button>
-            <span class="vote-count ${voteState[p.id]==='up'?'up':voteState[p.id]==='down'?'down':''}" id="vc-nearby-${p.id}">${formatVotes((p.votes||0)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}</span>
+            <span class="vote-count ${voteState[p.id]==='up'?'up':voteState[p.id]==='down'?'down':''}" id="vc-nearby-${p.id}">${formatVotes((p.votes||1)+(voteState[p.id]==='up'?1:voteState[p.id]==='down'?-1:0))}</span>
             <button class="downvote-btn ${voteState[p.id]==='down'?'active':''}" onclick="castVote(event,'${p.id}','down')">
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 12L1 5H13L7 12Z" fill="currentColor"/></svg>
             </button>
@@ -7717,11 +7445,11 @@ window.publishPost = async function() {
     authorId: currentUser.uid,
     authorEmail: currentUser.email || null,
     authorPhoto: currentUser.photoURL || null,
-    ...(isOwnerPost && isFeaturedMode ? { isPinned: true, role: 'admin' } : {}),
+    ...(isOwnerPost ? { isPinned: true, role: 'admin' } : {}),
     topic,                                        // Firestore topic 필드 — 카테고리 필터링 핵심
     title,
     preview: body,
-    votes: 0,
+    votes: 1,
     commentCount: 0,
     // ── 위치 데이터 (Nearby 필터링용) ──
     ...(userDistrict ? { district: userDistrict } : {}),
@@ -8062,110 +7790,9 @@ window.openPostMenuFromProfile = function(e, postId) {
   showActionMenu(e, postId);
 }
 
-// ── FEATURED POST MENU ──
-let activeFeaturedMenuId = null;
-
-window.showFeaturedMenu = function(e, featuredId) {
-  if (e && e.stopPropagation) e.stopPropagation();
-  if (!currentUser || !OWNER_EMAILS.includes(currentUser.email)) return;
-  activeFeaturedMenuId = featuredId;
-
-  const menu    = document.getElementById('actionMenu');
-  const overlay = document.getElementById('actionMenuOverlay');
-  if (!menu || !overlay) return;
-
-  // Save 숨기기 (featured는 bookmark 불필요)
-  const saveItem = document.getElementById('actionMenuSaveItem');
-  const saveSep  = saveItem?.nextElementSibling;
-  if (saveItem) saveItem.style.display = 'none';
-  if (saveSep && saveSep.classList.contains('action-menu-sep')) saveSep.style.display = 'none';
-
-  // Edit / Delete 항상 표시 (오너 전용 메뉴)
-  ['actionMenuEditItem','actionMenuEditSep','actionMenuDeleteItem'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = '';
-  });
-
-  // Edit 핸들러 교체
-  const editEl = document.getElementById('actionMenuEditItem');
-  if (editEl) {
-    editEl.onclick = function() { closeActionMenu(); openEditFeatured(activeFeaturedMenuId); activeFeaturedMenuId = null; };
-  }
-  // Delete 핸들러 교체
-  const delEl = document.getElementById('actionMenuDeleteItem');
-  if (delEl) {
-    delEl.onclick = function() { closeActionMenu(); confirmDeleteFeatured(activeFeaturedMenuId); activeFeaturedMenuId = null; };
-  }
-
-  const btn = e ? (e.currentTarget || e.target)?.closest('button') || e.target : null;
-  if (btn) {
-    const rect = btn.getBoundingClientRect();
-    menu.style.position = 'fixed';
-    menu.style.top   = (rect.bottom + 4) + 'px';
-    menu.style.right = Math.max(8, window.innerWidth - rect.right) + 'px';
-    menu.style.left  = 'auto';
-  } else {
-    menu.style.position = 'fixed';
-    menu.style.top   = '80px';
-    menu.style.right = '16px';
-    menu.style.left  = 'auto';
-  }
-  overlay.classList.add('open');
-};
-
-// Featured 삭제 확인
-let pendingDeleteFeaturedId = null;
-window.confirmDeleteFeatured = function(featuredId) {
-  pendingDeleteFeaturedId = featuredId;
-  document.getElementById('deleteConfirmOverlay').classList.add('open');
-};
-
-
-// Featured 수정 — Full Editor를 기존 내용으로 pre-fill
-let editingFeaturedId = null;
-window.openEditFeatured = function(featuredId) {
-  const cfg = FEATURED_CACHE.find(f => f.id === featuredId);
-  if (!cfg) { showToast('Featured post not found', 'error'); return; }
-  editingFeaturedId = featuredId;
-  isFeaturedMode = true;
-  // toggleFeaturedMode UI 동기화
-  ['featuredToggleBtn','featuredToggleBtnModal'].forEach(function(id) {
-    const btn = document.getElementById(id);
-    if (btn) btn.className = 'featured-toggle-btn on';
-  });
-  openFullEditor();
-  setTimeout(function() {
-    const titleEl = document.getElementById('feTitleInput');
-    const bodyEl  = document.getElementById('feEditor');
-    if (titleEl) { titleEl.value = cfg.title || ''; feAutoResize(titleEl); }
-    if (bodyEl)  bodyEl.innerHTML = cfg.preview || '';
-    // 토픽 칩 선택
-    document.querySelectorAll('.fe-chip').forEach(function(c) {
-      if (c.dataset.topic === cfg.topic) {
-        c.classList.add('selected');
-        feTopic = cfg.topic;
-        selectedFlair = cfg.topic;
-      } else {
-        c.classList.remove('selected');
-      }
-    });
-    feCheckReady();
-  }, 150);
-};
-
 window.showActionMenu = function(e, postId) {
   if (e && e.stopPropagation) e.stopPropagation();
   if (!postId) return;
-
-  // Featured 메뉴에서 변경된 핸들러를 원래대로 복원
-  const _editEl = document.getElementById('actionMenuEditItem');
-  if (_editEl) _editEl.onclick = function() { openEditPost(); };
-  const _delEl = document.getElementById('actionMenuDeleteItem');
-  if (_delEl) _delEl.onclick = function() { openDeleteConfirm(); };
-  const _saveItem = document.getElementById('actionMenuSaveItem');
-  const _saveSep  = _saveItem?.nextElementSibling;
-  if (_saveItem) _saveItem.style.display = '';
-  if (_saveSep && _saveSep.classList.contains('action-menu-sep')) _saveSep.style.display = '';
 
   // 로그인 필요
   if (!currentUser) { showToast('Sign in to save or manage posts', 'error'); return; }
@@ -8595,22 +8222,6 @@ window.closeDeleteConfirm = function() {
 }
 
 window.executeDeletePost = async function() {
-  // Featured 글 삭제 처리
-  if (pendingDeleteFeaturedId) {
-    const fid = pendingDeleteFeaturedId;
-    pendingDeleteFeaturedId = null;
-    closeDeleteConfirm();
-    if (firebaseOk) {
-      try {
-        await deleteDoc(doc(db, 'featured', fid));
-      } catch(e) { console.error('Featured 삭제 실패:', e); }
-    }
-    FEATURED_CACHE = FEATURED_CACHE.filter(f => f.id !== fid);
-    renderFeed();
-    showToast('Featured post deleted', 'info');
-    return;
-  }
-
   if (!activeDetailId || !currentUser) return;
   const post = POSTS.find(p => String(p.id) === String(activeDetailId));
   if (!post || post.authorId !== currentUser.uid) {
@@ -8682,7 +8293,6 @@ window.openFullEditor = function() {
 
 // ── 닫기 ──
 window.closeFullEditor = function() {
-  editingFeaturedId = null;
   const overlay = document.getElementById('fullEditorOverlay');
   if (overlay) {
     overlay.classList.remove('open');
@@ -9083,50 +8693,37 @@ window.publishFromEditor = async function() {
   // Featured 모드: Firestore 'featured' 컬렉션에 저장 후 종료
   if (OWNER_EMAILS.includes(currentUser.email) && isFeaturedMode) {
     try {
-      const featuredData = {
+      await addDoc(collection(db, 'featured'), {
         topic, title,
         preview: bodyText,
         comm: 'r/KoreaConnect',
         author: authorName,
         cta: 'Read Guide',
         active: true,
-      };
-      if (editingFeaturedId) {
-        // 기존 Featured 글 수정
-        await updateDoc(doc(db, 'featured', editingFeaturedId), featuredData);
-        editingFeaturedId = null;
-        showToast('⭐ Featured post updated!', 'success');
-      } else {
-        // 새 Featured 글 발행
-        featuredData.createdAt = serverTimestamp();
-        await addDoc(collection(db, 'featured'), featuredData);
-        showToast('⭐ Featured post published!', 'success');
-      }
+        createdAt: serverTimestamp(),
+      });
       await loadFeaturedFromFirestore();
-      isFeaturedMode = false;
       if (btn) { btn.textContent = 'Publish'; btn.classList.remove('ready'); }
       localStorage.removeItem(FE_DRAFT_KEY);
       feResetEditor();
       closeFullEditor();
+      showToast('⭐ Featured post published!', 'success');
     } catch(e) {
       console.error('Featured 저장 실패:', e);
-      showToast('Failed to save featured post', 'error');
+      showToast('Failed to publish featured post', 'error');
       if (btn) btn.textContent = 'Publish';
     }
     return;
   }
 
-  const isOwnerPost = OWNER_EMAILS.includes(currentUser.email);
-
   const newPost = {
     comm: selectedComm || 'KoreaConnect',
     author: authorName, authorId: currentUser.uid,
     authorPhoto: currentUser.photoURL || null,
-    ...(isOwnerPost && isFeaturedMode ? { isPinned: true, role: 'admin' } : {}),
     topic, title,
     preview: bodyHtml,      // HTML 그대로 저장 (색상, Bold 등 유지)
     previewText: bodyText,  // 검색/피드 미리보기용 plain text
-    votes: 0, commentCount: 0,
+    votes: 1, commentCount: 0,
     ...(userDistrict ? { district: userDistrict } : {}),
     ...(userCity     ? { city: userCity }         : {}),
     ...(locationStr  ? { location: locationStr }  : {}),
@@ -9340,68 +8937,18 @@ window.closeCommentMenu = function() {
 }
 
 window.confirmDeleteComment = async function() {
-  const postId    = activeDetailId;
-  const commentId = activeCommentId;
   closeCommentMenu();
-  if (!commentId || !postId || !currentUser) return;
+  if (!activeCommentId || !activeDetailId || !currentUser) return;
+  const postId = activeDetailId;
+  const commentId = activeCommentId;
 
-  const isFeaturedComment = String(postId).startsWith('featured_');
-  const featuredRealId    = isFeaturedComment ? String(postId).replace('featured_', '') : null;
-
-  // 1. Firestore 댓글 삭제
-  if (firebaseOk) {
+  if (firebaseOk && !String(postId).startsWith('seed_')) {
     try {
-      if (isFeaturedComment) {
-        await updateDoc(doc(db, 'featured', featuredRealId, 'comments', commentId), { deleted: true });
-      } else {
-        await updateDoc(doc(db, 'posts', postId, 'comments', commentId), { deleted: true });
-      }
-    } catch(e) { showToast('Delete failed', 'error'); return; }
+      await updateDoc(doc(db, 'posts', postId, 'comments', commentId), { deleted: true });
+      await updateDoc(doc(db, 'posts', postId), { commentCount: increment(-1) });
+      showToast('Comment deleted', 'info');
+    } catch(e) { showToast('Delete failed', 'error'); }
   }
-
-  // 2. 일반 포스트만 commentCount 업데이트
-  if (!isFeaturedComment) {
-    const post = POSTS.find(p => String(p.id) === String(postId));
-    if (post) {
-      post.commentCount = Math.max(0, (post.commentCount || 1) - 1);
-      const ccEl = document.getElementById(`cc-${postId}`);
-      if (ccEl) ccEl.textContent = post.commentCount;
-    }
-    if (firebaseOk) {
-      updateDoc(doc(db, 'posts', postId), { commentCount: increment(-1) }).catch(() => {});
-    }
-  }
-
-  // 3. 인메모리 캐시에서 제거
-  if (_myCommentsCache) {
-    _myCommentsCache = _myCommentsCache.filter(c => c.id !== commentId);
-  }
-
-  // 4. localStorage에서 제거
-  try {
-    const cache = JSON.parse(localStorage.getItem('kc_my_comments') || '[]');
-    localStorage.setItem('kc_my_comments', JSON.stringify(cache.filter(c => c.id !== commentId)));
-  } catch(e) {}
-
-  // 5. Firestore userActivity에서 제거
-  if (firebaseOk && currentUser) {
-    try {
-      const actSnap = await getDoc(doc(db, 'userActivity', currentUser.uid));
-      if (actSnap.exists()) {
-        const updated = (actSnap.data().comments || []).filter(c => c.id !== commentId);
-        setDoc(doc(db, 'userActivity', currentUser.uid), { comments: updated }, { merge: true }).catch(() => {});
-      }
-    } catch(e) {}
-  }
-
-  showToast('Comment deleted', 'info');
-
-  // 6. My Activity Comments 탭이 활성화되어 있으면 갱신
-  const actTabComments = document.getElementById('actTab-comments');
-  if (actTabComments && actTabComments.dataset.active === 'true') {
-    switchActivityTab('comments');
-  }
-  _loadCommentCount();
 }
 
 // ── NOTIFICATIONS ──
@@ -9615,6 +9162,7 @@ function renderDealsGrid(tab) {
       ...(HOT_DEALS.travel || []),
       ...(HOT_DEALS.food   || []),
       ...(HOT_DEALS.stay   || []),
+      ...(HOT_DEALS.goods  || []),
     ];
   } else {
     deals = HOT_DEALS[tab] || [];
@@ -9727,7 +9275,7 @@ function showFeedPlaceholder({ icon, title, desc, ctaLabel, ctaAction, extras = 
 // 로컬스토리지에 저장된 postId 목록을 읽어서 현재 로드된 POSTS와 매칭
 // TODO: Firestore users/{uid}/saved 서브컬렉션으로 마이그레이션 시
 //       getDocs(collection(db,`users/${uid}/saved`)) → postId 목록 → 각 doc fetch
-window.goSaved = async function() {
+window.goSaved = function() {
   setSideNav('saved');
   isHomeMode = false;
 
@@ -9751,97 +9299,57 @@ window.goSaved = async function() {
       desc: 'Tap the bookmark icon on any post to save it here for later.',
       ctaLabel: 'Browse posts',
       ctaAction: 'goHome()',
+      extras: `<div style="margin-top:16px;padding:12px 16px;background:var(--surface);
+                border:0.5px solid var(--border);border-radius:12px;
+                font-size:12px;color:var(--text-3);max-width:260px;line-height:1.5">
+                💡 Coming soon: Sync saved posts across devices with your account.
+               </div>`,
     });
     return;
   }
 
+  // 현재 로드된 POSTS에서 매칭
+  const filtered = POSTS.filter(p => saved.includes(String(p.id)));
+  const list = document.getElementById('feedList');
   goTo('feed');
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-  const list = document.getElementById('feedList');
+
   if (!list) return;
 
-  // 로딩 표시
-  list.innerHTML = `<div style="padding:48px 20px;text-align:center;color:var(--text-3);font-size:13px">Loading saved posts…</div>`;
-
-  // saved ID를 featured와 일반 포스트로 분리
-  const featuredIds = saved.filter(id => id.startsWith('featured_')).map(id => id.replace('featured_', ''));
-  const postIds     = saved.filter(id => !id.startsWith('featured_'));
-
-  // ① 이미 POSTS에 있는 것
-  const fromCache = POSTS.filter(p => postIds.includes(String(p.id)));
-  const cachedIds = new Set(fromCache.map(p => String(p.id)));
-
-  // ② POSTS에 없는 것은 Firestore에서 직접 fetch
-  const missingIds = postIds.filter(id => !cachedIds.has(id));
-  let fetched = [];
-  if (firebaseOk && missingIds.length > 0) {
-    try {
-      const fetches = missingIds.map(id => getDoc(doc(db, 'posts', id)));
-      const snaps = await Promise.all(fetches);
-      snaps.forEach(snap => {
-        if (snap.exists()) {
-          const data = snap.data();
-          if (!data.deleted) {
-            const p = { id: snap.id, ...data };
-            p.time = p.createdAt ? timeAgo(p.createdAt) : 'Some time ago';
-            fetched.push(p);
-            // POSTS 캐시에 추가
-            if (!POSTS.find(x => x.id === p.id)) POSTS.push(p);
-          }
-        }
-      });
-    } catch(e) {
-      console.warn('Saved posts fetch error:', e);
-    }
-  }
-
-  // ③ Featured 포스트
-  const featuredPosts = featuredIds
-    .map(fid => FEATURED_CACHE.find(f => f.id === fid))
-    .filter(Boolean);
-
-  const regularPosts = [...fromCache, ...fetched];
-
-  if (regularPosts.length === 0 && featuredPosts.length === 0) {
+  if (filtered.length === 0) {
+    // 저장은 됐지만 현재 세션에 로드 안 됨
     showFeedPlaceholder({
       icon: '🔖',
-      title: 'Saved posts not found',
-      desc: 'These posts may have been deleted.',
-      ctaLabel: 'Browse posts',
-      ctaAction: 'goHome()',
+      title: `${saved.length} saved post${saved.length > 1 ? 's' : ''}`,
+      desc: 'Your saved posts aren\'t loaded in this session. Refresh the page to load them.',
+      ctaLabel: 'Refresh & load',
+      ctaAction: 'location.reload()',
+      extras: `<div style="margin-top:8px;font-size:11px;color:var(--text-3)">${saved.length} post ID${saved.length > 1 ? 's' : ''} saved locally</div>`,
     });
     return;
   }
 
-  function renderSavedCard(p, isFeatured) {
-    const id      = isFeatured ? 'featured_' + p.id : p.id;
-    const openFn  = isFeatured ? `openFeaturedDetail('${p.id}')` : `openDetail('${p.id}')`;
-    const preview = (p.previewText || p.preview || '').replace(/<[^>]*>/g, '').slice(0, 120);
-    return `
-      <div class="post-card" style="cursor:pointer" onclick="${openFn}">
-        <div class="post-meta">
-          <span class="comm-name">${p.comm || 'KoreaConnect'}</span>
-          <div class="meta-dot"></div>
-          <span class="meta-time">${isFeatured ? 'Featured' : (p.time || 'Just now')}</span>
-          <span class="tag tag-${p.topic}">${capTopic(p.topic)}</span>
-        </div>
-        <div class="post-title">${p.title}</div>
-        <div class="post-preview">${preview}</div>
-        <div class="post-actions" style="margin-top:8px">
-          <button class="action-btn" style="color:#E24B4A" onclick="event.stopPropagation();removeSavedPost('${id}');goSaved()">🗑 Remove</button>
-        </div>
-      </div>`;
-  }
-
-  const total = regularPosts.length + featuredPosts.length;
   list.innerHTML = `
     <div style="padding:12px 16px 4px;display:flex;align-items:center;gap:6px">
       <span style="font-size:15px">🔖</span>
       <span style="font-size:13px;font-weight:600;color:var(--text)">Saved Posts</span>
-      <span style="margin-left:auto;font-size:11px;color:var(--text-3)">${total} post${total !== 1 ? 's' : ''}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text-3)">${filtered.length} post${filtered.length > 1 ? 's' : ''}</span>
     </div>
-    ${featuredPosts.map(p => renderSavedCard(p, true)).join('')}
-    ${regularPosts.map(p => renderSavedCard(p, false)).join('')}`;
+    ${filtered.map((p, i) => `
+      <div class="post-card" style="animation-delay:${i * 0.03}s">
+        <div class="post-meta">
+          <span class="comm-name">${p.comm || 'KoreaConnect'}</span>
+          <div class="meta-dot"></div>
+          <span class="meta-time">${p.time || 'Just now'}</span>
+          <span class="tag tag-${p.topic}">${capTopic(p.topic)}</span>
+        </div>
+        <div class="post-title" onclick="openDetail('${p.id}')" style="cursor:pointer">${p.title}</div>
+        <div class="post-preview" onclick="openDetail('${p.id}')" style="cursor:pointer">${p.preview}</div>
+        <div class="post-actions" style="margin-top:8px">
+          <button class="action-btn" style="color:#E24B4A"
+            onclick="removeSavedPost('${p.id}');goSaved()">🗑 Remove</button>
+        </div>
+      </div>`).join('')}`;
 }
 
 // 저장 목록에서 특정 포스트 제거
@@ -9918,18 +9426,14 @@ window.refreshSheetSave = function(postId) {
 // TODO: 댓글 활동 포함 시 collectionGroup('comments').where('authorId','==',uid) 쿼리 필요
 // ── showMyPosts: goActivity + renderMyPosts 통합 함수 ──
 // 사이드바 My Activity / 프로필 탭 / 어디서든 호출 가능
-// ── My Activity 캐시 (탭 전환 시 재사용) ──
-let _activityCache = null;
-let _myCommentsCache = null; // { id (Firestore ID), text, postId, postTitle, createdAt }
-
-window.showMyPosts = async function(tab) {
+window.showMyPosts = async function() {
   setSideNav('activity');
   isHomeMode = false;
 
   if (!currentUser) {
     showFeedPlaceholder({
       icon: '📊',
-      title: 'Sign in to see your activity',
+      title: 'Sign in to see your posts',
       desc: 'Create an account to start sharing with the community.',
       ctaLabel: 'Sign in with Google',
       ctaAction: 'signInWithGoogle()',
@@ -9942,17 +9446,17 @@ window.showMyPosts = async function(tab) {
 
   const list = document.getElementById('feedList');
   if (!list) return;
-  list.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text-3);font-size:13px">Loading…</div>`;
+  list.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text-3);font-size:13px">Loading your posts...</div>`;
 
-  // Firestore에서 내 글 쿼리
+  // Firestore에서 내 글 직접 쿼리 (가장 정확함)
   let myPosts = [];
   if (firebaseOk) {
     try {
-      const q = query(collection(db, 'posts'), where('authorId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
       myPosts = snap.docs
         .map(d => ({ id: d.id, ...d.data(), time: timeAgo(d.data().createdAt) }))
-        .filter(p => !p.deleted);
+        .filter(p => p.authorId === currentUser.uid && !p.deleted);
     } catch(e) {
       myPosts = POSTS.filter(p => p.authorId === currentUser.uid && !p.deleted);
     }
@@ -9960,254 +9464,64 @@ window.showMyPosts = async function(tab) {
     myPosts = POSTS.filter(p => p.authorId === currentUser.uid && !p.deleted);
   }
 
-  const totalVotes = myPosts.reduce((s, p) => s + (p.votes || 0), 0);
-  // 프로필 / 위젯 통계 동기화
+  const totalVotes    = myPosts.reduce((s, p) => s + (p.votes || 0), 0);
+  const totalComments = myPosts.reduce((s, p) => s + (p.commentCount || 0), 0);
+
+  // 프로필 화면 통계도 동기화
   const statPostsEl   = document.getElementById('statPosts');
   const statUpvotesEl = document.getElementById('statUpvotes');
-  const statCommentsEl = document.getElementById('statComments');
-  const totalComments = myPosts.reduce((s, p) => s + (p.commentCount || 0), 0);
-  if (statPostsEl)    statPostsEl.textContent   = myPosts.length;
-  if (statUpvotesEl)  statUpvotesEl.textContent = formatVotes(totalVotes);
-  if (statCommentsEl) statCommentsEl.textContent = totalComments;
-  // 위젯도 동기화
-  const wsp = document.getElementById('widgetStatPosts');
-  const wsu = document.getElementById('widgetStatUpvotes');
-  if (wsp) wsp.textContent = myPosts.length;
-  if (wsu) wsu.textContent = formatVotes(totalVotes);
-
-  _activityCache = { myPosts, totalVotes };
-
-  // upvotes 수: localStorage kc_votes에서 'up' 카운트
-  const kvAll = (() => { try { return JSON.parse(localStorage.getItem('kc_votes') || '{}'); } catch(e) { return {}; } })();
-  const upvoteCount = Object.values(kvAll).filter(v => v === 'up').length;
+  if (statPostsEl)   statPostsEl.textContent   = myPosts.length;
+  if (statUpvotesEl) statUpvotesEl.textContent = formatVotes(totalVotes);
 
   list.innerHTML = `
+    <!-- 헤더 -->
     <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between">
       <div style="display:flex;align-items:center;gap:8px">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--green-light);
+                    display:flex;align-items:center;justify-content:center">
           <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3.5" stroke="#1D9E75" stroke-width="1.4"/><path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="#1D9E75" stroke-width="1.4" stroke-linecap="round"/></svg>
         </div>
-        <span style="font-size:15px;font-weight:700;color:var(--text)">My Activity</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text)">My Posts</span>
       </div>
       <button onclick="goTo('write');setSideNav('write')"
         style="background:var(--green);color:#fff;border:none;border-radius:var(--radius-pill);
-               padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)">+ Write</button>
+               padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)">
+        + Write
+      </button>
     </div>
 
-    <!-- 탭 겸 스탯 카드 -->
+    <!-- 스탯 카드 3개 -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 14px">
-      <div id="actTab-posts" onclick="switchActivityTab('posts')"
-           style="background:var(--green-light);border:1.5px solid var(--green);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all 0.15s">
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center">
         <div style="font-size:20px;font-weight:700;color:var(--green)">${myPosts.length}</div>
-        <div style="font-size:10px;color:var(--green-dark);margin-top:2px;font-weight:600">Posts</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:2px">Posts</div>
       </div>
-      <div id="actTab-upvotes" onclick="switchActivityTab('upvotes')"
-           style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all 0.15s">
-        <div style="font-size:20px;font-weight:700;color:var(--green)">${upvoteCount}</div>
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--green)">${formatVotes(totalVotes)}</div>
         <div style="font-size:10px;color:var(--text-3);margin-top:2px">Upvotes</div>
       </div>
-      <div id="actTab-comments" onclick="switchActivityTab('comments')"
-           style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all 0.15s">
-        <div style="font-size:20px;font-weight:700;color:var(--green)" id="actCommentCount">0</div>
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--green)">${totalComments}</div>
         <div style="font-size:10px;color:var(--text-3);margin-top:2px">Comments</div>
       </div>
     </div>
 
-    <div id="activityContent"></div>`;
-
-  // 댓글 수 비동기 로드 (탭 전환과 병렬)
-  _loadCommentCount();
-
-  await switchActivityTab(tab || 'posts');
-};
-
-// 댓글 수 카운트 비동기 로드 → actCommentCount 업데이트
-async function _loadCommentCount() {
-  if (!currentUser) return;
-  let count = 0;
-  if (firebaseOk) {
-    try {
-      const actSnap = await getDoc(doc(db, 'userActivity', currentUser.uid));
-      if (actSnap.exists()) count = (actSnap.data().comments || []).length;
-    } catch(e) {}
-  }
-  if (count === 0) {
-    try { count = JSON.parse(localStorage.getItem('kc_my_comments') || '[]').length; } catch(e) {}
-  }
-  const el = document.getElementById('actCommentCount');
-  if (el) el.textContent = count;
-  const sc = document.getElementById('statComments');
-  if (sc) sc.textContent = count;
-}
-
-// ── 탭 전환 ──
-window.switchActivityTab = async function(tab) {
-  // 탭 카드 active 스타일 업데이트
-  ['posts','upvotes','comments'].forEach(t => {
-    const el = document.getElementById('actTab-' + t);
-    if (!el) return;
-    const isActive = t === tab;
-    el.dataset.active        = isActive ? 'true' : 'false';
-    el.style.background      = isActive ? 'var(--green-light)' : 'var(--surface)';
-    el.style.border          = isActive ? '1.5px solid var(--green)' : '1px solid var(--border)';
-    el.querySelector('div:last-child').style.color      = isActive ? 'var(--green-dark)' : 'var(--text-3)';
-    el.querySelector('div:last-child').style.fontWeight = isActive ? '600' : '400';
-  });
-
-  const content = document.getElementById('activityContent');
-  if (!content) return;
-
-  if (tab === 'posts') {
-    _renderActivityPosts(content);
-
-  } else if (tab === 'upvotes') {
-    content.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-3);font-size:13px">Loading…</div>`;
-    const kv = (() => { try { return JSON.parse(localStorage.getItem('kc_votes') || '{}'); } catch(e) { return {}; } })();
-    const upIds = Object.entries(kv).filter(([,v]) => v === 'up').map(([id]) => id);
-
-    if (upIds.length === 0) {
-      content.innerHTML = _activityEmpty('No upvoted posts yet', 'Posts you upvote will appear here.');
-      return;
-    }
-
-    // 캐시에서 찾고 없으면 Firestore에서 fetch
-    let upPosts = POSTS.filter(p => upIds.includes(String(p.id)));
-    const cachedIds = new Set(upPosts.map(p => String(p.id)));
-    const missingIds = upIds.filter(id => !cachedIds.has(id));
-    if (firebaseOk && missingIds.length > 0) {
-      try {
-        const snaps = await Promise.all(missingIds.map(id => getDoc(doc(db, 'posts', id))));
-        snaps.forEach(s => {
-          if (s.exists() && !s.data().deleted) {
-            upPosts.push({ id: s.id, ...s.data(), time: timeAgo(s.data().createdAt) });
-          }
-        });
-      } catch(e) {}
-    }
-
-    if (upPosts.length === 0) {
-      content.innerHTML = _activityEmpty('Upvoted posts not found', 'These posts may have been deleted.');
-      return;
-    }
-    content.innerHTML = upPosts.map((p, i) => _activityPostCard(p, i, false)).join('');
-
-  } else if (tab === 'comments') {
-    content.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-3);font-size:13px">Loading…</div>`;
-    let myComments = [];
-
-    // ① 인메모리 캐시 우선 (가장 최신 상태)
-    if (_myCommentsCache !== null) {
-      myComments = _myCommentsCache.map(c => ({
-        ...c,
-        time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
-      }));
-    }
-
-    // ② 캐시 없으면 Firestore userActivity 로드
-    if (myComments.length === 0 && firebaseOk && currentUser) {
-      try {
-        const actSnap = await getDoc(doc(db, 'userActivity', currentUser.uid));
-        if (actSnap.exists()) {
-          const data = actSnap.data().comments || [];
-          _myCommentsCache = [...data].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-          myComments = _myCommentsCache.map(c => ({
-            ...c,
-            time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
-          }));
-        }
-      } catch(e) {}
-    }
-
-    // ③ 그래도 없으면 localStorage fallback
-    if (myComments.length === 0) {
-      try {
-        const cached = JSON.parse(localStorage.getItem('kc_my_comments') || '[]');
-        if (cached.length) {
-          _myCommentsCache = cached;
-          myComments = cached.map(c => ({
-            ...c,
-            time: c.createdAt ? timeAgo({ toMillis: () => c.createdAt }) : 'Just now',
-          }));
-        }
-      } catch(e) {}
-    }
-
-    // comment count 업데이트
-    const countEl = document.getElementById('actCommentCount');
-    if (countEl) countEl.textContent = myComments.length;
-
-    if (myComments.length === 0) {
-      content.innerHTML = _activityEmpty('No comments yet', 'Your comments on posts will appear here.');
-      return;
-    }
-
-    // 댓글이 달린 포스트 제목 가져오기
-    const postIdSet = [...new Set(myComments.map(c => c.postId).filter(Boolean))];
-    const postTitleMap = {};
-    // ① localStorage 캐시의 postTitle 우선 활용
-    myComments.forEach(c => { if (c.postId && c.postTitle) postTitleMap[c.postId] = c.postTitle; });
-    // ② POSTS 배열
-    postIdSet.forEach(pid => {
-      if (!postTitleMap[pid]) {
-        const p = POSTS.find(x => x.id === pid);
-        if (p) postTitleMap[pid] = p.title;
-      }
-    });
-    // ③ 그래도 없으면 Firestore fetch (featured_ prefix 구분)
-    const missingPosts = postIdSet.filter(pid => !postTitleMap[pid]);
-    if (firebaseOk && missingPosts.length > 0) {
-      try {
-        const fetches = missingPosts.map(pid => {
-          if (pid.startsWith('featured_')) {
-            const fid = pid.replace('featured_', '');
-            const cached = FEATURED_CACHE.find(f => f.id === fid);
-            if (cached) return Promise.resolve({ id: pid, title: cached.title });
-            return getDoc(doc(db, 'featured', fid)).then(s => s.exists() ? { id: pid, title: s.data().title || 'Featured Post' } : null);
-          }
-          return getDoc(doc(db, 'posts', pid)).then(s => s.exists() ? { id: pid, title: s.data().title || 'Untitled' } : null);
-        });
-        const results = await Promise.all(fetches);
-        results.forEach(r => { if (r) postTitleMap[r.id] = r.title; });
-      } catch(e) {}
-    }
-
-    content.innerHTML = myComments.map((c, i) => {
-      const isFeatured = c.postId?.startsWith('featured_');
-      const featuredRealId = isFeatured ? c.postId.replace('featured_', '') : null;
-      const openFn = c.postId
-        ? (isFeatured ? `openFeaturedDetail('${featuredRealId}')` : `openDetail('${c.postId}')`)
-        : '';
-      return `
-      <div class="post-card" style="animation-delay:${i*0.03}s;cursor:pointer"
-           onclick="${openFn}">
-        <div class="post-meta">
-          <span class="tag" style="background:var(--blue-light);color:var(--blue)">${isFeatured ? 'Featured' : 'Comment'}</span>
-          <div class="meta-dot"></div>
-          <span class="meta-time">${c.time || 'Just now'}</span>
-        </div>
-        ${c.postId && postTitleMap[c.postId] ? `
-        <div style="font-size:11px;color:var(--text-3);margin-bottom:4px;display:flex;align-items:center;gap:4px">
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M14 2H2C1.4 2 1 2.4 1 3v8c0 .6.4 1 1 1h2v3l3.5-3H14c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1z" stroke="currentColor" stroke-width="1.3"/></svg>
-          on: <span style="color:var(--text-2);font-weight:500">${postTitleMap[c.postId]}</span>
-        </div>` : ''}
-        <div class="post-title" style="font-size:14px">${c.text || ''}</div>
-      </div>`;
-    }).join('');
-  }
-};
-
-function _renderActivityPosts(container) {
-  const myPosts = _activityCache?.myPosts || [];
-  if (myPosts.length === 0) {
-    container.innerHTML = _activityEmpty('No posts yet', 'Share your knowledge with the expat community', true);
-    return;
-  }
-  container.innerHTML = myPosts.map((p, i) => _activityPostCard(p, i, true)).join('');
-}
-
-function _activityPostCard(p, i, showDelete) {
-  const preview = (p.previewText || p.preview || '').replace(/<[^>]*>/g, '').slice(0, 100);
-  return `
+    ${myPosts.length === 0 ? `
+    <!-- 빈 상태 -->
+    <div data-my-posts-list style="padding:32px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--green-light);
+                  display:flex;align-items:center;justify-content:center">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div style="font-size:15px;font-weight:600;color:var(--text)">No posts yet</div>
+      <div style="font-size:13px;color:var(--text-2);line-height:1.5">Share your knowledge with<br>the expat community</div>
+      <button onclick="goTo('write')" style="margin-top:4px;background:var(--green);color:#fff;border:none;
+              border-radius:999px;padding:10px 24px;font-size:13px;font-weight:600;
+              cursor:pointer;font-family:var(--font)">Write your first post</button>
+    </div>` : `
+    <!-- 글 목록 -->
+    <div data-my-posts-list>
+    ${myPosts.map((p, i) => `
     <div class="post-card" style="animation-delay:${i*0.03}s" data-post-id="${p.id}">
       <div class="post-meta">
         <span class="tag tag-${p.topic}">${capTopic(p.topic)}</span>
@@ -10216,43 +9530,87 @@ function _activityPostCard(p, i, showDelete) {
         <span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:600">▲ ${p.votes || 0}</span>
       </div>
       <div class="post-title" onclick="openDetail('${p.id}')" style="cursor:pointer">${p.title}</div>
-      <div class="post-preview" onclick="openDetail('${p.id}')" style="cursor:pointer">${preview}</div>
+      <div class="post-preview" onclick="openDetail('${p.id}')" style="cursor:pointer">${p.preview}</div>
       <div class="post-actions" style="margin-top:8px">
         <button class="action-btn" onclick="openDetail('${p.id}')">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 2H2C1.4 2 1 2.4 1 3v8c0 .6.4 1 1 1h2v3l3.5-3H14c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1z" stroke="currentColor" stroke-width="1.3"/></svg>
           ${p.commentCount || 0}
         </button>
         <div class="spacer"></div>
-        ${showDelete ? `
         <button class="action-btn" style="color:#E24B4A"
           onclick="event.stopPropagation();confirmDeletePost('${p.id}')">
           <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M6 6v4M8 6v4M3 3l1 9h6l1-9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           Delete
-        </button>` : ''}
+        </button>
       </div>
-    </div>`;
+    </div>`).join('')}
+    </div>`}`;
 }
 
-function _activityEmpty(title, desc, showWrite) {
-  return `
-    <div style="padding:32px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
-      <div style="width:52px;height:52px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/></svg>
-      </div>
-      <div style="font-size:15px;font-weight:600;color:var(--text)">${title}</div>
-      <div style="font-size:13px;color:var(--text-2);line-height:1.5">${desc}</div>
-      ${showWrite ? `<button onclick="goTo('write')" style="margin-top:4px;background:var(--green);color:#fff;border:none;border-radius:999px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Write your first post</button>` : ''}
-    </div>`;
-}
-
-// 사이드바 My Activity 클릭
+// 사이드바 My Activity 클릭 → showMyPosts로 통합
 window.goActivity = function() { showMyPosts(); }
 
-// 글 삭제 후 목록 갱신 (in-place)
+// My Posts 뷰에서 화면 전환 없이 글 목록만 갱신
 async function refreshMyPostsInPlace() {
   if (!currentUser) return;
-  _activityCache = null;
-  showMyPosts('posts');
+  const list = document.getElementById('feedList');
+  if (!list) return;
+
+  let myPosts = [];
+  if (firebaseOk) {
+    try {
+      const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      myPosts = snap.docs
+        .map(d => ({ id: d.id, ...d.data(), time: timeAgo(d.data().createdAt) }))
+        .filter(p => p.authorId === currentUser.uid && !p.deleted);
+    } catch(e) {
+      myPosts = POSTS.filter(p => p.authorId === currentUser.uid && !p.deleted);
+    }
+  } else {
+    myPosts = POSTS.filter(p => p.authorId === currentUser.uid && !p.deleted);
+  }
+
+  // 통계 업데이트
+  const totalVotes    = myPosts.reduce((s, p) => s + (p.votes || 0), 0);
+  const totalComments = myPosts.reduce((s, p) => s + (p.commentCount || 0), 0);
+  const statPostsEl   = document.getElementById('statPosts');
+  const statUpvotesEl = document.getElementById('statUpvotes');
+  if (statPostsEl)   statPostsEl.textContent  = myPosts.length;
+  if (statUpvotesEl) statUpvotesEl.textContent = formatVotes(totalVotes);
+
+  // 글 카드 부분만 찾아서 교체 (헤더/스탯카드 유지)
+  const postsArea = list.querySelector('[data-my-posts-list]');
+  const newHtml = myPosts.map((p, i) => `
+    <div class="post-card" style="animation-delay:${i*0.03}s" data-post-id="${p.id}">
+      <div class="post-meta">
+        <span class="tag tag-${p.topic}">${capTopic(p.topic)}</span>
+        <div class="meta-dot"></div>
+        <span class="meta-time">${p.time || 'Just now'}</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:600">▲ ${p.votes || 0}</span>
+      </div>
+      <div class="post-title" onclick="openDetail('${p.id}')" style="cursor:pointer">${p.title}</div>
+      <div class="post-preview" onclick="openDetail('${p.id}')" style="cursor:pointer">${p.preview}</div>
+      <div class="post-actions" style="margin-top:8px">
+        <button class="action-btn" onclick="openDetail('${p.id}')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 2H2C1.4 2 1 2.4 1 3v8c0 .6.4 1 1 1h2v3l3.5-3H14c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1z" stroke="currentColor" stroke-width="1.3"/></svg>
+          ${p.commentCount || 0}
+        </button>
+        <div class="spacer"></div>
+        <button class="action-btn" style="color:#E24B4A"
+          onclick="event.stopPropagation();confirmDeletePost('${p.id}')">
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M6 6v4M8 6v4M3 3l1 9h6l1-9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Delete
+        </button>
+      </div>
+    </div>`).join('');
+
+  if (postsArea) {
+    postsArea.innerHTML = newHtml;
+  } else {
+    // data-my-posts-list 영역이 없으면 전체 다시 그리기 (showMyPosts의 화면전환 제외 버전)
+    showMyPosts();
+  }
 }
 
 // Local Info 위젯 업데이트 (toggleLoc 호출 시)
@@ -10944,22 +10302,6 @@ window.setTabByName = function(tab) {
   selectCategory(tab);
 }
 
-// POSTS 배열 기준으로 위젯 + 프로필 통계 즉시 갱신
-function _syncWidgetStats() {
-  if (!currentUser) return;
-  const myPosts = POSTS.filter(p => p.authorId === currentUser.uid && !p.deleted);
-  const cnt   = myPosts.length;
-  const votes = formatVotes(myPosts.reduce((s, p) => s + (p.votes || 0), 0));
-  const sp = document.getElementById('statPosts');
-  const su = document.getElementById('statUpvotes');
-  const wp = document.getElementById('widgetStatPosts');
-  const wu = document.getElementById('widgetStatUpvotes');
-  if (sp) sp.textContent = cnt;
-  if (su) su.textContent = votes;
-  if (wp) wp.textContent = cnt;
-  if (wu) wu.textContent = votes;
-}
-
 function updateDesktopUserWidget(user) {
   if (!isDesktop()) return;
   const guestCta  = document.getElementById('widgetGuestCta');
@@ -10981,8 +10323,10 @@ function updateDesktopUserWidget(user) {
     document.getElementById('widgetUserName').textContent  = user.displayName || 'Anonymous';
     document.getElementById('widgetUserEmail').textContent = user.email || '';
 
-    // POSTS 기반 즉시 표시 (포스트 로드 후 _syncWidgetStats로 자동 갱신)
-    _syncWidgetStats();
+    // 내 글 통계
+    const myPosts = POSTS.filter(p => p.authorId === user.uid);
+    document.getElementById('widgetStatPosts').textContent   = myPosts.length;
+    document.getElementById('widgetStatUpvotes').textContent = formatVotes(myPosts.reduce((s,p)=>s+(p.votes||1),0));
   } else {
     guestCta.style.display  = '';
     userRow.style.display   = 'none';

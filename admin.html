@@ -208,7 +208,7 @@
 
   /* ── CATEGORY CHIPS ── */
   .category-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
     gap: 8px;
   }
   .cat-chip {
@@ -531,8 +531,9 @@
           <div class="field">
             <label class="field-label">Category <span>*</span></label>
             <div class="category-grid">
-              <div class="cat-chip" onclick="selectCategory(this,'hair')"><span class="cat-chip-icon">✂️</span> Hair</div>
-              <div class="cat-chip" onclick="selectCategory(this,'makeup')"><span class="cat-chip-icon">💄</span> Makeup & Skin</div>
+              <div class="cat-chip" onclick="selectCategory(this,'beauty')"><span class="cat-chip-icon">💄</span> Beauty</div>
+              <div class="cat-chip" onclick="selectCategory(this,'tour')"><span class="cat-chip-icon">✈️</span> Tour</div>
+              <div class="cat-chip" onclick="selectCategory(this,'food')"><span class="cat-chip-icon">🍜</span> Food</div>
               <div class="cat-chip" onclick="selectCategory(this,'stay')"><span class="cat-chip-icon">🏨</span> Stay</div>
               <div class="cat-chip" onclick="selectCategory(this,'goods')"><span class="cat-chip-icon">🛍️</span> Goods</div>
             </div>
@@ -880,7 +881,7 @@ window.updatePreview = function() {
   document.getElementById('previewName').textContent  = name    || 'Business Name';
   document.getElementById('previewDesc').textContent  = tagline || 'Short tagline will appear here';
 
-  const catLabels = { hair: '✂️ Hair', makeup: '💄 Makeup & Skin', stay: '🏨 Stay', goods: '🛍️ Goods' };
+  const catLabels = { beauty: '💄 Beauty', tour: '✈️ Tour', food: '🍜 Food', stay: '🏨 Stay', goods: '🛍️ Goods' };
   document.getElementById('previewCat').textContent = selectedCat ? catLabels[selectedCat] : 'Category';
 
   // Photo
@@ -1051,7 +1052,8 @@ window.editBusiness = function(id, data) {
 
   // category chips
   document.querySelectorAll('.cat-chip').forEach(c => {
-    c.classList.toggle('selected', c.getAttribute('onclick').includes(`'${data.category}'`));
+    const onclickVal = c.getAttribute('onclick') || '';
+    c.classList.toggle('selected', onclickVal.includes("'" + data.category + "'"));
   });
   // platform chips
   document.querySelectorAll('.platform-chip').forEach(c => {
@@ -1112,7 +1114,7 @@ async function loadListings() {
       return;
     }
 
-    const catEmoji = { hair: '✂️', makeup: '💄', stay: '🏨', goods: '🛍️' };
+    const catEmoji = { beauty: '💄', tour: '✈️', food: '🍜', stay: '🏨', goods: '🛍️' };
 
     grid.innerHTML = items.map(item => `
       <div class="listing-item">

@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KoreaConnect — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green:        #1D9E75;
+    --green-light:  #E1F5EE;
+    --green-mid:    #9FE1CB;
+    --green-dark:   #0F6E56;
+    --green-deeper: #085041;
+    --bg:           #F5F5F0;
+    --surface:      #FFFFFF;
+    --border:       rgba(0,0,0,0.08);
+    --border-mid:   rgba(0,0,0,0.13);
+    --text:         #1A1A18;
+    --text-2:       #5A5A56;
+    --text-3:       #9A9A96;
+    --red:          #E53935;
+    --red-light:    #FFEBEE;
+    --amber:        #F59E0B;
+    --amber-light:  #FFFBEB;
+    --font:         'DM Sans', sans-serif;
+    --radius:       20px;
+    --radius-sm:    12px;
+    --radius-xs:    8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 60px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .topbar-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px; color: var(--green-deeper);
+    text-decoration: none;
+  }
+  .topbar-logo span { color: var(--green); }
+  .topbar-badge {
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 999px;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .topbar-user {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--text-2);
+  }
+  .topbar-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--green-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: var(--green-deeper);
+    overflow: hidden; flex-shrink: 0;
+  }
+  .topbar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .btn-signout {
+    background: none; border: 1px solid var(--border-mid);
+    border-radius: 999px; padding: 5px 14px;
+    font-size: 12px; font-weight: 500; color: var(--text-2);
+    cursor: pointer; font-family: var(--font);
+    transition: all 0.15s;
+  }
+  .btn-signout:hover { background: var(--bg); color: var(--text); }
+
+  /* ── LOGIN GATE ── */
+  #loginGate {
+    min-height: calc(100vh - 60px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 48px 40px;
+    text-align: center;
+    max-width: 380px; width: 100%;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+  .login-icon {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--green-light);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+  }
+  .login-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .login-sub { font-size: 14px; color: var(--text-2); margin-bottom: 28px; line-height: 1.5; }
+  .btn-google {
+    width: 100%; padding: 13px;
+    background: var(--green); color: #fff;
+    border: none; border-radius: 999px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: var(--font);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: background 0.15s;
+  }
+  .btn-google:hover { background: var(--green-dark); }
+
+  /* ── ACCESS DENIED ── */
+  #accessDenied {
+    display: none;
+    min-height: calc(100vh - 60px);
+    align-items: center; justify-content: center;
+  }
+  .denied-card {
+    background: var(--red-light);
+    border: 1px solid rgba(229,57,53,0.2);
+    border-radius: var(--radius);
+    padding: 40px; text-align: center;
+    max-width: 360px;
+  }
+  .denied-card h2 { font-size: 20px; color: var(--red); margin-bottom: 8px; }
+  .denied-card p { font-size: 13px; color: var(--text-2); }
+
+  /* ── MAIN LAYOUT ── */
+  #adminApp {
+    display: none;
+    max-width: 1200px; margin: 0 auto;
+    padding: 32px 32px 80px;
+  }
+
+  .page-header {
+    margin-bottom: 32px;
+  }
+  .page-title {
+    font-size: 28px; font-weight: 700; color: var(--text);
+    margin-bottom: 6px;
+  }
+  .page-sub { font-size: 14px; color: var(--text-2); }
+
+  .admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-header-icon {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: var(--green-light);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .card-title { font-size: 15px; font-weight: 700; }
+  .card-body { padding: 24px; }
+
+  /* ── FORM ── */
+  .field { margin-bottom: 20px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-label {
+    font-size: 12px; font-weight: 700; color: var(--text-2);
+    letter-spacing: 0.4px; text-transform: uppercase;
+    margin-bottom: 8px; display: block;
+  }
+  .field-label span { color: var(--red); margin-left: 2px; }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="url"],
+  textarea,
+  select {
+    width: 100%; padding: 11px 14px;
+    border: 1.5px solid var(--border-mid);
+    border-radius: var(--radius-xs);
+    font-family: var(--font); font-size: 14px;
+    color: var(--text); background: var(--surface);
+    transition: border-color 0.15s;
+    outline: none;
+    resize: vertical;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(29,158,117,0.1);
+  }
+  input::placeholder, textarea::placeholder { color: var(--text-3); }
+  textarea { min-height: 90px; }
+
+  /* ── CATEGORY CHIPS ── */
+  .category-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .cat-chip {
+    padding: 10px 14px;
+    border: 1.5px solid var(--border-mid);
+    border-radius: var(--radius-xs);
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    color: var(--text-2); background: var(--surface);
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.15s; user-select: none;
+  }
+  .cat-chip:hover { border-color: var(--green-mid); background: var(--green-light); }
+  .cat-chip.selected {
+    border-color: var(--green); background: var(--green-light);
+    color: var(--green-deeper); font-weight: 600;
+  }
+  .cat-chip-icon { font-size: 16px; }
+
+  /* ── IMAGE UPLOAD ── */
+  .upload-zone {
+    border: 2px dashed var(--border-mid);
+    border-radius: var(--radius-sm);
+    padding: 28px 20px;
+    text-align: center; cursor: pointer;
+    transition: all 0.15s; background: var(--bg);
+  }
+  .upload-zone:hover { border-color: var(--green); background: var(--green-light); }
+  .upload-zone.drag-over { border-color: var(--green); background: var(--green-light); }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-text { font-size: 13px; color: var(--text-2); }
+  .upload-text strong { color: var(--green); }
+  .upload-sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+  #photoInput { display: none; }
+
+  .photo-previews {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px; margin-top: 12px;
+  }
+  .photo-preview {
+    position: relative; aspect-ratio: 1;
+    border-radius: var(--radius-xs); overflow: hidden;
+    background: var(--bg);
+  }
+  .photo-preview img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .photo-remove {
+    position: absolute; top: 4px; right: 4px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(0,0,0,0.6); color: #fff;
+    border: none; cursor: pointer;
+    font-size: 11px; display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .photo-main-badge {
+    position: absolute; bottom: 4px; left: 4px;
+    background: var(--green); color: #fff;
+    font-size: 9px; font-weight: 700;
+    padding: 2px 6px; border-radius: 4px;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── SLOTS ── */
+  .slots-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* ── PLATFORM BADGE ── */
+  .platform-row {
+    display: flex; gap: 8px;
+  }
+  .platform-chip {
+    padding: 8px 16px;
+    border: 1.5px solid var(--border-mid);
+    border-radius: 999px;
+    cursor: pointer; font-size: 12px; font-weight: 600;
+    color: var(--text-2); background: var(--surface);
+    transition: all 0.15s; user-select: none;
+  }
+  .platform-chip:hover { border-color: var(--green-mid); }
+  .platform-chip.selected {
+    background: var(--green); color: #fff;
+    border-color: var(--green);
+  }
+
+  /* ── RIGHT SIDEBAR ── */
+  .sidebar-sticky { position: sticky; top: 92px; }
+
+  /* ── PREVIEW CARD ── */
+  .preview-card {
+    border-radius: var(--radius-sm); overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .preview-img {
+    width: 100%; aspect-ratio: 4/3;
+    object-fit: cover; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-3); font-size: 13px;
+  }
+  .preview-img img { width: 100%; height: 100%; object-fit: cover; }
+  .preview-body { padding: 14px; }
+  .preview-cat {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--green);
+    margin-bottom: 6px;
+  }
+  .preview-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .preview-desc { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+  .preview-badges {
+    display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
+  }
+  .preview-badge {
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 4px;
+  }
+  .preview-badge.discount { background: #FCE4EC; color: #E91E63; }
+  .preview-badge.slots { background: var(--green-light); color: var(--green-dark); }
+
+  /* ── SUBMIT BTN ── */
+  .btn-submit {
+    width: 100%; padding: 14px;
+    background: var(--green); color: #fff;
+    border: none; border-radius: 999px;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: var(--font);
+    transition: background 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 16px;
+  }
+  .btn-submit:hover { background: var(--green-dark); }
+  .btn-submit:disabled { background: var(--border-mid); cursor: not-allowed; }
+
+  /* ── LISTINGS ── */
+  .listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 4px;
+  }
+  .listing-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden; background: var(--surface);
+    transition: box-shadow 0.15s;
+  }
+  .listing-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .listing-thumb {
+    width: 100%; aspect-ratio: 4/3;
+    object-fit: cover; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-3); font-size: 28px;
+  }
+  .listing-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .listing-body { padding: 12px 14px; }
+  .listing-cat {
+    font-size: 10px; font-weight: 700; color: var(--green);
+    letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .listing-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .listing-desc { font-size: 12px; color: var(--text-2); line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .listing-meta {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--text-3);
+  }
+  .listing-actions {
+    display: flex; gap: 6px; margin-left: auto;
+  }
+  .btn-edit, .btn-delete {
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: var(--font); border: none;
+    transition: all 0.1s;
+  }
+  .btn-edit { background: var(--green-light); color: var(--green-dark); }
+  .btn-edit:hover { background: var(--green-mid); }
+  .btn-delete { background: var(--red-light); color: var(--red); }
+  .btn-delete:hover { background: rgba(229,57,53,0.15); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: #fff;
+    padding: 12px 20px; border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 999; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+  .toast.success { background: var(--green); }
+  .toast.error { background: var(--red); }
+
+  /* ── STATUS BADGE ── */
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); display: inline-block;
+    box-shadow: 0 0 0 3px var(--green-light);
+    margin-right: 6px;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    padding: 48px 20px; text-align: center;
+    color: var(--text-3); font-size: 13px;
+  }
+  .empty-state-icon { font-size: 36px; margin-bottom: 12px; }
+
+  /* ── JSON PREVIEW ── */
+  .json-wrap {
+    background: #1A1A18; color: #9FE1CB;
+    border-radius: var(--radius-xs);
+    padding: 16px; font-size: 11px;
+    font-family: 'Courier New', monospace;
+    line-height: 1.6; overflow-x: auto;
+    max-height: 200px; overflow-y: auto;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 900px) {
+    .admin-grid { grid-template-columns: 1fr; }
+    .sidebar-sticky { position: static; }
+    #adminApp { padding: 20px 16px 60px; }
+    .topbar { padding: 0 16px; }
+    .photo-previews { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar">
+  <a class="topbar-logo" href="index.html">Korea<span>Connect</span></a>
+  <div class="topbar-badge">Admin</div>
+  <div class="topbar-user" id="topbarUser" style="display:none">
+    <div class="topbar-avatar" id="topbarAvatar"></div>
+    <span id="topbarEmail"></span>
+    <button class="btn-signout" onclick="signOut()">Sign out</button>
+  </div>
+</div>
+
+<!-- ── LOGIN GATE ── -->
+<div id="loginGate">
+  <div class="login-card">
+    <div class="login-icon">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <path d="M14 3C8 3 3 8 3 14s5 11 11 11 11-5 11-11S20 3 14 3z" stroke="#1D9E75" stroke-width="1.8"/>
+        <path d="M9 14l3.5 3.5L19 10" stroke="#1D9E75" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="login-title">Admin Dashboard</div>
+    <div class="login-sub">Sign in with your owner account to manage KoreaConnect listings.</div>
+    <button class="btn-google" onclick="signInWithGoogle()">
+      <svg width="16" height="16" viewBox="0 0 48 48">
+        <path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/>
+      </svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- ── ACCESS DENIED ── -->
+<div id="accessDenied">
+  <div class="denied-card">
+    <div style="font-size:36px;margin-bottom:12px">🚫</div>
+    <h2>Access Denied</h2>
+    <p style="margin-top:8px">This page is only accessible to KoreaConnect admins.<br><br>
+    <button class="btn-signout" onclick="signOut()" style="margin-top:12px">Sign out and try again</button>
+    </p>
+  </div>
+</div>
+
+<!-- ── ADMIN APP ── -->
+<div id="adminApp">
+
+  <div class="page-header">
+    <div class="page-title">✦ Business Listings</div>
+    <div class="page-sub"><span class="status-dot"></span>Manage businesses shown in the Hot Deals section</div>
+  </div>
+
+  <div class="admin-grid">
+
+    <!-- ── LEFT: FORM ── -->
+    <div>
+
+      <!-- Photo Upload -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><rect x="1" y="4" width="18" height="13" rx="2" stroke="#1D9E75" stroke-width="1.4"/><circle cx="7" cy="10" r="2" stroke="#1D9E75" stroke-width="1.3"/><path d="M1 14l4-3 3 3 3-4 5 5" stroke="#1D9E75" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="card-title">Photos</div>
+        </div>
+        <div class="card-body">
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('photoInput').click()"
+               ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+            <div class="upload-icon">📸</div>
+            <div class="upload-text"><strong>Click to upload</strong> or drag & drop</div>
+            <div class="upload-sub">JPG, PNG, WEBP · Max 5MB each · Up to 6 photos</div>
+          </div>
+          <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotoSelect(event)">
+          <div class="photo-previews" id="photoPreviews"></div>
+        </div>
+      </div>
+
+      <!-- Basic Info -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 4h12v12H4z" stroke="#1D9E75" stroke-width="1.4" rx="1"/><path d="M7 8h6M7 11h4" stroke="#1D9E75" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </div>
+          <div class="card-title">Basic Information</div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label class="field-label">Category <span>*</span></label>
+            <div class="category-grid">
+              <div class="cat-chip" onclick="selectCategory(this,'hair')"><span class="cat-chip-icon">✂️</span> Hair</div>
+              <div class="cat-chip" onclick="selectCategory(this,'makeup')"><span class="cat-chip-icon">💄</span> Makeup & Skin</div>
+              <div class="cat-chip" onclick="selectCategory(this,'stay')"><span class="cat-chip-icon">🏨</span> Stay</div>
+              <div class="cat-chip" onclick="selectCategory(this,'goods')"><span class="cat-chip-icon">🛍️</span> Goods</div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Business Name <span>*</span></label>
+            <input type="text" id="bizName" placeholder="e.g. Gangnam Hair Studio" oninput="updatePreview()">
+          </div>
+          <div class="field">
+            <label class="field-label">Short Tagline <span>*</span></label>
+            <input type="text" id="bizTagline" placeholder="e.g. Seoul's top expat-friendly hair salon" oninput="updatePreview()">
+          </div>
+          <div class="field">
+            <label class="field-label">Detailed Description</label>
+            <textarea id="bizDesc" placeholder="Describe the business in detail — services, specialties, why expats love it..." oninput="updatePreview()"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing & Slots -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#1D9E75" stroke-width="1.4"/><path d="M10 6v4l3 2" stroke="#1D9E75" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </div>
+          <div class="card-title">Pricing & Slots</div>
+        </div>
+        <div class="card-body">
+          <div class="slots-row">
+            <div class="field">
+              <label class="field-label">Original Price (₩)</label>
+              <input type="number" id="priceOriginal" placeholder="e.g. 80000" oninput="updatePreview()">
+            </div>
+            <div class="field">
+              <label class="field-label">Sale Price (₩)</label>
+              <input type="number" id="priceSale" placeholder="e.g. 55000" oninput="updatePreview()">
+            </div>
+          </div>
+          <div class="slots-row">
+            <div class="field">
+              <label class="field-label">Slots per Hour <span>*</span></label>
+              <input type="number" id="slotsPerHour" placeholder="e.g. 3" min="1" max="50" oninput="updatePreview()">
+            </div>
+            <div class="field">
+              <label class="field-label">Session Duration (min)</label>
+              <input type="number" id="sessionDuration" placeholder="e.g. 60" min="15">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Platform / Partner</label>
+            <div class="platform-row">
+              <div class="platform-chip" onclick="selectPlatform(this,'KLOOK')">KLOOK</div>
+              <div class="platform-chip" onclick="selectPlatform(this,'CREATRIP')">CREATRIP</div>
+              <div class="platform-chip" onclick="selectPlatform(this,'KKDAY')">KKDAY</div>
+              <div class="platform-chip" onclick="selectPlatform(this,'DIRECT')">Direct</div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Booking URL</label>
+            <input type="url" id="bookingUrl" placeholder="https://...">
+          </div>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 2C7.2 2 5 4.2 5 7c0 4 5 9 5 9s5-5 5-9c0-2.8-2.2-5-5-5z" stroke="#1D9E75" stroke-width="1.4"/><circle cx="10" cy="7" r="2" stroke="#1D9E75" stroke-width="1.3"/></svg>
+          </div>
+          <div class="card-title">Location</div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label class="field-label">Address (English)</label>
+            <input type="text" id="bizAddress" placeholder="e.g. 123 Gangnam-daero, Gangnam-gu, Seoul">
+          </div>
+          <div class="field">
+            <label class="field-label">District / Neighborhood</label>
+            <input type="text" id="bizDistrict" placeholder="e.g. Gangnam · Seoul">
+          </div>
+          <div class="field">
+            <label class="field-label">Google Maps Link</label>
+            <input type="url" id="bizMapUrl" placeholder="https://maps.google.com/...">
+          </div>
+        </div>
+      </div>
+
+      <!-- Generated JSON -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M6 4L2 10l4 6M14 4l4 6-4 6M11 3l-2 14" stroke="#1D9E75" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+          <div class="card-title">Generated Object</div>
+        </div>
+        <div class="card-body">
+          <div style="font-size:12px;color:var(--text-2);margin-bottom:4px">
+            This object is saved to Firestore <code style="background:var(--bg);padding:2px 6px;border-radius:4px">businesses</code> collection and automatically appears in Hot Deals.
+          </div>
+          <div class="json-wrap" id="jsonPreview">{ }</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── RIGHT: PREVIEW + SUBMIT ── -->
+    <div class="sidebar-sticky">
+
+      <!-- Live Preview -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M1 10s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6z" stroke="#1D9E75" stroke-width="1.4"/><circle cx="10" cy="10" r="3" stroke="#1D9E75" stroke-width="1.3"/></svg>
+          </div>
+          <div class="card-title">Live Preview</div>
+        </div>
+        <div class="card-body" style="padding:16px">
+          <div class="preview-card">
+            <div class="preview-img" id="previewImg">
+              <span>No photo yet</span>
+            </div>
+            <div class="preview-body">
+              <div class="preview-cat" id="previewCat">Category</div>
+              <div class="preview-name" id="previewName">Business Name</div>
+              <div class="preview-desc" id="previewDesc">Short tagline will appear here</div>
+              <div class="preview-badges" id="previewBadges"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="card">
+        <div class="card-body">
+          <div style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:4px">
+            Saves to Firestore and immediately appears in Hot Deals on the main feed.
+          </div>
+          <button class="btn-submit" id="submitBtn" onclick="submitBusiness()">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M3 10l5 5L17 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Save Business
+          </button>
+          <button class="btn-submit" id="updateBtn" style="display:none;background:var(--amber)" onclick="updateBusiness()">
+            Update Business
+          </button>
+          <button style="width:100%;margin-top:8px;padding:10px;border:none;background:none;font-size:13px;color:var(--text-3);cursor:pointer;font-family:var(--font)" onclick="resetForm()">
+            Clear form
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+          <div style="text-align:center;padding:16px;border-right:1px solid var(--border)">
+            <div style="font-size:26px;font-weight:700;color:var(--green)" id="statCount">0</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:2px">Businesses</div>
+          </div>
+          <div style="text-align:center;padding:16px">
+            <div style="font-size:26px;font-weight:700;color:var(--green)" id="statPhotos">0</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:2px">Photos uploaded</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── LISTINGS ── -->
+  <div class="card" style="margin-top:32px">
+    <div class="card-header">
+      <div class="card-header-icon">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" stroke="#1D9E75" stroke-width="1.4"/><rect x="11" y="2" width="7" height="7" rx="1.5" stroke="#1D9E75" stroke-width="1.4"/><rect x="2" y="11" width="7" height="7" rx="1.5" stroke="#1D9E75" stroke-width="1.4"/><rect x="11" y="11" width="7" height="7" rx="1.5" stroke="#1D9E75" stroke-width="1.4"/></svg>
+      </div>
+      <div class="card-title">All Listings</div>
+      <div style="margin-left:auto;font-size:12px;color:var(--text-3)" id="listingCount">Loading...</div>
+    </div>
+    <div class="card-body">
+      <div class="listings-grid" id="listingsGrid">
+        <div class="empty-state">
+          <div class="empty-state-icon">🏪</div>
+          Loading businesses...
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── FIREBASE ── -->
+<script type="module">
+import { initializeApp }           from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
+                                    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, query }
+                                    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getStorage, ref, uploadBytes, getDownloadURL }
+                                    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+
+// ── Firebase config (same as index.html) ──
+const firebaseConfig = {
+  apiKey:            "AIzaSyD-JgVkX693KDK9ArZNkSw8EYTdj0YANfo",
+  authDomain:        "koreaconnect-81f3b.firebaseapp.com",
+  projectId:         "koreaconnect-81f3b",
+  storageBucket:     "koreaconnect-81f3b.firebasestorage.app",
+  messagingSenderId: "1031892307775",
+  appId:             "1:1031892307775:web:0a177496122172483c0d8a",
+  measurementId:     "G-N2W46F27NR"
+};
+
+const OWNER_EMAILS = [
+  'hyoyoungnicolehan@gmail.com',
+  'andhaw89@gmail.com',
+];
+
+const app      = initializeApp(firebaseConfig);
+const auth     = getAuth(app);
+const db       = getFirestore(app);
+const storage  = getStorage(app);
+const provider = new GoogleAuthProvider();
+
+// ── STATE ──
+let currentUser   = null;
+let selectedCat   = null;
+let selectedPlat  = null;
+let photoFiles    = [];  // { file, localUrl }
+let editingId     = null;
+
+// ── AUTH ──
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  if (!user) {
+    show('loginGate'); hide('accessDenied'); hide('adminApp');
+    hide('topbarUser');
+  } else if (!OWNER_EMAILS.includes(user.email)) {
+    hide('loginGate'); show('accessDenied'); hide('adminApp');
+    show('topbarUser');
+    document.getElementById('topbarEmail').textContent = user.email;
+    setAvatar(user);
+  } else {
+    hide('loginGate'); hide('accessDenied'); show('adminApp');
+    show('topbarUser');
+    document.getElementById('topbarEmail').textContent = user.email;
+    setAvatar(user);
+    loadListings();
+  }
+});
+
+function setAvatar(user) {
+  const el = document.getElementById('topbarAvatar');
+  if (user.photoURL) {
+    el.innerHTML = `<img src="${user.photoURL}" referrerpolicy="no-referrer">`;
+  } else {
+    el.textContent = (user.displayName || user.email || 'A')[0].toUpperCase();
+  }
+}
+
+window.signInWithGoogle = async function() {
+  try { await signInWithPopup(auth, provider); }
+  catch(e) { showToast('Sign in failed: ' + e.message, 'error'); }
+};
+
+window.signOut = async function() {
+  await fbSignOut(auth);
+};
+
+// ── CATEGORY ──
+window.selectCategory = function(el, cat) {
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedCat = cat;
+  updatePreview();
+  generateJson();
+};
+
+// ── PLATFORM ──
+window.selectPlatform = function(el, plat) {
+  document.querySelectorAll('.platform-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPlat = plat;
+  generateJson();
+};
+
+// ── PHOTOS ──
+window.handleDragOver = function(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.add('drag-over');
+};
+window.handleDragLeave = function() {
+  document.getElementById('uploadZone').classList.remove('drag-over');
+};
+window.handleDrop = function(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag-over');
+  addPhotos(Array.from(e.dataTransfer.files));
+};
+window.handlePhotoSelect = function(e) {
+  addPhotos(Array.from(e.target.files));
+  e.target.value = '';
+};
+
+function addPhotos(files) {
+  files.forEach(file => {
+    if (photoFiles.length >= 6) { showToast('Max 6 photos', 'error'); return; }
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB per photo', 'error'); return; }
+    const localUrl = URL.createObjectURL(file);
+    photoFiles.push({ file, localUrl });
+  });
+  renderPhotoPreviews();
+  updatePreview();
+  generateJson();
+}
+
+function renderPhotoPreviews() {
+  const wrap = document.getElementById('photoPreviews');
+  wrap.innerHTML = photoFiles.map((p, i) => `
+    <div class="photo-preview">
+      <img src="${p.localUrl}" alt="">
+      ${i === 0 ? '<div class="photo-main-badge">MAIN</div>' : ''}
+      <button class="photo-remove" onclick="removePhoto(${i})">✕</button>
+    </div>
+  `).join('');
+  document.getElementById('statPhotos').textContent = photoFiles.length;
+}
+
+window.removePhoto = function(i) {
+  URL.revokeObjectURL(photoFiles[i].localUrl);
+  photoFiles.splice(i, 1);
+  renderPhotoPreviews();
+  updatePreview();
+  generateJson();
+};
+
+// ── LIVE PREVIEW ──
+window.updatePreview = function() {
+  const name    = document.getElementById('bizName').value.trim();
+  const tagline = document.getElementById('bizTagline').value.trim();
+  const orig    = document.getElementById('priceOriginal').value;
+  const sale    = document.getElementById('priceSale').value;
+  const slots   = document.getElementById('slotsPerHour').value;
+
+  document.getElementById('previewName').textContent  = name    || 'Business Name';
+  document.getElementById('previewDesc').textContent  = tagline || 'Short tagline will appear here';
+
+  const catLabels = { hair: '✂️ Hair', makeup: '💄 Makeup & Skin', stay: '🏨 Stay', goods: '🛍️ Goods' };
+  document.getElementById('previewCat').textContent = selectedCat ? catLabels[selectedCat] : 'Category';
+
+  // Photo
+  const imgWrap = document.getElementById('previewImg');
+  if (photoFiles.length > 0) {
+    imgWrap.innerHTML = `<img src="${photoFiles[0].localUrl}" alt="" style="width:100%;height:100%;object-fit:cover">`;
+  } else {
+    imgWrap.innerHTML = '<span>No photo yet</span>';
+  }
+
+  // Badges
+  const badges = [];
+  if (orig && sale && Number(sale) < Number(orig)) {
+    const pct = Math.round((1 - sale/orig)*100);
+    badges.push(`<span class="preview-badge discount">-${pct}% OFF</span>`);
+  }
+  if (slots) badges.push(`<span class="preview-badge slots">${slots} slots/hr</span>`);
+  document.getElementById('previewBadges').innerHTML = badges.join('');
+
+  generateJson();
+};
+
+// ── JSON PREVIEW ──
+function generateJson() {
+  const obj = buildObject();
+  document.getElementById('jsonPreview').textContent = JSON.stringify(obj, null, 2);
+}
+
+function buildObject() {
+  const orig = document.getElementById('priceOriginal').value;
+  const sale = document.getElementById('priceSale').value;
+
+  return {
+    name:            document.getElementById('bizName').value.trim(),
+    tagline:         document.getElementById('bizTagline').value.trim(),
+    description:     document.getElementById('bizDesc').value.trim(),
+    category:        selectedCat || '',
+    platform:        selectedPlat || '',
+    priceOriginal:   orig ? Number(orig) : null,
+    priceSale:       sale ? Number(sale) : null,
+    discountPct:     (orig && sale) ? Math.round((1 - sale/orig)*100) : null,
+    slotsPerHour:    document.getElementById('slotsPerHour').value
+                       ? Number(document.getElementById('slotsPerHour').value) : null,
+    sessionDuration: document.getElementById('sessionDuration').value
+                       ? Number(document.getElementById('sessionDuration').value) : null,
+    bookingUrl:      document.getElementById('bookingUrl').value.trim(),
+    address:         document.getElementById('bizAddress').value.trim(),
+    district:        document.getElementById('bizDistrict').value.trim(),
+    mapUrl:          document.getElementById('bizMapUrl').value.trim(),
+    photos:          [],   // filled after upload
+    active:          true,
+  };
+}
+
+// ── SUBMIT ──
+window.submitBusiness = async function() {
+  const name = document.getElementById('bizName').value.trim();
+  if (!name) { showToast('Please enter a business name', 'error'); return; }
+  if (!selectedCat) { showToast('Please select a category', 'error'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Saving...';
+
+  try {
+    // 1. Upload photos
+    const photoUrls = [];
+    for (let i = 0; i < photoFiles.length; i++) {
+      const file = photoFiles[i].file;
+      const ext  = file.name.split('.').pop();
+      const path = `businesses/${Date.now()}_${i}.${ext}`;
+      const sRef = ref(storage, path);
+      await uploadBytes(sRef, file);
+      const url = await getDownloadURL(sRef);
+      photoUrls.push(url);
+    }
+
+    // 2. Build & save object
+    const obj = buildObject();
+    obj.photos      = photoUrls;
+    obj.photoMain   = photoUrls[0] || null;
+    obj.createdAt   = serverTimestamp();
+    obj.updatedAt   = serverTimestamp();
+
+    await addDoc(collection(db, 'businesses'), obj);
+
+    showToast('✅ Business saved!', 'success');
+    resetForm();
+    loadListings();
+  } catch(e) {
+    console.error(e);
+    showToast('Save failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M3 10l5 5L17 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Save Business';
+  }
+};
+
+// ── UPDATE ──
+window.updateBusiness = async function() {
+  if (!editingId) return;
+  const btn = document.getElementById('updateBtn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Updating...';
+
+  try {
+    const photoUrls = [];
+    for (let i = 0; i < photoFiles.length; i++) {
+      if (photoFiles[i].localUrl.startsWith('blob:')) {
+        // new file
+        const file = photoFiles[i].file;
+        const ext  = file.name.split('.').pop();
+        const path = `businesses/${Date.now()}_${i}.${ext}`;
+        const sRef = ref(storage, path);
+        await uploadBytes(sRef, file);
+        photoUrls.push(await getDownloadURL(sRef));
+      } else {
+        photoUrls.push(photoFiles[i].localUrl);
+      }
+    }
+
+    const obj = buildObject();
+    obj.photos    = photoUrls;
+    obj.photoMain = photoUrls[0] || null;
+    obj.updatedAt = serverTimestamp();
+
+    await updateDoc(doc(db, 'businesses', editingId), obj);
+    showToast('✅ Updated!', 'success');
+    resetForm();
+    loadListings();
+  } catch(e) {
+    showToast('Update failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Update Business';
+  }
+};
+
+// ── DELETE ──
+window.deleteBusiness = async function(id) {
+  if (!confirm('Delete this business? This cannot be undone.')) return;
+  try {
+    await deleteDoc(doc(db, 'businesses', id));
+    showToast('Deleted', 'success');
+    loadListings();
+  } catch(e) {
+    showToast('Delete failed: ' + e.message, 'error');
+  }
+};
+
+// ── EDIT ──
+window.editBusiness = function(id, data) {
+  editingId = id;
+  selectedCat  = data.category  || null;
+  selectedPlat = data.platform  || null;
+
+  document.getElementById('bizName').value        = data.name        || '';
+  document.getElementById('bizTagline').value     = data.tagline     || '';
+  document.getElementById('bizDesc').value        = data.description || '';
+  document.getElementById('priceOriginal').value  = data.priceOriginal || '';
+  document.getElementById('priceSale').value      = data.priceSale     || '';
+  document.getElementById('slotsPerHour').value   = data.slotsPerHour  || '';
+  document.getElementById('sessionDuration').value= data.sessionDuration || '';
+  document.getElementById('bookingUrl').value     = data.bookingUrl   || '';
+  document.getElementById('bizAddress').value     = data.address      || '';
+  document.getElementById('bizDistrict').value    = data.district     || '';
+  document.getElementById('bizMapUrl').value      = data.mapUrl       || '';
+
+  // category chips
+  document.querySelectorAll('.cat-chip').forEach(c => {
+    c.classList.toggle('selected', c.getAttribute('onclick').includes(`'${data.category}'`));
+  });
+  // platform chips
+  document.querySelectorAll('.platform-chip').forEach(c => {
+    c.classList.toggle('selected', c.getAttribute('onclick').includes(`'${data.platform}'`));
+  });
+
+  // existing photos as previews
+  photoFiles = (data.photos || []).map(url => ({ file: null, localUrl: url }));
+  renderPhotoPreviews();
+
+  document.getElementById('submitBtn').style.display = 'none';
+  document.getElementById('updateBtn').style.display = '';
+
+  updatePreview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast('Editing: ' + data.name, '');
+};
+
+// ── RESET ──
+window.resetForm = function() {
+  editingId = null;
+  selectedCat = null;
+  selectedPlat = null;
+  photoFiles = [];
+
+  ['bizName','bizTagline','bizDesc','priceOriginal','priceSale',
+   'slotsPerHour','sessionDuration','bookingUrl','bizAddress','bizDistrict','bizMapUrl'
+  ].forEach(id => { document.getElementById(id).value = ''; });
+
+  document.querySelectorAll('.cat-chip, .platform-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('photoPreviews').innerHTML = '';
+  document.getElementById('submitBtn').style.display = '';
+  document.getElementById('updateBtn').style.display = 'none';
+  document.getElementById('previewImg').innerHTML = '<span>No photo yet</span>';
+  document.getElementById('previewName').textContent = 'Business Name';
+  document.getElementById('previewDesc').textContent = 'Short tagline will appear here';
+  document.getElementById('previewCat').textContent = 'Category';
+  document.getElementById('previewBadges').innerHTML = '';
+  document.getElementById('jsonPreview').textContent = '{ }';
+  document.getElementById('statPhotos').textContent = '0';
+};
+
+// ── LOAD LISTINGS ──
+async function loadListings() {
+  const grid = document.getElementById('listingsGrid');
+  grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div>Loading...</div>';
+
+  try {
+    const q = query(collection(db, 'businesses'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    document.getElementById('statCount').textContent = items.length;
+    document.getElementById('listingCount').textContent = `${items.length} listing${items.length !== 1 ? 's' : ''}`;
+
+    if (items.length === 0) {
+      grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏪</div>No businesses yet. Add your first one!</div>';
+      return;
+    }
+
+    const catEmoji = { hair: '✂️', makeup: '💄', stay: '🏨', goods: '🛍️' };
+
+    grid.innerHTML = items.map(item => `
+      <div class="listing-item">
+        <div class="listing-thumb">
+          ${item.photoMain
+            ? `<img src="${item.photoMain}" alt="${item.name}">`
+            : `<span>${catEmoji[item.category] || '🏪'}</span>`}
+        </div>
+        <div class="listing-body">
+          <div class="listing-cat">${catEmoji[item.category] || ''} ${item.category || 'Uncategorized'} ${item.platform ? '· ' + item.platform : ''}</div>
+          <div class="listing-name">${item.name || '—'}</div>
+          <div class="listing-desc">${item.tagline || item.description || '—'}</div>
+          <div class="listing-meta">
+            ${item.priceSale ? `<span>₩${item.priceSale.toLocaleString()}</span>` : ''}
+            ${item.discountPct ? `<span style="color:#E91E63;font-weight:700">-${item.discountPct}%</span>` : ''}
+            ${item.slotsPerHour ? `<span>${item.slotsPerHour} slots/hr</span>` : ''}
+            <div class="listing-actions">
+              <button class="btn-edit" onclick="editBusiness('${item.id}', ${JSON.stringify(item).replace(/'/g, '&#39;')})">Edit</button>
+              <button class="btn-delete" onclick="deleteBusiness('${item.id}')">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div>${e.message}</div>`;
+  }
+}
+
+// ── TOAST ──
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { el.className = 'toast'; }, 3000);
+}
+
+// ── HELPERS ──
+function show(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = '';
+}
+function hide(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}
+
+// Expose for inline handlers
+window.updatePreview = window.updatePreview || updatePreview;
+
+</script>
+</body>
+</html>

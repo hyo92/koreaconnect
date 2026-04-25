@@ -3774,15 +3774,15 @@
 
     <!-- ③ Sticky 카테고리 탭 — 스크롤해도 화면 상단에 고정 -->
   <div class="tabs" id="feedTabs">
-    <div class="tab-btn active" onclick="setTab(this,'all')">All</div>
-    <div class="tab-btn" onclick="setTab(this,'visa')">Visa</div>
-    <div class="tab-btn" onclick="setTab(this,'jobs')">Jobs</div>
-    <div class="tab-btn" onclick="setTab(this,'housing')">Housing</div>
-    <div class="tab-btn" onclick="setTab(this,'tips')">Tips</div>
-    <div class="tab-btn" onclick="setTab(this,'questions')">Questions</div>
-    <div class="tab-btn" onclick="setTab(this,'travel')">Travel</div>
-    <div class="tab-btn" onclick="setTab(this,'beauty')">Beauty</div>
-    <div class="tab-btn" onclick="setTab(this,'social')">Social</div>
+    <div class="tab-btn active" onclick="window.setTab(this,'all')">All</div>
+    <div class="tab-btn" onclick="window.setTab(this,'visa')">Visa</div>
+    <div class="tab-btn" onclick="window.setTab(this,'jobs')">Jobs</div>
+    <div class="tab-btn" onclick="window.setTab(this,'housing')">Housing</div>
+    <div class="tab-btn" onclick="window.setTab(this,'tips')">Tips</div>
+    <div class="tab-btn" onclick="window.setTab(this,'questions')">Questions</div>
+    <div class="tab-btn" onclick="window.setTab(this,'travel')">Travel</div>
+    <div class="tab-btn" onclick="window.setTab(this,'beauty')">Beauty</div>
+    <div class="tab-btn" onclick="window.setTab(this,'social')">Social</div>
     <div class="tab-btn explore-tab" onclick="openExplore()">🗺️ Explore</div>
   </div>
 
@@ -10978,7 +10978,7 @@ window.selectCategory = function(tab) {
   goTo('feed');
   isHomeMode = false; // 카테고리 필터 모드
   setSideNav('home'); // 사이드바는 Home 유지 (카테고리는 탭으로 표시)
-  const tabEl = document.querySelector(`.tab-btn[onclick="setTab(this,'${tab}')"]`);
+  const tabEl = document.querySelector(`.tab-btn[onclick="window.setTab(this,'${tab}')"]`);
   if (tabEl) setTab(tabEl, tab);
 }
 
@@ -11285,7 +11285,7 @@ function renderExploreItems(grid, items) {
     card.onclick = function() { openExploreDetail(item); };
     card.innerHTML =
       (item.firstimage
-        ? '<img class="explore-card-img" src="' + item.firstimage + '" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">' +
+        ? '<img class="explore-card-img" src="' + item.firstimage + '" alt="" loading="lazy" onerror="this.style.display=&quot;none&quot;;this.nextElementSibling.style.display=&quot;flex&quot;">' +
           '<div class="explore-card-img-placeholder" style="display:none">' + emoji + '</div>'
         : '<div class="explore-card-img-placeholder">' + emoji + '</div>') +
       '<div class="explore-card-body">' +

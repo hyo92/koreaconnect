@@ -11941,7 +11941,7 @@ async function generateDescWithClaude(item) {
     var catLabel = catLabels[String(item.contenttypeid)] || 'place';
     var name = (item.title || '').trim();
     var prompt = 'Write a 2-3 sentence English description for this Korean ' + catLabel + '. Name: ' + name + ', Address: ' + (item.addr1||'') + '. Write naturally as if for a travel guide. Return only the description.';
-    var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBEAMzlxFRV2FAXs1z0X_9h-uOFXIhQvBs', {
+    var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBEAMzlxFRV2FAXs1z0X_9h-uOFXIhQvBs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 200, temperature: 0.4 } })
@@ -11957,7 +11957,7 @@ async function generateDescWithClaude(item) {
 async function translateWithClaude(korText) {
   try {
     var prompt = 'Translate this Korean tourism description to natural English in 2-3 sentences. Return only the translation: ' + korText.slice(0, 500);
-    var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBEAMzlxFRV2FAXs1z0X_9h-uOFXIhQvBs', {
+    var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBEAMzlxFRV2FAXs1z0X_9h-uOFXIhQvBs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 300, temperature: 0.4 } })

@@ -11850,13 +11850,15 @@ async function loadExploreDetailDesc(contentId, contentTypeId, el) {
     var body = data?.response?.body;
     var rawItem = body?.items?.item;
     var item = Array.isArray(rawItem) ? rawItem[0] : (rawItem || null);
-    console.log('[DetailDesc] overview:', item?.overview?.slice(0,80));
-    if (!item || !item.overview) {
-      el.textContent = 'No description available for this location.';
-      return;
-    }
-    var overview = item.overview.replace(/<[^>]*>/g, '').trim();
-    el.textContent = overview || 'No description available.';
+    // 전체 응답 키 확인
+    console.log('[DetailDesc] item keys:', item ? Object.keys(item) : 'null');
+    console.log('[DetailDesc] overview:', item?.overview);
+    console.log('[DetailDesc] overviewinfo:', item?.overviewinfo);
+
+    // 여러 필드 시도
+    var overview = item?.overview || item?.overviewinfo || item?.summary || '';
+    overview = overview.replace(/<[^>]*>/g, '').trim();
+    el.textContent = overview || 'No description available for this location.';
   } catch(e) {
     console.error('[DetailDesc] 에러:', e);
     el.textContent = 'Could not load description.';

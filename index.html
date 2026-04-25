@@ -11693,7 +11693,7 @@ function renderExploreItems(grid, items) {
     var emoji = EXPLORE_CAT_EMOJI[item.contenttypeid] || '📍';
     var card = document.createElement('div');
     card.className = 'explore-card';
-    card.onclick = function() { console.log('[Card] contentid:', item.contentid, 'keys:', Object.keys(item).join(',')); openExploreDetail(item); };
+    card.onclick = function() { openExploreDetail(item); };
     card.innerHTML =
       (item.firstimage
         ? '<img class="explore-card-img" src="' + item.firstimage + '" alt="" loading="lazy" onerror="this.style.display=&quot;none&quot;;this.nextElementSibling.style.display=&quot;flex&quot;">' +
@@ -11825,9 +11825,44 @@ window.openExploreDetail = function(item) {
   popup.appendChild(sheet);
   document.body.appendChild(popup);
 
-  // 상세 설명 API 호출
-  loadExploreDetailDesc(item.contentid, item.contenttypeid, descDiv);
+  // areaBasedList 응답에서 바로 설명 구성 (detailCommon2 활용신청 불필요)
+  buildExploreDescFromItem(item, descDiv);
 };
+
+function buildExploreDescFromItem(item, el) {
+  // areaBasedList2 응답 필드 활용
+  var parts = [];
+
+  // 영업시간/운영정보
+  if (item.usetime)       parts.push('🕐 Hours: '    + item.usetime.replace(/<[^>]*>/g,'').trim());
+  if (item.restdate)      parts.push('📅 Closed: '   + item.restdate.replace(/<[^>]*>/g,'').trim());
+  if (item.parking)       parts.push('🅿️ Parking: '  + item.parking.replace(/<[^>]*>/g,'').trim());
+  if (item.infocenter)    parts.push('📞 Info: '     + item.infocenter.replace(/<[^>]*>/g,'').trim());
+  if (item.infocenterleports) parts.push('📞 Info: ' + item.infocenterleports.replace(/<[^>]*>/g,'').trim());
+  if (item.infocenterculture) parts.push('📞 Info: ' + item.infocenterculture.replace(/<[^>]*>/g,'').trim());
+  if (item.infocenterfoods)   parts.push('📞 Info: ' + item.infocenterfoods.replace(/<[^>]*>/g,'').trim());
+  if (item.chkbabycarriage)   parts.push('👶 Stroller: ' + item.chkbabycarriage);
+  if (item.chkpet)            parts.push('🐾 Pets: '     + item.chkpet);
+  if (item.accomcount)        parts.push('👥 Capacity: ' + item.accomcount);
+  if (item.expagerange)       parts.push('👤 Age: '      + item.expagerange);
+
+  if (parts.length > 0) {
+    el.style.cssText = 'font-size:13px;color:var(--text-2);line-height:1.9;padding:12px;background:var(--bg);border-radius:10px;';
+    el.textContent = parts.join('
+');
+  } else {
+    // 정보 없으면 카테고리별 기본 안내
+    var catMsg = {
+      '76': 'Tourist attraction — visit for sightseeing and cultural experiences.',
+      '78': 'Cultural facility — museums, galleries, and cultural centers.',
+      '79': 'Shopping destination — malls, markets, and retail areas.',
+      '80': 'Leisure & sports — recreational activities and outdoor fun.',
+      '82': 'Accommodation — hotels, guesthouses, and lodging.',
+      '85': 'Festival or event — check dates before visiting.',
+    };
+    el.textContent = catMsg[String(item.contenttypeid)] || 'Explore this location in Korea.';
+  }
+}
 
 async function loadExploreDetailDesc(contentId, contentTypeId, el) {
   if (!contentId) { el.textContent = 'No description available.'; return; }

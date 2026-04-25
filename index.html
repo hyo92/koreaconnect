@@ -11469,21 +11469,53 @@ window.searchExplore = function() {
 
 window.toggleExploreNearby = function() {
   exploreNearby = !exploreNearby;
-  var toggle = document.getElementById('exploreNearbyToggle');
-  var knob   = document.getElementById('exploreNearbyKnob');
-  var label  = document.getElementById('exploreNearbyLabel');
-  toggle.style.background = exploreNearby ? 'var(--green)' : 'var(--border-mid)';
-  knob.style.transform    = exploreNearby ? 'translateX(18px)' : '';
-  label.textContent = exploreNearby ? 'Showing near your location' : 'Show attractions near your location';
-  if (exploreNearby && !exploreUserLat) {
-    navigator.geolocation.getCurrentPosition(function(pos) {
-      exploreUserLat = pos.coords.latitude; exploreUserLon = pos.coords.longitude;
+
+  function updateNearbyUI(on) {
+    var toggle = document.getElementById('exploreNearbyToggle');
+    var knob   = document.getElementById('exploreNearbyKnob');
+    var label  = document.getElementById('exploreNearbyLabel');
+    if (toggle) toggle.style.background = on ? 'var(--green)' : 'var(--border-mid)';
+    if (knob)   knob.style.transform    = on ? 'translateX(18px)' : '';
+    if (label)  label.textContent = on ? 'Showing near your location' : 'Show attractions near your location';
+  }
+
+  updateNearbyUI(exploreNearby);
+
+  if (exploreNearby) {
+    if (exploreUserLat) {
+      // 이미 위치 있으면 바로 로드
       loadExplore(true);
-    }, function() {
-      exploreNearby = false; toggle.style.background = 'var(--border-mid)';
-      knob.style.transform = ''; label.textContent = 'Location access denied';
-    });
-  } else { loadExplore(true); }
+    } else {
+      // 위치 새로 요청
+      if (!navigator.geolocation) {
+        exploreNearby = false;
+        updateNearbyUI(false);
+        var label = document.getElementById('exploreNearbyLabel');
+        if (label) label.textContent = 'Geolocation not supported';
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          exploreUserLat = pos.coords.latitude;
+          exploreUserLon = pos.coords.longitude;
+          updateNearbyUI(true);
+          loadExplore(true);
+        },
+        function(err) {
+          console.warn('[Nearby] 위치 거부:', err.code, err.message);
+          exploreNearby = false;
+          updateNearbyUI(false);
+          var label = document.getElementById('exploreNearbyLabel');
+          if (label) label.textContent = err.code === 1 ? 'Location access denied — please allow in browser settings' : 'Could not get location';
+        },
+        { timeout: 10000, maximumAge: 300000, enableHighAccuracy: false }
+      );
+    }
+  } else {
+    exploreUserLat = null;
+    exploreUserLon = null;
+    loadExplore(true);
+  }
 };
 
 window.loadMoreExplore = function() { explorePage++; loadExplore(false); };

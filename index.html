@@ -11494,6 +11494,10 @@ window.toggleExploreNearby = function() {
         if (label) label.textContent = 'Geolocation not supported';
         return;
       }
+      var label = document.getElementById('exploreNearbyLabel');
+      if (label) label.textContent = 'Getting your location...';
+
+      // 1차: 빠른 시도 (네트워크 기반)
       navigator.geolocation.getCurrentPosition(
         function(pos) {
           exploreUserLat = pos.coords.latitude;
@@ -11502,13 +11506,30 @@ window.toggleExploreNearby = function() {
           loadExplore(true);
         },
         function(err) {
-          console.warn('[Nearby] 위치 거부:', err.code, err.message);
-          exploreNearby = false;
-          updateNearbyUI(false);
-          var label = document.getElementById('exploreNearbyLabel');
-          if (label) label.textContent = err.code === 1 ? 'Location access denied — please allow in browser settings' : 'Could not get location';
+          console.warn('[Nearby] 1차 실패 code=' + err.code + ', 2차 시도...');
+          // 2차: 더 긴 timeout으로 재시도
+          navigator.geolocation.getCurrentPosition(
+            function(pos) {
+              exploreUserLat = pos.coords.latitude;
+              exploreUserLon = pos.coords.longitude;
+              updateNearbyUI(true);
+              loadExplore(true);
+            },
+            function(err2) {
+              console.warn('[Nearby] 최종 실패 code=' + err2.code);
+              exploreNearby = false;
+              updateNearbyUI(false);
+              var lbl = document.getElementById('exploreNearbyLabel');
+              if (lbl) {
+                if (err2.code === 1) lbl.textContent = 'Location denied — allow in browser settings';
+                else if (err2.code === 2) lbl.textContent = 'Location unavailable — try turning on GPS';
+                else lbl.textContent = 'Location timed out — please try again';
+              }
+            },
+            { timeout: 20000, maximumAge: 0, enableHighAccuracy: false }
+          );
         },
-        { timeout: 10000, maximumAge: 300000, enableHighAccuracy: false }
+        { timeout: 8000, maximumAge: 60000, enableHighAccuracy: false }
       );
     }
   } else {

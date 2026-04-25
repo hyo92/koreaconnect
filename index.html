@@ -11319,20 +11319,29 @@ function buildExploreInline() {
   districtRow.style.cssText = 'display:flex;align-items:center;gap:8px;padding-bottom:12px;';
   var districtLabel = document.createElement('div');
   districtLabel.style.cssText = 'font-size:13px;color:var(--text-2);font-weight:500;flex-shrink:0;';
-  districtLabel.textContent = '📍 District';
+  districtLabel.textContent = '🗾 Region';
   var districtSelect = document.createElement('select');
   districtSelect.id = 'exploreDistrictSelect';
   districtSelect.style.cssText = 'flex:1;padding:7px 12px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface);outline:none;cursor:pointer;';
   var districts = [
-    ['','All Seoul'],
-    ['1','Jongno-gu (종로구)'],['2','Jung-gu (중구)'],['3','Yongsan-gu (용산구)'],
-    ['4','Seongdong-gu (성동구)'],['5','Gwangjin-gu (광진구)'],['6','Dongdaemun-gu (동대문구)'],
-    ['7','Jungnang-gu (중랑구)'],['8','Seongbuk-gu (성북구)'],['9','Gangbuk-gu (강북구)'],
-    ['10','Dobong-gu (도봉구)'],['11','Nowon-gu (노원구)'],['12','Eunpyeong-gu (은평구)'],
-    ['13','Seodaemun-gu (서대문구)'],['14','Mapo-gu (마포구)'],['15','Yangcheon-gu (양천구)'],
-    ['16','Gangseo-gu (강서구)'],['17','Guro-gu (구로구)'],['18','Geumcheon-gu (금천구)'],
-    ['19','Yeongdeungpo-gu (영등포구)'],['20','Dongjak-gu (동작구)'],['21','Gwanak-gu (관악구)'],
-    ['22','Seocho-gu (서초구)'],['23','Gangnam-gu (강남구)'],['24','Songpa-gu (송파구)'],['25','Gangdong-gu (강동구)']
+    ['','🇰🇷 All Korea'],
+    ['1', '🏙️ Seoul (서울)'],
+    ['2', '🌊 Incheon (인천)'],
+    ['3', '🌿 Daejeon (대전)'],
+    ['4', '🌸 Daegu (대구)'],
+    ['5', '🌺 Gwangju (광주)'],
+    ['6', '🏖️ Busan (부산)'],
+    ['7', '🌅 Ulsan (울산)'],
+    ['8', '🏛️ Sejong (세종)'],
+    ['31','🌾 Gyeonggi (경기)'],
+    ['32','🏔️ Gangwon (강원)'],
+    ['33','🌳 Chungbuk (충북)'],
+    ['34','🌻 Chungnam (충남)'],
+    ['35','🍑 Gyeongbuk (경북)'],
+    ['36','🌊 Gyeongnam (경남)'],
+    ['37','🍊 Jeonbuk (전북)'],
+    ['38','🌿 Jeonnam (전남)'],
+    ['39','🍊 Jeju (제주)'],
   ];
   districts.forEach(function(d) {
     var opt = document.createElement('option');
@@ -11594,8 +11603,7 @@ async function loadExplore(reset) {
       if (exploreCat !== 'all') params.set('contentTypeId', exploreCat);
       url = base + '/locationBasedList2?' + params.toString();
     } else {
-      params.set('areaCode', '1'); // 서울
-      if (exploreDistrict) params.set('sigunguCode', exploreDistrict);
+      if (exploreDistrict) params.set('areaCode', exploreDistrict); // 선택한 시/도
       if (exploreCat !== 'all') params.set('contentTypeId', exploreCat);
       url = base + '/areaBasedList2?' + params.toString();
     }

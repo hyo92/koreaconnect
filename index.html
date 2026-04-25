@@ -11168,17 +11168,6 @@ setTimeout(() => {
 // ══════════════════════════════════════════════════
 // ── FEATURED + BUSINESSES Firestore 연동 ──
 // ══════════════════════════════════════════════════
-async function loadFeaturedFromFirestore() {
-  if (!firebaseOk) return;
-  try {
-    const snap = await getDocs(collection(db, 'featured'));
-    FEATURED_CACHE = [];
-    snap.forEach(d => { const data = d.data(); if (data.active !== false) FEATURED_CACHE.push({ id: d.id, ...data }); });
-    console.log('[Featured] 로드:', FEATURED_CACHE.length, '개');
-    renderFeed();
-  } catch(e) { console.warn('[Featured] 로드 실패:', e.message); }
-}
-
 async function loadBusinessesFromFirestore() {
   if (!firebaseOk) return;
   try {

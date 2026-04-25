@@ -11222,30 +11222,24 @@ window.openExplore = function() {
   isHomeMode = false;
   setSideNav('home');
 
-  // feedList에 Explore 인라인으로 렌더
+  // feedList에 Explore 인라인으로 항상 새로 렌더
   var list = document.getElementById('feedList');
   if (list) {
     list.innerHTML = '';
-    var el = document.getElementById('screen-explore');
-    // screen-explore 내용을 clone해서 feedList 안에 표시
     list.appendChild(buildExploreInline());
   }
-  // 원본 screen-explore는 숨김 유지
   document.getElementById('screen-explore').style.display = 'none';
-  if (!exploreInlineBuilt) {
-    exploreInlineBuilt = true;
-    loadExplore(true);
-  }
+
+  // 항상 Places 탭 먼저 보이고 데이터 로드
+  exploreSection = 'places';
+  loadExplore(true);
 };
 
 window.closeExplore = function() {
-  exploreInlineBuilt = false;
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
   var allTab = document.querySelector('.tab-btn[onclick*="setTab"][onclick*="all"]');
   if (allTab) allTab.classList.add('active');
 };
-
-var exploreInlineBuilt = false;
 
 function buildExploreInline() {
   var wrap = document.createElement('div');

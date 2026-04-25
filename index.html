@@ -11828,7 +11828,7 @@ window.openExploreDetail = function(item) {
   // 1) item 기본 정보 즉시 표시
   buildExploreDescFromItem(item, descDiv);
   // 2) detailCommon2로 overview 비동기 로드 (있으면 교체)
-  loadExploreDetailDesc(item.contentid, item.contenttypeid, descDiv);
+  loadExploreDetailDesc(item.contentid, item.contenttypeid, descDiv, item);
 };
 
 function buildExploreDescFromItem(item, el) {
@@ -11865,7 +11865,7 @@ function buildExploreDescFromItem(item, el) {
   }
 }
 
-async function loadExploreDetailDesc(contentId, contentTypeId, el) {
+async function loadExploreDetailDesc(contentId, contentTypeId, el, itemData) {
   if (!contentId) { el.textContent = 'No description available.'; return; }
   var cacheKey = 'explore_desc_' + contentId;
   try {
@@ -11895,7 +11895,23 @@ async function loadExploreDetailDesc(contentId, contentTypeId, el) {
     var overview = (item && item.overview) || '';
     overview = overview.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
     if (!overview) {
-      // 설명 없으면 buildExploreDescFromItem 결과 그대로 유지 (이미 표시됨)
+      // 설명 없으면 이름+주소로 Claude가 설명 생성
+      if (itemData) {
+        el.textContent = 'Generating description...';
+        var generated = await generateDescWithClaude(itemData);
+        el.textContent = generated;
+        // Firestore에 캐시
+        if (firebaseOk && generated !== 'No description available.') {
+          try {
+            await setDoc(doc(db, 'explore_cache', String(contentId)), {
+              overview: generated,
+              contentId: String(contentId),
+              translatedAt: new Date().toISOString(),
+              generated: true,
+            });
+          } catch(e) {}
+        }
+      }
       return;
     }
 
@@ -11916,6 +11932,34 @@ async function loadExploreDetailDesc(contentId, contentTypeId, el) {
     }
   } catch(e) {
     el.textContent = 'No description available.';
+  }
+}
+
+async function generateDescWithClaude(item) {
+  try {
+    var catLabels = { '76':'tourist attraction','78':'cultural facility','79':'shopping destination','80':'leisure spot','82':'accommodation','85':'festival or event' };
+    var catLabel = catLabels[String(item.contenttypeid)] || 'place';
+    var name = (item.title || '').replace(/\([^)]*\)/g,'').trim();
+    var addr = item.addr1 || '';
+    var prompt = 'Write a 2-3 sentence English description for this Korean ' + catLabel + '.
+Name: ' + name + '
+Address: ' + addr + '
+Write naturally as if for a travel guide. Return only the description.';
+
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    var data = await res.json();
+    var text = data && data.content && data.content[0] && data.content[0].text;
+    return text ? text.trim() : 'No description available.';
+  } catch(e) {
+    return 'No description available.';
   }
 }
 

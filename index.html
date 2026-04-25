@@ -4861,12 +4861,12 @@
     </div>
     <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;">
       <button class="exp-cat active" onclick="setExploreCat(this,'all')">All</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'12')">🏛️ Attractions</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'14')">🍽️ Food</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'32')">🎪 Festivals</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'15')">🏨 Stay</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'38')">🛍️ Shopping</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'28')">🏋️ Leisure</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'76')">🏛️ Attractions</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'78')">🏛️ Culture</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'85')">🎪 Festivals</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'82')">🏨 Stay</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'79')">🛍️ Shopping</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'80')">🏋️ Leisure</button>
     </div>
   </div>
   <div style="padding:0 16px 12px;display:flex;align-items:center;gap:10px;">
@@ -11189,8 +11189,8 @@ const VISITKOREA_KEY = 'e40ebfa9e37fa69a20c7fb7cefc1bd3fb5e871a9ee85eb17b82ec3eb
 let exploreCat = 'all', exploreNearby = false, explorePage = 1;
 let exploreKeyword = '', exploreUserLat = null, exploreUserLon = null;
 
-const EXPLORE_CAT_LABELS = { '12':'Attraction','14':'Food','32':'Festival','15':'Stay','38':'Shopping','28':'Leisure' };
-const EXPLORE_CAT_EMOJI  = { '12':'🏛️','14':'🍽️','32':'🎪','15':'🏨','38':'🛍️','28':'🏋️' };
+const EXPLORE_CAT_LABELS = { '76':'Attraction','78':'Culture','85':'Festival','82':'Stay','79':'Shopping','80':'Leisure','75':'Travel' };
+const EXPLORE_CAT_EMOJI  = { '76':'🏛️','78':'🎭','85':'🎪','82':'🏨','79':'🛍️','80':'🏋️','75':'🗺️' };
 
 window.openExplore = function() {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));

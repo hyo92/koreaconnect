@@ -67,12 +67,7 @@
   .option-sale{font-size:16px;font-weight:700;color:var(--green-deeper);}
   .option-original{font-size:12px;color:var(--text-3);text-decoration:line-through;margin-right:4px;}
   .option-disc{font-size:11px;font-weight:700;color:#E91E63;background:#FCE4EC;padding:2px 6px;border-radius:4px;}
-  .option-check{position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;border:2px solid var(--border-mid);display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
-  .option-card.selected .option-check{background:var(--green);border-color:var(--green);}
-  .option-check svg{display:none;}
-  .option-card.selected .option-check svg{display:block;}
-  .btn-select{margin-top:12px;width:100%;padding:10px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background 0.15s;display:none;}
-  .option-card.selected .btn-select{display:block;}
+  .btn-select{margin-top:12px;width:100%;padding:10px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background 0.15s;}
   .btn-select:hover{background:var(--green-dark);}
   .location-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
   .location-icon{width:36px;height:36px;border-radius:10px;background:var(--green-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
@@ -413,7 +408,6 @@ function renderBusiness(biz) {
             (sale ? '<div class="option-sale">₩' + Number(sale).toLocaleString() + '</div>' : '') +
           '</div>' +
         '</div>' +
-        '<div class="option-check"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
         '<button class="btn-select" onclick="event.stopPropagation();openDateModal(' + i + ')">SELECT</button>' +
       '</div>';
     }).join('');

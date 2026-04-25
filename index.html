@@ -11825,8 +11825,10 @@ window.openExploreDetail = function(item) {
   popup.appendChild(sheet);
   document.body.appendChild(popup);
 
-  // areaBasedList 응답에서 바로 설명 구성 (detailCommon2 활용신청 불필요)
+  // 1) item 기본 정보 즉시 표시
   buildExploreDescFromItem(item, descDiv);
+  // 2) detailCommon2로 overview 비동기 로드 (있으면 교체)
+  loadExploreDetailDesc(item.contentid, item.contenttypeid, descDiv);
 };
 
 function buildExploreDescFromItem(item, el) {

@@ -11697,26 +11697,120 @@ window.openExploreDetail = function(item) {
   var cat   = EXPLORE_CAT_LABELS[item.contenttypeid] || 'Attraction';
   var existing = document.getElementById('exploreDetailPopup');
   if (existing) existing.remove();
+
   var popup = document.createElement('div');
   popup.id = 'exploreDetailPopup';
-  popup.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
+  // 가운데 정렬
+  popup.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;';
   popup.onclick = function(e) { if (e.target === popup) popup.remove(); };
-  var mapLink = (item.mapx && item.mapy) ? '<a href="https://maps.google.com/?q=' + item.mapy + ',' + item.mapx + '" target="_blank" style="display:flex;align-items:center;justify-content:center;padding:11px;background:var(--bg);border:1px solid var(--border-mid);border-radius:999px;text-decoration:none;font-weight:600;font-size:13px;color:var(--text);margin-top:8px;">📍 Open in Google Maps</a>' : '';
-  var webLink = item.homepage ? '<a href="' + item.homepage.replace(/<[^>]*>/g,'') + '" target="_blank" style="display:flex;align-items:center;justify-content:center;padding:13px;background:var(--green);color:#fff;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Visit Website →</a>' : '';
-  popup.innerHTML = '<div style="background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding-bottom:32px;">' +
-    '<div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);">' +
-      '<div style="font-size:15px;font-weight:700;">' + emoji + ' ' + cat + '</div>' +
-      '<button onclick="document.getElementById(&quot;exploreDetailPopup&quot;).remove()" style="width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:14px;">✕</button>' +
-    '</div>' +
-    (item.firstimage ? '<img src="' + item.firstimage + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;" loading="lazy">' : '') +
-    '<div style="padding:20px;">' +
-      '<div style="font-size:20px;font-weight:700;margin-bottom:8px;">' + (item.title || '—') + '</div>' +
-      (item.addr1 ? '<div style="font-size:13px;color:var(--text-2);margin-bottom:12px;">📍 ' + item.addr1 + '</div>' : '') +
-      (item.overview ? '<div style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:16px;">' + String(item.overview).slice(0,300) + '...</div>' : '') +
-      webLink + mapLink +
-    '</div></div>';
+
+  var sheet = document.createElement('div');
+  sheet.style.cssText = 'background:var(--surface);border-radius:24px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;animation:slideUp 0.2s ease;';
+
+  // 헤더
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:20px 20px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1;border-radius:24px 24px 0 0;';
+  header.innerHTML = '<div style="font-size:15px;font-weight:700;">' + emoji + ' ' + cat + '</div>';
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:14px;';
+  closeBtn.textContent = '✕';
+  closeBtn.onclick = function() { popup.remove(); };
+  header.appendChild(closeBtn);
+  sheet.appendChild(header);
+
+  // 이미지
+  if (item.firstimage) {
+    var img = document.createElement('img');
+    img.src = item.firstimage;
+    img.style.cssText = 'width:100%;aspect-ratio:16/9;object-fit:cover;display:block;';
+    img.loading = 'lazy';
+    sheet.appendChild(img);
+  }
+
+  // 본문
+  var body = document.createElement('div');
+  body.style.cssText = 'padding:20px;';
+
+  // 제목
+  var title = document.createElement('div');
+  title.style.cssText = 'font-size:20px;font-weight:700;margin-bottom:8px;color:var(--text);';
+  title.textContent = item.title || '—';
+  body.appendChild(title);
+
+  // 주소
+  if (item.addr1) {
+    var addr = document.createElement('div');
+    addr.style.cssText = 'font-size:13px;color:var(--text-2);margin-bottom:12px;display:flex;align-items:center;gap:4px;';
+    addr.innerHTML = '📍 ' + item.addr1;
+    body.appendChild(addr);
+  }
+
+  // 전화번호
+  if (item.tel) {
+    var tel = document.createElement('div');
+    tel.style.cssText = 'font-size:13px;color:var(--text-2);margin-bottom:12px;display:flex;align-items:center;gap:4px;';
+    tel.innerHTML = '📞 ' + item.tel;
+    body.appendChild(tel);
+  }
+
+  // 설명 로딩 placeholder
+  var descDiv = document.createElement('div');
+  descDiv.id = 'exploreDetailDesc';
+  descDiv.style.cssText = 'font-size:13px;color:var(--text-2);line-height:1.7;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:10px;';
+  descDiv.textContent = 'Loading description...';
+  body.appendChild(descDiv);
+
+  // 버튼들
+  if (item.homepage) {
+    var webLink = document.createElement('a');
+    webLink.href = item.homepage.replace(/<[^>]*>/g,'');
+    webLink.target = '_blank';
+    webLink.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:13px;background:var(--green);color:#fff;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:8px;';
+    webLink.textContent = 'Visit Website →';
+    body.appendChild(webLink);
+  }
+  if (item.mapx && item.mapy) {
+    var mapLink = document.createElement('a');
+    mapLink.href = 'https://maps.google.com/?q=' + item.mapy + ',' + item.mapx;
+    mapLink.target = '_blank';
+    mapLink.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:var(--bg);border:1px solid var(--border-mid);border-radius:999px;text-decoration:none;font-weight:600;font-size:13px;color:var(--text);';
+    mapLink.innerHTML = '📍 Open in Google Maps';
+    body.appendChild(mapLink);
+  }
+
+  sheet.appendChild(body);
+  popup.appendChild(sheet);
   document.body.appendChild(popup);
+
+  // 상세 설명 API 호출
+  loadExploreDetailDesc(item.contentid, item.contenttypeid, descDiv);
 };
+
+async function loadExploreDetailDesc(contentId, contentTypeId, el) {
+  if (!contentId) { el.textContent = 'No description available.'; return; }
+  try {
+    var url = 'https://apis.data.go.kr/B551011/EngService2/detailCommon2?' +
+      new URLSearchParams({
+        serviceKey:    VISITKOREA_KEY,
+        MobileOS:      'ETC',
+        MobileApp:     'KoreaConnect',
+        _type:         'json',
+        contentId:     contentId,
+        contentTypeId: contentTypeId || '',
+        overviewYN:    'Y',
+        defaultYN:     'Y',
+      }).toString();
+    var res  = await fetch(url);
+    var data = await res.json();
+    var item = data?.response?.body?.items?.item;
+    if (Array.isArray(item)) item = item[0];
+    var overview = item?.overview || item?.homepage || '';
+    overview = overview.replace(/<[^>]*>/g, '').trim();
+    el.textContent = overview || 'No description available.';
+  } catch(e) {
+    el.textContent = 'Could not load description.';
+  }
+}
 
 // HTML onclick 전역 노출 (type=module 스코프 우회)
 if (typeof window.openExplore === 'undefined') {

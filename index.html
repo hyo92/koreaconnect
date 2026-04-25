@@ -11613,7 +11613,7 @@ async function loadExplore(reset) {
   loading.style.display = ''; empty.style.display = 'none';
   try {
     var base = 'https://apis.data.go.kr/B551011/EngService2';
-    var params = new URLSearchParams({ serviceKey: VISITKOREA_KEY, MobileOS: 'ETC', MobileApp: 'KoreaConnect', _type: 'json', numOfRows: '20', pageNo: String(explorePage), arrange: 'Q' });
+    var params = new URLSearchParams({ serviceKey: VISITKOREA_KEY, MobileOS: 'ETC', MobileApp: 'KoreaConnect', _type: 'json', numOfRows: '20', pageNo: String(explorePage), arrange: 'A' });
     var url = '';
     if (exploreKeyword) {
       params.set('keyword', exploreKeyword);
@@ -11627,7 +11627,9 @@ async function loadExplore(reset) {
       if (exploreRegion)   params.set('areaCode',    exploreRegion);
       if (exploreDistrict) params.set('sigunguCode', exploreDistrict);
       if (exploreCat !== 'all') params.set('contentTypeId', exploreCat);
+      params.set('arrange', 'A'); // 제목순 — 지역 필터 정확히 반영
       url = base + '/areaBasedList2?' + params.toString();
+      console.log('[Explore] areaCode=' + exploreRegion + ' sigunguCode=' + exploreDistrict + ' URL=' + url.slice(0,120));
     }
     var res   = await fetch(url);
     var data  = await res.json();

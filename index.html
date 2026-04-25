@@ -11322,7 +11322,7 @@ function buildExploreInline() {
   districtLabel.textContent = '🗾 Region';
   var districtSelect = document.createElement('select');
   districtSelect.id = 'exploreDistrictSelect';
-  districtSelect.style.cssText = 'flex:1;padding:7px 12px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface);outline:none;cursor:pointer;';
+  districtSelect.style.cssText = 'width:200px;padding:7px 12px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface);outline:none;cursor:pointer;';
   var districts = [
     ['','🇰🇷 All Korea'],
     ['1', '🏙️ Seoul (서울)'],
@@ -11368,7 +11368,7 @@ function buildExploreInline() {
   sigunguLabel.textContent = '📌 Area';
   var sigunguSelect = document.createElement('select');
   sigunguSelect.id = 'exploreSigunguSelect';
-  sigunguSelect.style.cssText = 'flex:1;padding:7px 12px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface);outline:none;cursor:pointer;';
+  sigunguSelect.style.cssText = 'width:200px;padding:7px 12px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface);outline:none;cursor:pointer;';
   sigunguSelect.addEventListener('change', function() {
     exploreDistrict = this.value;
     loadExplore(true);

@@ -11845,15 +11845,17 @@ async function loadExploreDetailDesc(contentId, contentTypeId, el) {
         addrinfoYN:    'Y',
         mapinfoYN:     'Y',
       }).toString();
-    console.log('[DetailDesc] URL:', url.slice(0,120));
     var res  = await fetch(url);
     var data = await res.json();
-    console.log('[DetailDesc] 응답:', JSON.stringify(data?.response?.body?.items).slice(0,200));
-    var item = data?.response?.body?.items?.item;
-    if (Array.isArray(item)) item = item[0];
-    console.log('[DetailDesc] item:', JSON.stringify(item)?.slice(0,200));
-    var overview = item?.overview || '';
-    overview = overview.replace(/<[^>]*>/g, '').trim();
+    var body = data?.response?.body;
+    var rawItem = body?.items?.item;
+    var item = Array.isArray(rawItem) ? rawItem[0] : (rawItem || null);
+    console.log('[DetailDesc] overview:', item?.overview?.slice(0,80));
+    if (!item || !item.overview) {
+      el.textContent = 'No description available for this location.';
+      return;
+    }
+    var overview = item.overview.replace(/<[^>]*>/g, '').trim();
     el.textContent = overview || 'No description available.';
   } catch(e) {
     console.error('[DetailDesc] 에러:', e);

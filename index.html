@@ -2631,6 +2631,41 @@
   }
   .deals-tab.active { color:#111; font-weight:700; border-bottom-color:#111; }
 
+  /* Explore 카테고리 버튼 */
+  .exp-cat {
+    padding:7px 14px; border-radius:999px; border:1.5px solid var(--border-mid);
+    font-size:12px; font-weight:600; color:var(--text-2); background:var(--surface);
+    cursor:pointer; font-family:var(--font); white-space:nowrap; transition:all 0.15s;
+    flex-shrink:0;
+  }
+  .exp-cat:hover { border-color:var(--green-mid); color:var(--green-dark); }
+  .exp-cat.active { background:var(--green); color:#fff; border-color:var(--green); }
+
+  /* Explore 카드 */
+  .explore-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; overflow:hidden; cursor:pointer;
+    transition:box-shadow 0.15s, transform 0.15s;
+  }
+  .explore-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.1); transform:translateY(-2px); }
+  .explore-card-img {
+    width:100%; aspect-ratio:4/3; object-fit:cover;
+    background:var(--bg); display:block;
+  }
+  .explore-card-img-placeholder {
+    width:100%; aspect-ratio:4/3; background:var(--green-light);
+    display:flex; align-items:center; justify-content:center; font-size:32px;
+  }
+  .explore-card-body { padding:10px 12px; }
+  .explore-card-cat { font-size:10px; font-weight:700; color:var(--green); letter-spacing:0.4px; text-transform:uppercase; margin-bottom:4px; }
+  .explore-card-name { font-size:13px; font-weight:600; color:var(--text); line-height:1.3;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .explore-card-addr { font-size:11px; color:var(--text-3); margin-top:4px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* Explore 탭 버튼 강조 */
+  .explore-tab { color:var(--green) !important; font-weight:600 !important; }
+
   /* 그리드 컨테이너 — 이 영역만 스크롤 */
   .deals-grid-wrap {
     flex:1; overflow-y:auto;
@@ -3766,6 +3801,7 @@
     <div class="tab-btn" onclick="setTab(this,'travel')">Travel</div>
     <div class="tab-btn" onclick="setTab(this,'beauty')">Beauty</div>
     <div class="tab-btn" onclick="setTab(this,'social')">Social</div>
+    <div class="tab-btn explore-tab" onclick="openExplore()">🗺️ Explore</div>
   </div>
 
   <!-- ④ 피드 리스트 -->
@@ -4803,6 +4839,51 @@
      SCREEN: HOT DEALS (전체 화면 — desktop-layout 밖)
      goTo('deals') 시 fixed 오버레이로 전체 덮음
 ══════════════════════════════════ -->
+
+<!-- ── EXPLORE KOREA 전용 페이지 ── -->
+<div id="screen-explore" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);overflow-y:auto;flex-direction:column;">
+  <div style="position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:56px;display:flex;align-items:center;gap:12px;">
+    <button onclick="closeExplore()" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--text-2);display:flex;align-items:center;gap:6px;font-size:14px;font-weight:500;font-family:var(--font);">
+      <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back
+    </button>
+    <div style="font-size:17px;font-weight:700;">🗺️ Explore Korea</div>
+    <div style="margin-left:auto;font-size:11px;font-weight:700;letter-spacing:0.5px;background:var(--green-light);color:var(--green-dark);padding:3px 10px;border-radius:999px;">한국관광공사</div>
+  </div>
+  <div style="padding:16px 16px 0;">
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input type="text" id="exploreSearch" placeholder="Search attractions, food, events..."
+        style="flex:1;padding:11px 14px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:14px;outline:none;background:var(--surface);"
+        onkeydown="if(event.key==='Enter')searchExplore()"
+        onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border-mid)'">
+      <button onclick="searchExplore()" style="padding:11px 18px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">Search</button>
+    </div>
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;" id="exploreCatBar">
+      <button class="exp-cat active" onclick="setExploreCat(this,'all')">All</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'12')">🏛️ Attractions</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'14')">🍽️ Food</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'32')">🎪 Festivals</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'15')">🏨 Stay</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'38')">🛍️ Shopping</button>
+      <button class="exp-cat" onclick="setExploreCat(this,'28')">🏋️ Leisure</button>
+    </div>
+  </div>
+  <div style="padding:0 16px 12px;display:flex;align-items:center;gap:10px;">
+    <div style="font-size:13px;color:var(--text-2);font-weight:500;">📍 Near me</div>
+    <div id="exploreNearbyToggle" onclick="toggleExploreNearby()"
+      style="width:40px;height:22px;border-radius:11px;background:var(--border-mid);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;">
+      <div id="exploreNearbyKnob" style="position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text-3)" id="exploreNearbyLabel">Show attractions near your location</div>
+  </div>
+  <div style="padding:0 16px 80px;">
+    <div id="exploreGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;"></div>
+    <div id="exploreLoading" style="text-align:center;padding:40px;color:var(--text-3);font-size:14px;display:none;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading...</div>
+    <div id="exploreEmpty" style="text-align:center;padding:48px 20px;color:var(--text-3);font-size:14px;display:none;"><div style="font-size:36px;margin-bottom:8px;">🗺️</div>No results found!</div>
+    <button id="exploreLoadMore" onclick="loadMoreExplore()" style="display:none;width:100%;margin-top:16px;padding:12px;background:var(--surface);border:1.5px solid var(--border-mid);border-radius:999px;font-size:14px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:var(--font);">Load more</button>
+  </div>
+</div>
+
 <div id="screen-deals" style="
   display:none; position:fixed; inset:0; z-index:200;
   background:var(--bg);
@@ -10551,6 +10632,206 @@ setTimeout(() => {
   const mainArea = document.querySelector('.main-area, .desktop-main');
   if (mainArea) mainArea.addEventListener('scroll', onScroll, { passive: true });
 })();
+
+// ══════════════════════════════════════════════════
+// ── EXPLORE KOREA — 한국관광공사 OpenAPI 연동 ──
+// ══════════════════════════════════════════════════
+const VISITKOREA_KEY = 'e40ebfa9e37fa69a20c7fb7cefc1bd3fb5e871a9ee85eb17b82ec3eb695888a5';
+
+let exploreCat = 'all', exploreNearby = false, explorePage = 1;
+let exploreKeyword = '', exploreUserLat = null, exploreUserLon = null;
+
+const EXPLORE_CAT_LABELS = { '12':'Attraction','14':'Food','32':'Festival','15':'Stay','38':'Shopping','28':'Leisure' };
+const EXPLORE_CAT_EMOJI  = { '12':'🏛️','14':'🍽️','32':'🎪','15':'🏨','38':'🛍️','28':'🏋️' };
+
+window.openExplore = function() {
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelector('.explore-tab').classList.add('active');
+  const el = document.getElementById('screen-explore');
+  el.style.display = 'flex';
+  el.scrollTop = 0;
+  if (!document.getElementById('exploreGrid').children.length) loadExplore(true);
+};
+
+window.closeExplore = function() {
+  document.getElementById('screen-explore').style.display = 'none';
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  const allTab = document.querySelector('.tab-btn[onclick*=\"all\"]');
+  if (allTab) allTab.classList.add('active');
+};
+
+window.setExploreCat = function(el, cat) {
+  document.querySelectorAll('.exp-cat').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  exploreCat = cat;
+  loadExplore(true);
+};
+
+window.searchExplore = function() {
+  exploreKeyword = document.getElementById('exploreSearch').value.trim();
+  loadExplore(true);
+};
+
+window.toggleExploreNearby = function() {
+  exploreNearby = !exploreNearby;
+  const toggle = document.getElementById('exploreNearbyToggle');
+  const knob   = document.getElementById('exploreNearbyKnob');
+  const label  = document.getElementById('exploreNearbyLabel');
+  toggle.style.background = exploreNearby ? 'var(--green)' : 'var(--border-mid)';
+  knob.style.transform    = exploreNearby ? 'translateX(18px)' : '';
+  label.textContent = exploreNearby ? 'Showing near your location' : 'Show attractions near your location';
+  if (exploreNearby && !exploreUserLat) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      exploreUserLat = pos.coords.latitude;
+      exploreUserLon = pos.coords.longitude;
+      loadExplore(true);
+    }, function() {
+      exploreNearby = false;
+      toggle.style.background = 'var(--border-mid)';
+      knob.style.transform = '';
+      label.textContent = 'Location access denied';
+    });
+  } else { loadExplore(true); }
+};
+
+window.loadMoreExplore = function() { explorePage++; loadExplore(false); };
+
+async function loadExplore(reset) {
+  if (reset) { explorePage = 1; document.getElementById('exploreGrid').innerHTML = ''; document.getElementById('exploreLoadMore').style.display = 'none'; }
+  const grid    = document.getElementById('exploreGrid');
+  const loading = document.getElementById('exploreLoading');
+  const empty   = document.getElementById('exploreEmpty');
+  loading.style.display = '';
+  empty.style.display   = 'none';
+
+  if (VISITKOREA_KEY === 'YOUR_API_KEY_HERE') {
+    loading.style.display = 'none';
+    renderExploreSample(grid);
+    return;
+  }
+
+  try {
+    const base = 'https://apis.data.go.kr/B551011/EngService2';
+    const commonParams = new URLSearchParams({
+      serviceKey: VISITKOREA_KEY, MobileOS: 'ETC', MobileApp: 'KoreaConnect',
+      _type: 'json', numOfRows: '20', pageNo: String(explorePage), arrange: 'Q',
+    });
+    let url = '';
+    if (exploreKeyword) {
+      commonParams.set('keyword', exploreKeyword);
+      if (exploreCat !== 'all') commonParams.set('contentTypeId', exploreCat);
+      url = base + '/searchKeyword2?' + commonParams.toString();
+    } else if (exploreNearby && exploreUserLat) {
+      commonParams.set('mapX', String(exploreUserLon));
+      commonParams.set('mapY', String(exploreUserLat));
+      commonParams.set('radius', '5000');
+      if (exploreCat !== 'all') commonParams.set('contentTypeId', exploreCat);
+      url = base + '/locationBasedList2?' + commonParams.toString();
+    } else {
+      commonParams.set('areaCode', '1');
+      if (exploreCat !== 'all') commonParams.set('contentTypeId', exploreCat);
+      url = base + '/areaBasedList2?' + commonParams.toString();
+    }
+
+    const res   = await fetch(url);
+    const data  = await res.json();
+    const items = data?.response?.body?.items?.item || [];
+    const total = data?.response?.body?.totalCount || 0;
+    loading.style.display = 'none';
+    if (!items.length && explorePage === 1) { empty.style.display = ''; return; }
+    renderExploreItems(grid, Array.isArray(items) ? items : [items]);
+    document.getElementById('exploreLoadMore').style.display = (explorePage * 20 < total) ? '' : 'none';
+  } catch(e) {
+    console.error('[Explore]', e);
+    loading.style.display = 'none';
+    if (explorePage === 1) renderExploreSample(grid);
+  }
+}
+
+function renderExploreItems(grid, items) {
+  items.forEach(function(item) {
+    const cat   = EXPLORE_CAT_LABELS[item.contenttypeid] || 'Attraction';
+    const emoji = EXPLORE_CAT_EMOJI[item.contenttypeid]  || '📍';
+    const card  = document.createElement('div');
+    card.className = 'explore-card';
+    card.onclick   = function() { openExploreDetail(item); };
+    card.innerHTML =
+      (item.firstimage
+        ? '<img class="explore-card-img" src="' + item.firstimage + '" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">' +
+          '<div class="explore-card-img-placeholder" style="display:none">' + emoji + '</div>'
+        : '<div class="explore-card-img-placeholder">' + emoji + '</div>') +
+      '<div class="explore-card-body">' +
+        '<div class="explore-card-cat">' + emoji + ' ' + cat + '</div>' +
+        '<div class="explore-card-name">' + (item.title||'—') + '</div>' +
+        (item.addr1 ? '<div class="explore-card-addr">📍 ' + item.addr1 + '</div>' : '') +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
+function renderExploreSample(grid) {
+  var samples = [
+    { title:'Gyeongbokgung Palace',     cat:'🏛️ Attraction', addr:'Jongno-gu, Seoul',       emoji:'🏛️', color:'#E8F5E9' },
+    { title:'Myeongdong Street Food',   cat:'🍽️ Food',        addr:'Jung-gu, Seoul',          emoji:'🍽️', color:'#FFF3E0' },
+    { title:'Bukchon Hanok Village',    cat:'🏛️ Attraction', addr:'Jongno-gu, Seoul',        emoji:'🏛️', color:'#F3E5F5' },
+    { title:'Namdaemun Market',         cat:'🛍️ Shopping',   addr:'Jung-gu, Seoul',          emoji:'🛍️', color:'#E3F2FD' },
+    { title:'Lotte World',              cat:'🏋️ Leisure',    addr:'Songpa-gu, Seoul',        emoji:'🎡', color:'#FCE4EC' },
+    { title:'Insadong Art Street',      cat:'🏛️ Attraction', addr:'Jongno-gu, Seoul',        emoji:'🎨', color:'#E8F5E9' },
+    { title:'Hangang River Park',       cat:'🏋️ Leisure',    addr:'Yeongdeungpo-gu, Seoul',  emoji:'🌊', color:'#E3F2FD' },
+    { title:'Dongdaemun Design Plaza',  cat:'🏛️ Attraction', addr:'Jung-gu, Seoul',          emoji:'🏗️', color:'#F3E5F5' },
+  ];
+  if (grid.children.length > 0) return; // 이미 렌더된 경우 스킵
+  samples.forEach(function(s) {
+    var card = document.createElement('div');
+    card.className = 'explore-card';
+    card.innerHTML =
+      '<div class="explore-card-img-placeholder" style="background:' + s.color + '">' + s.emoji + '</div>' +
+      '<div class="explore-card-body">' +
+        '<div class="explore-card-cat">' + s.cat + '</div>' +
+        '<div class="explore-card-name">' + s.title + '</div>' +
+        '<div class="explore-card-addr">📍 ' + s.addr + '</div>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+  // API 키 안내
+  var notice = document.createElement('div');
+  notice.style.cssText = 'grid-column:1/-1;margin-top:4px;padding:12px 14px;background:#FFFBEB;border:1px solid #F59E0B;border-radius:12px;font-size:12px;color:#92400E;';
+  notice.textContent = '⚠️ Sample data — Add your 한국관광공사 API key to see real attractions!';
+  grid.appendChild(notice);
+}
+
+window.openExploreDetail = function(item) {
+  var emoji = EXPLORE_CAT_EMOJI[item.contenttypeid] || '📍';
+  var cat   = EXPLORE_CAT_LABELS[item.contenttypeid] || 'Attraction';
+  var existing = document.getElementById('exploreDetailPopup');
+  if (existing) existing.remove();
+  var popup = document.createElement('div');
+  popup.id = 'exploreDetailPopup';
+  popup.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
+  popup.onclick = function(e) { if (e.target === popup) popup.remove(); };
+  var mapLink = (item.mapx && item.mapy)
+    ? '<a href="https://maps.google.com/?q=' + item.mapy + ',' + item.mapx + '" target="_blank" style="display:flex;align-items:center;justify-content:center;padding:11px;background:var(--bg);border:1px solid var(--border-mid);border-radius:999px;text-decoration:none;font-weight:600;font-size:13px;color:var(--text);margin-top:8px;">📍 Open in Google Maps</a>'
+    : '';
+  var webLink = item.homepage
+    ? '<a href="' + item.homepage.replace(/<[^>]*>/g,'') + '" target="_blank" style="display:flex;align-items:center;justify-content:center;padding:13px;background:var(--green);color:#fff;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Visit Website →</a>'
+    : '';
+  popup.innerHTML =
+    '<div style="background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding-bottom:32px;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);">' +
+        '<div style="font-size:15px;font-weight:700;">' + emoji + ' ' + cat + '</div>' +
+        '<button onclick="document.getElementById('exploreDetailPopup').remove()" style="width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:14px;">✕</button>' +
+      '</div>' +
+      (item.firstimage ? '<img src="' + item.firstimage + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;" loading="lazy">' : '') +
+      '<div style="padding:20px;">' +
+        '<div style="font-size:20px;font-weight:700;margin-bottom:8px;">' + (item.title||'—') + '</div>' +
+        (item.addr1 ? '<div style="font-size:13px;color:var(--text-2);margin-bottom:12px;">📍 ' + item.addr1 + '</div>' : '') +
+        (item.overview ? '<div style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:16px;">' + String(item.overview).slice(0,300) + '...</div>' : '') +
+        webLink + mapLink +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(popup);
+};
+// ══════════════════════════════════════════════════
 </script>
 <!-- ══════════════════════════════════
      WEATHER DETAIL MODAL (Bottom Sheet)

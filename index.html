@@ -6299,6 +6299,9 @@ function renderSearchResults(results, kw) {
       </div>
     </div>`;
   }).join('');
+  var postsDiv = document.createElement('div');
+  postsDiv.innerHTML = postsHtml;
+  while (postsDiv.firstChild) list.appendChild(postsDiv.firstChild);
 }
 
 // 키워드 하이라이트 헬퍼
@@ -11403,25 +11406,36 @@ async function loadExploreStories() {
 
   loading.style.display = 'none';
 
-  // 도움말 배너 항상 표시
-  var bannerHtml = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;display:flex;align-items:flex-start;gap:12px;">' +
-    '<div style="width:36px;height:36px;border-radius:10px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">✈️</div>' +
-    '<div>' +
-      '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">Travel Stories</div>' +
-      '<div style="font-size:13px;color:var(--text-2);line-height:1.5;">Day trips, destinations, and tourist tips around Korea. Share your experiences!</div>' +
-      '<button onclick="window.goTo(&quot;write&quot;)" style="margin-top:10px;padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">✏️ Write a Story</button>' +
+  // 배너 — info-banner 스타일로 통일
+  var banner = document.createElement('div');
+  banner.className = 'info-banner planning';
+  banner.innerHTML =
+    '<div class="ib-icon planning">' +
+      '<svg width="14" height="14" viewBox="0 0 16 16" fill="none">' +
+        '<path d="M3 12l5-9 5 9" stroke="#3C3489" stroke-width="1.3" stroke-linecap="round"/>' +
+        '<path d="M5 9h6" stroke="#3C3489" stroke-width="1.2" stroke-linecap="round"/>' +
+      '</svg>' +
     '</div>' +
-  '</div>';
+    '<div>' +
+      '<div class="ib-title planning">Travel Stories</div>' +
+      '<div class="ib-sub planning">Day trips, destinations, and tourist tips around Korea.</div>' +
+    '</div>';
+  list.appendChild(banner);
 
   if (travelPosts.length === 0) {
-    list.innerHTML = bannerHtml + '<div style="text-align:center;padding:32px 20px;color:var(--text-3);font-size:14px;">' +
-      '<div style="font-size:36px;margin-bottom:8px;">✈️</div>' +
-      'No travel stories yet — be the first to share!</div>';
+    // 빈 상태 — 다른 탭과 동일한 스타일
+    var emptyWrap = document.createElement('div');
+    emptyWrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;';
+    emptyWrap.innerHTML =
+      '<div style="width:56px;height:56px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:24px;">✈️</div>' +
+      '<div style="font-size:16px;font-weight:700;color:var(--text);">No posts yet in Travel</div>' +
+      '<div style="font-size:13px;color:var(--text-2);text-align:center;max-width:260px;line-height:1.5;">Be the first to share something with the community!</div>' +
+      '<button onclick="window.goTo('write')" style="padding:12px 28px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">Write a post</button>';
+    list.appendChild(emptyWrap);
     return;
   }
-  list.innerHTML = bannerHtml;
 
-  list.innerHTML += travelPosts.map(function(p) {
+  var postsHtml = travelPosts.map(function(p) {
     var preview = (p.previewText || p.preview || '').replace(/<[^>]*>/g, '').slice(0, 120);
     var imgHtml = p.imageURL
       ? '<img src="' + p.imageURL + '" style="width:100%;height:160px;object-fit:cover;border-radius:12px 12px 0 0;" loading="lazy">'

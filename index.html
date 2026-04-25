@@ -11867,31 +11867,76 @@ function buildExploreDescFromItem(item, el) {
 
 async function loadExploreDetailDesc(contentId, contentTypeId, el) {
   if (!contentId) { el.textContent = 'No description available.'; return; }
+  var cacheKey = 'explore_desc_' + contentId;
   try {
-    // URLSearchParams가 키를 이중 인코딩하는 문제 방지 — URL 직접 조합
-    var url = 'https://apis.data.go.kr/B551011/EngService2/detailCommon2' +
+    // 1단계: Firestore 캐시 확인
+    if (firebaseOk) {
+      try {
+        var cacheSnap = await getDoc(doc(db, 'explore_cache', String(contentId)));
+        if (cacheSnap.exists() && cacheSnap.data().overview) {
+          el.textContent = cacheSnap.data().overview;
+          return;
+        }
+      } catch(e) { /* 캐시 없으면 계속 */ }
+    }
+
+    // 2단계: 국문 API로 설명 가져오기
+    var korUrl = 'https://apis.data.go.kr/B551011/KorService2/detailCommon2' +
       '?serviceKey=' + VISITKOREA_KEY +
-      '&MobileOS=ETC' +
-      '&MobileApp=KoreaConnect' +
-      '&_type=json' +
+      '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
       '&contentId=' + String(contentId) +
       '&contentTypeId=' + String(contentTypeId || '') +
-      '&overviewYN=Y' +
-      '&defaultYN=Y';
-    console.log('[DetailDesc] URL:', url.slice(0,100));
-    var res  = await fetch(url);
-    var text = await res.text();
-    var data = JSON.parse(text);
+      '&overviewYN=Y&defaultYN=Y';
+    var res  = await fetch(korUrl);
+    var data = await res.json();
     var body = data && data.response && data.response.body;
     var rawItem = body && body.items && body.items.item;
     var item = Array.isArray(rawItem) ? rawItem[0] : (rawItem || null);
-    console.log('[DetailDesc] item:', item ? JSON.stringify(item).slice(0,150) : 'null');
-    var overview = (item && (item.overview || item.overviewinfo || item.summary)) || '';
-    overview = overview.replace(/<[^>]*>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
-    el.textContent = overview || 'No description available.';
+    var overview = (item && item.overview) || '';
+    overview = overview.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
+    if (!overview) { el.textContent = 'No description available.'; return; }
+
+    // 3단계: Claude API로 영문 번역
+    el.textContent = 'Translating...';
+    var translated = await translateWithClaude(overview);
+    el.textContent = translated;
+
+    // 4단계: Firestore에 캐시 저장 (이후 무료)
+    if (firebaseOk && translated !== 'No description available.') {
+      try {
+        await setDoc(doc(db, 'explore_cache', String(contentId)), {
+          overview:      translated,
+          contentId:     String(contentId),
+          translatedAt:  new Date().toISOString(),
+        });
+      } catch(e) { console.warn('[Cache] 저장 실패:', e.message); }
+    }
   } catch(e) {
-    console.error('[DetailDesc] 에러:', e);
-    el.textContent = 'Could not load description.';
+    el.textContent = 'No description available.';
+  }
+}
+
+async function translateWithClaude(korText) {
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: 'Translate this Korean tourism description to natural English in 2-3 sentences. Return only the translation:
+
+' + korText.slice(0, 500)
+        }]
+      })
+    });
+    var data = await res.json();
+    var text = data && data.content && data.content[0] && data.content[0].text;
+    return text ? text.trim() : 'No description available.';
+  } catch(e) {
+    return 'No description available.';
   }
 }
 

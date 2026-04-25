@@ -11926,9 +11926,7 @@ async function translateWithClaude(korText) {
         max_tokens: 300,
         messages: [{
           role: 'user',
-          content: 'Translate this Korean tourism description to natural English in 2-3 sentences. Return only the translation:
-
-' + korText.slice(0, 500)
+          content: 'Translate this Korean tourism description to natural English in 2-3 sentences. Return only the translation: ' + korText.slice(0, 500)
         }]
       })
     });

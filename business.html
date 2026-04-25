@@ -410,7 +410,7 @@ function renderBusiness(biz) {
             (sale ? '<div class="option-sale">₩' + Number(sale).toLocaleString() + '</div>' : '') +
           '</div>' +
         '</div>' +
-        '<button class="btn-select" onclick="event.stopPropagation();openDateModal(' + i + ')">SELECT</button>' +
+        '<button class="btn-select" onclick="event.stopPropagation();selectOption(' + i + ');openDateModal(' + i + ')">SELECT</button>' +
       '</div>';
     }).join('');
     document.getElementById('optionsCard').style.display = '';

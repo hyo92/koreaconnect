@@ -11249,48 +11249,111 @@ var exploreInlineBuilt = false;
 function buildExploreInline() {
   var wrap = document.createElement('div');
   wrap.id = 'exploreInline';
-  wrap.style.cssText = 'width:100%;';
 
   // 스위처
-  wrap.innerHTML =
-    '<div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:0;">' +
-      '<button id="expSwitch-places" onclick="window.switchExploreSection(&quot;places&quot;)" style="flex:1;padding:10px;background:none;border:none;border-bottom:2.5px solid var(--green);font-size:14px;font-weight:700;color:var(--green);cursor:pointer;font-family:var(--font);">🏛️ Places</button>' +
-      '<button id="expSwitch-stories" onclick="window.switchExploreSection(&quot;stories&quot;)" style="flex:1;padding:10px;background:none;border:none;border-bottom:2.5px solid transparent;font-size:14px;font-weight:500;color:var(--text-3);cursor:pointer;font-family:var(--font);">💬 Stories</button>' +
-    '</div>' +
+  var switcher = document.createElement('div');
+  switcher.style.cssText = 'display:flex;border-bottom:1px solid var(--border);margin-bottom:0;';
+  var btnP = document.createElement('button');
+  btnP.id = 'expSwitch-places';
+  btnP.textContent = '🏛️ Places';
+  btnP.style.cssText = 'flex:1;padding:10px;background:none;border:none;border-bottom:2.5px solid var(--green);font-size:14px;font-weight:700;color:var(--green);cursor:pointer;font-family:var(--font);';
+  btnP.onclick = function() { window.switchExploreSection('places'); };
+  var btnS = document.createElement('button');
+  btnS.id = 'expSwitch-stories';
+  btnS.textContent = '💬 Stories';
+  btnS.style.cssText = 'flex:1;padding:10px;background:none;border:none;border-bottom:2.5px solid transparent;font-size:14px;font-weight:500;color:var(--text-3);cursor:pointer;font-family:var(--font);';
+  btnS.onclick = function() { window.switchExploreSection('stories'); };
+  switcher.appendChild(btnP);
+  switcher.appendChild(btnS);
+  wrap.appendChild(switcher);
 
-    // Places
-    '<div id="explorePlacesSection">' +
-      '<div style="padding:12px 0 0;">' +
-        '<div style="display:flex;gap:8px;margin-bottom:12px;">' +
-          '<input type="text" id="exploreSearch" placeholder="Search attractions, food, events..." style="flex:1;padding:11px 14px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:14px;outline:none;background:var(--surface);" onkeydown="if(event.key==='Enter')searchExplore()" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border-mid)'">' +
-          '<button onclick="searchExplore()" style="padding:11px 18px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">Search</button>' +
-        '</div>' +
-        '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;">' +
-          '<button class="exp-cat active" onclick="setExploreCat(this,'all')">All</button>' +
-          '<button class="exp-cat" onclick="setExploreCat(this,'76')">🏛️ Attractions</button>' +
-          '<button class="exp-cat" onclick="setExploreCat(this,'78')">🎭 Culture</button>' +
-          '<button class="exp-cat" onclick="setExploreCat(this,'85')">🎪 Festivals</button>' +
-          '<button class="exp-cat" onclick="setExploreCat(this,'82')">🏨 Stay</button>' +
-          '<button class="exp-cat" onclick="setExploreCat(this,'79')">🛍️ Shopping</button>' +
-          '<button class="exp-cat" onclick="setExploreCat(this,'80')">🏋️ Leisure</button>' +
-        '</div>' +
-        '<div style="display:flex;align-items:center;gap:10px;padding-bottom:12px;">' +
-          '<div style="font-size:13px;color:var(--text-2);font-weight:500;">📍 Near me</div>' +
-          '<div id="exploreNearbyToggle" onclick="toggleExploreNearby()" style="width:40px;height:22px;border-radius:11px;background:var(--border-mid);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;"><div id="exploreNearbyKnob" style="position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div></div>' +
-          '<div style="font-size:11px;color:var(--text-3)" id="exploreNearbyLabel">Show attractions near your location</div>' +
-        '</div>' +
-      '</div>' +
-      '<div id="exploreGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;"></div>' +
-      '<div id="exploreLoading" style="text-align:center;padding:40px;color:var(--text-3);font-size:14px;display:none;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading...</div>' +
-      '<div id="exploreEmpty" style="text-align:center;padding:48px 20px;color:var(--text-3);font-size:14px;display:none;"><div style="font-size:36px;margin-bottom:8px;">🗺️</div>No results found!</div>' +
-      '<button id="exploreLoadMore" onclick="loadMoreExplore()" style="display:none;width:100%;margin-top:16px;padding:12px;background:var(--surface);border:1.5px solid var(--border-mid);border-radius:999px;font-size:14px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:var(--font);">Load more</button>' +
-    '</div>' +
+  // Places 섹션
+  var places = document.createElement('div');
+  places.id = 'explorePlacesSection';
 
-    // Stories
-    '<div id="exploreStoriesSection" style="display:none;padding-top:16px;">' +
-      '<div id="exploreStoriesList"></div>' +
-      '<div id="exploreStoriesLoading" style="text-align:center;padding:40px;color:var(--text-3);font-size:14px;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading travel stories...</div>' +
-    '</div>';
+  // 검색바
+  var searchRow = document.createElement('div');
+  searchRow.style.cssText = 'display:flex;gap:8px;margin:12px 0;';
+  var searchInput = document.createElement('input');
+  searchInput.type = 'text';
+  searchInput.id = 'exploreSearch';
+  searchInput.placeholder = 'Search attractions, food, events...';
+  searchInput.style.cssText = 'flex:1;padding:11px 14px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:14px;outline:none;background:var(--surface);';
+  searchInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') searchExplore(); });
+  searchInput.addEventListener('focus', function() { this.style.borderColor = 'var(--green)'; });
+  searchInput.addEventListener('blur',  function() { this.style.borderColor = 'var(--border-mid)'; });
+  var searchBtn = document.createElement('button');
+  searchBtn.textContent = 'Search';
+  searchBtn.style.cssText = 'padding:11px 18px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);';
+  searchBtn.onclick = searchExplore;
+  searchRow.appendChild(searchInput);
+  searchRow.appendChild(searchBtn);
+  places.appendChild(searchRow);
+
+  // 카테고리 버튼
+  var catBar = document.createElement('div');
+  catBar.style.cssText = 'display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;';
+  var cats = [
+    ['all','All'], ['76','🏛️ Attractions'], ['78','🎭 Culture'],
+    ['85','🎪 Festivals'], ['82','🏨 Stay'], ['79','🛍️ Shopping'], ['80','🏋️ Leisure']
+  ];
+  cats.forEach(function(c, i) {
+    var btn = document.createElement('button');
+    btn.className = 'exp-cat' + (i === 0 ? ' active' : '');
+    btn.textContent = c[1];
+    btn.onclick = function() { setExploreCat(btn, c[0]); };
+    catBar.appendChild(btn);
+  });
+  places.appendChild(catBar);
+
+  // Near me 토글
+  var nearRow = document.createElement('div');
+  nearRow.style.cssText = 'display:flex;align-items:center;gap:10px;padding-bottom:12px;';
+  nearRow.innerHTML = '<div style="font-size:13px;color:var(--text-2);font-weight:500;">📍 Near me</div>' +
+    '<div id="exploreNearbyToggle" style="width:40px;height:22px;border-radius:11px;background:var(--border-mid);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;"><div id="exploreNearbyKnob" style="position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div></div>' +
+    '<div id="exploreNearbyLabel" style="font-size:11px;color:var(--text-3);">Show attractions near your location</div>';
+  nearRow.querySelector('#exploreNearbyToggle').onclick = toggleExploreNearby;
+  places.appendChild(nearRow);
+
+  // 그리드 + 로딩 + 빈 상태 + 더보기
+  var grid = document.createElement('div');
+  grid.id = 'exploreGrid';
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;';
+  places.appendChild(grid);
+
+  var loading = document.createElement('div');
+  loading.id = 'exploreLoading';
+  loading.style.cssText = 'text-align:center;padding:40px;color:var(--text-3);font-size:14px;display:none;';
+  loading.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading...';
+  places.appendChild(loading);
+
+  var empty = document.createElement('div');
+  empty.id = 'exploreEmpty';
+  empty.style.cssText = 'text-align:center;padding:48px 20px;color:var(--text-3);font-size:14px;display:none;';
+  empty.innerHTML = '<div style="font-size:36px;margin-bottom:8px;">🗺️</div>No results found!';
+  places.appendChild(empty);
+
+  var loadMore = document.createElement('button');
+  loadMore.id = 'exploreLoadMore';
+  loadMore.textContent = 'Load more';
+  loadMore.style.cssText = 'display:none;width:100%;margin-top:16px;padding:12px;background:var(--surface);border:1.5px solid var(--border-mid);border-radius:999px;font-size:14px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:var(--font);';
+  loadMore.onclick = loadMoreExplore;
+  places.appendChild(loadMore);
+  wrap.appendChild(places);
+
+  // Stories 섹션
+  var stories = document.createElement('div');
+  stories.id = 'exploreStoriesSection';
+  stories.style.cssText = 'display:none;padding-top:16px;';
+  var storiesList = document.createElement('div');
+  storiesList.id = 'exploreStoriesList';
+  var storiesLoading = document.createElement('div');
+  storiesLoading.id = 'exploreStoriesLoading';
+  storiesLoading.style.cssText = 'text-align:center;padding:40px;color:var(--text-3);font-size:14px;';
+  storiesLoading.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading travel stories...';
+  stories.appendChild(storiesList);
+  stories.appendChild(storiesLoading);
+  wrap.appendChild(stories);
 
   return wrap;
 }

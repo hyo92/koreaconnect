@@ -9145,7 +9145,7 @@ let activeDealsTab = 'all';
 
 window.goDeals = function(tab) {
   tab = tab || 'all';
-  window.location.hash = 'deals';
+  sessionStorage.setItem('kc_on_deals', '1');
 
   // 1. 딜 오버레이 가져오기
   const dealsEl = document.getElementById('screen-deals');
@@ -9303,6 +9303,8 @@ function renderDealsGrid(tab) {
 }
 
 window.goHome = function() {
+  // 핫딜 페이지 나가면 sessionStorage 제거
+  sessionStorage.removeItem('kc_on_deals');
   // 딜 오버레이 닫기
   const dealsEl = document.getElementById('screen-deals');
   if (dealsEl) dealsEl.style.cssText = 'display:none;';
@@ -10507,8 +10509,8 @@ getRedirectResult(auth).then(result => {
 isHomeMode = true;
 initPostsListener();
 renderChatList();
-// URL hash가 #deals면 핫딜 페이지 자동 오픈 (새로고침 대응)
-if (window.location.hash === '#deals') {
+// 핫딜 페이지에서 새로고침 시 핫딜 All 탭 복원
+if (sessionStorage.getItem('kc_on_deals') === '1') {
   setTimeout(function() { window.goDeals('all'); }, 600);
 }
 // Featured는 약간 딜레이 후 로드 (Firestore 연결 안정화 후)

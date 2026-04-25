@@ -3782,7 +3782,7 @@
     <div class="tab-btn" onclick="window.setTab(this,'questions')">Questions</div>
     <div class="tab-btn" onclick="window.setTab(this,'beauty')">Beauty</div>
     <div class="tab-btn" onclick="window.setTab(this,'social')">Social</div>
-    <div class="tab-btn explore-tab" onclick="openExplore()">🗺️ Explore</div>
+    <div class="tab-btn explore-tab" onclick="if(window.openExplore)window.openExplore();else setTimeout(function(){window.openExplore&&window.openExplore();},500)">🗺️ Explore</div>
   </div>
 
   <!-- ④ 피드 리스트 -->
@@ -11214,6 +11214,7 @@ let exploreKeyword = '', exploreUserLat = null, exploreUserLon = null;
 const EXPLORE_CAT_LABELS = { '76':'Attraction','78':'Culture','85':'Festival','82':'Stay','79':'Shopping','80':'Leisure','75':'Travel' };
 const EXPLORE_CAT_EMOJI  = { '76':'🏛️','78':'🎭','85':'🎪','82':'🏨','79':'🛍️','80':'🏋️','75':'🗺️' };
 
+// HTML onclick에서 접근 가능하도록 즉시 window에 노출
 window.openExplore = function() {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
   document.querySelector('.explore-tab').classList.add('active');
@@ -11414,7 +11415,7 @@ async function loadExploreStories() {
     '<div>' +
       '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">Travel Stories</div>' +
       '<div style="font-size:13px;color:var(--text-2);line-height:1.5;">Day trips, destinations, and tourist tips around Korea. Share your experiences!</div>' +
-      '<button onclick="window.goTo('write')" style="margin-top:10px;padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">✏️ Write a Story</button>' +
+      '<button onclick="window.goTo(&quot;write&quot;)" style="margin-top:10px;padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">✏️ Write a Story</button>' +
     '</div>' +
   '</div>';
 
@@ -11590,6 +11591,13 @@ window.openExploreDetail = function(item) {
     '</div></div>';
   document.body.appendChild(popup);
 };
+
+// HTML onclick 전역 노출 (type=module 스코프 우회)
+if (typeof window.openExplore === 'undefined') {
+  document.addEventListener('DOMContentLoaded', function() {
+    // 이미 위에서 window.openExplore로 선언됨
+  });
+}
 
 // filterMyPostsBy (My Posts 스탯 카드 클릭)
 let _myPostsCache = [], _myPostsActiveFilter = 'posts';

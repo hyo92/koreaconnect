@@ -11848,8 +11848,7 @@ function buildExploreDescFromItem(item, el) {
 
   if (parts.length > 0) {
     el.style.cssText = 'font-size:13px;color:var(--text-2);line-height:1.9;padding:12px;background:var(--bg);border-radius:10px;';
-    el.textContent = parts.join('
-');
+    el.textContent = parts.join(' · ');
   } else {
     // 정보 없으면 카테고리별 기본 안내
     var catMsg = {

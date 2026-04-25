@@ -11338,7 +11338,7 @@ window.openExploreDetail = function(item) {
   popup.innerHTML = '<div style="background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding-bottom:32px;">' +
     '<div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);">' +
       '<div style="font-size:15px;font-weight:700;">' + emoji + ' ' + cat + '</div>' +
-      '<button onclick="document.getElementById('exploreDetailPopup').remove()" style="width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:14px;">✕</button>' +
+      '<button onclick="document.getElementById(&quot;exploreDetailPopup&quot;).remove()" style="width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:14px;">✕</button>' +
     '</div>' +
     (item.firstimage ? '<img src="' + item.firstimage + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;" loading="lazy">' : '') +
     '<div style="padding:20px;">' +

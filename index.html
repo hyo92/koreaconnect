@@ -9180,15 +9180,12 @@ window.publishFromEditor = async function() {
   }
 
   const isOwnerPost = OWNER_EMAILS.includes(currentUser.email);
-
-  const isOwnerPost = OWNER_EMAILS.includes(currentUser.email);
   const newPost = {
     comm: selectedComm || 'KoreaConnect',
     author: authorName, authorId: currentUser.uid,
     authorEmail: currentUser.email || null,
     authorPhoto: currentUser.photoURL || null,
     ...(isOwnerPost ? { isPinned: true, role: 'admin' } : {}),
-    ...(isOwnerPost && isFeaturedMode ? { isPinned: true, role: 'admin' } : {}),
     topic, title,
     preview: bodyHtml,      // HTML 그대로 저장 (색상, Bold 등 유지)
     previewText: bodyText,  // 검색/피드 미리보기용 plain text

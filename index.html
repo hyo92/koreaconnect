@@ -11212,7 +11212,7 @@ async function loadBusinessesFromFirestore() {
 const VISITKOREA_KEY = 'e40ebfa9e37fa69a20c7fb7cefc1bd3fb5e871a9ee85eb17b82ec3eb695888a5';
 
 let exploreCat = 'all', exploreNearby = false, explorePage = 1;
-let exploreKeyword = '', exploreUserLat = null, exploreUserLon = null, exploreDistrict = '';
+let exploreKeyword = '', exploreUserLat = null, exploreUserLon = null, exploreRegion = '', exploreDistrict = '';
 
 const EXPLORE_CAT_LABELS = { '76':'Attraction','78':'Culture','85':'Festival','82':'Stay','79':'Shopping','80':'Leisure','75':'Travel' };
 const EXPLORE_CAT_EMOJI  = { '76':'🏛️','78':'🎭','85':'🎪','82':'🏨','79':'🛍️','80':'🏋️','75':'🗺️' };
@@ -11235,7 +11235,7 @@ window.openExplore = function() {
 
   // 항상 Places 탭 먼저 보이고 데이터 로드
   exploreSection = 'places';
-  exploreDistrict = '';
+  exploreRegion = ''; exploreDistrict = '';
   loadExplore(true);
 };
 
@@ -11349,12 +11349,33 @@ function buildExploreInline() {
     districtSelect.appendChild(opt);
   });
   districtSelect.addEventListener('change', function() {
-    exploreDistrict = this.value;
+    exploreRegion = this.value;
+    exploreDistrict = '';
+    // 구/시군구 드롭다운 업데이트
+    updateSigunguSelect(this.value);
     loadExplore(true);
   });
   districtRow.appendChild(districtLabel);
   districtRow.appendChild(districtSelect);
   places.appendChild(districtRow);
+
+  // 구/시군구 드롭다운 (시/도 선택 후 표시)
+  var sigunguRow = document.createElement('div');
+  sigunguRow.id = 'exploreSigunguRow';
+  sigunguRow.style.cssText = 'display:none;align-items:center;gap:8px;padding-bottom:12px;';
+  var sigunguLabel = document.createElement('div');
+  sigunguLabel.style.cssText = 'font-size:13px;color:var(--text-2);font-weight:500;flex-shrink:0;';
+  sigunguLabel.textContent = '📌 Area';
+  var sigunguSelect = document.createElement('select');
+  sigunguSelect.id = 'exploreSigunguSelect';
+  sigunguSelect.style.cssText = 'flex:1;padding:7px 12px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface);outline:none;cursor:pointer;';
+  sigunguSelect.addEventListener('change', function() {
+    exploreDistrict = this.value;
+    loadExplore(true);
+  });
+  sigunguRow.appendChild(sigunguLabel);
+  sigunguRow.appendChild(sigunguSelect);
+  places.appendChild(sigunguRow);
 
   // 그리드 + 로딩 + 빈 상태 + 더보기
   var grid = document.createElement('div');
@@ -11603,7 +11624,8 @@ async function loadExplore(reset) {
       if (exploreCat !== 'all') params.set('contentTypeId', exploreCat);
       url = base + '/locationBasedList2?' + params.toString();
     } else {
-      if (exploreDistrict) params.set('areaCode', exploreDistrict); // 선택한 시/도
+      if (exploreRegion)   params.set('areaCode',    exploreRegion);
+      if (exploreDistrict) params.set('sigunguCode', exploreDistrict);
       if (exploreCat !== 'all') params.set('contentTypeId', exploreCat);
       url = base + '/areaBasedList2?' + params.toString();
     }
@@ -11715,6 +11737,38 @@ window.filterMyPostsBy = function(type) {
   });
 };
 // ══════════════════════════════════════════════════
+
+// 시/도별 시군구 데이터
+const SIGUNGU_MAP = {
+  '1':  [['','All Seoul'],['1','Jongno-gu'],['2','Jung-gu'],['3','Yongsan-gu'],['4','Seongdong-gu'],['5','Gwangjin-gu'],['6','Dongdaemun-gu'],['7','Jungnang-gu'],['8','Seongbuk-gu'],['9','Gangbuk-gu'],['10','Dobong-gu'],['11','Nowon-gu'],['12','Eunpyeong-gu'],['13','Seodaemun-gu'],['14','Mapo-gu'],['15','Yangcheon-gu'],['16','Gangseo-gu'],['17','Guro-gu'],['18','Geumcheon-gu'],['19','Yeongdeungpo-gu'],['20','Dongjak-gu'],['21','Gwanak-gu'],['22','Seocho-gu'],['23','Gangnam-gu'],['24','Songpa-gu'],['25','Gangdong-gu']],
+  '2':  [['','All Incheon'],['1','Jung-gu'],['2','Dong-gu'],['3','Michuhol-gu'],['4','Yeonsu-gu'],['5','Namdong-gu'],['6','Bupyeong-gu'],['7','Gyeyang-gu'],['8','Seo-gu'],['9','Ganghwa-gun'],['10','Ongjin-gun']],
+  '4':  [['','All Daegu'],['1','Jung-gu'],['2','Dong-gu'],['3','Seo-gu'],['4','Nam-gu'],['5','Buk-gu'],['6','Suseong-gu'],['7','Dalseo-gu'],['8','Dalseong-gun']],
+  '5':  [['','All Gwangju'],['1','Dong-gu'],['2','Seo-gu'],['3','Nam-gu'],['4','Buk-gu'],['5','Gwangsan-gu']],
+  '6':  [['','All Busan'],['1','Jung-gu'],['2','Seo-gu'],['3','Dong-gu'],['4','Yeongdo-gu'],['5','Busanjin-gu'],['6','Dongnae-gu'],['7','Nam-gu'],['8','Buk-gu'],['9','Haeundae-gu'],['10','Saha-gu'],['11','Geumjeong-gu'],['12','Gangseo-gu'],['13','Yeonje-gu'],['14','Suyeong-gu'],['15','Sasang-gu'],['16','Gijang-gun']],
+  '7':  [['','All Ulsan'],['1','Jung-gu'],['2','Nam-gu'],['3','Dong-gu'],['4','Buk-gu'],['5','Ulju-gun']],
+  '31': [['','All Gyeonggi'],['1','Suwon'],['2','Seongnam'],['3','Uijeongbu'],['4','Anyang'],['5','Bucheon'],['6','Gwangmyeong'],['7','Pyeongtaek'],['8','Dongducheon'],['9','Ansan'],['10','Goyang'],['11','Gwacheon'],['12','Guri'],['13','Namyangju'],['14','Osan'],['15','Siheung'],['16','Gunpo'],['17','Uiwang'],['18','Hanam'],['19','Yongin'],['20','Paju'],['21','Icheon'],['22','Anseong'],['23','Gimpo'],['24','Hwaseong'],['25','Gwangju'],['26','Yangju'],['27','Pocheon'],['28','Yeoju'],['29','Yangpyeong-gun'],['30','Gapyeong-gun'],['31','Yeoncheon-gun']],
+  '32': [['','All Gangwon'],['1','Chuncheon'],['2','Wonju'],['3','Gangneung'],['4','Donghae'],['5','Taebaek'],['6','Sokcho'],['7','Samcheok'],['8','Hongcheon-gun'],['9','Hoengseong-gun'],['10','Yeongwol-gun'],['11','Pyeongchang-gun'],['12','Jeongseon-gun'],['13','Cheorwon-gun'],['14','Hwacheon-gun'],['15','Yanggu-gun'],['16','Inje-gun'],['17','Goseong-gun'],['18','Yangyang-gun']],
+  '35': [['','All Gyeongbuk'],['1','Pohang'],['2','Gyeongju'],['3','Gimcheon'],['4','Andong'],['5','Gumi'],['6','Yeongju'],['7','Yeongcheon'],['8','Sangju'],['9','Mungyeong'],['10','Gyeongsan'],['11','Gunwi-gun'],['12','Uiseong-gun'],['13','Cheongsong-gun'],['14','Yeongyang-gun'],['15','Yeongdeok-gun'],['16','Cheongdo-gun'],['17','Goryeong-gun'],['18','Seongju-gun'],['19','Chilgok-gun'],['20','Yecheon-gun'],['21','Bonghwa-gun'],['22','Uljin-gun'],['23','Ulleung-gun']],
+  '36': [['','All Gyeongnam'],['1','Changwon'],['2','Jinju'],['3','Tongyeong'],['4','Sacheon'],['5','Gimhae'],['6','Miryang'],['7','Geoje'],['8','Yangsan'],['9','Uiryeong-gun'],['10','Haman-gun'],['11','Changnyeong-gun'],['12','Goseong-gun'],['13','Namhae-gun'],['14','Hadong-gun'],['15','Sancheong-gun'],['16','Hamyang-gun'],['17','Geochang-gun'],['18','Hapcheon-gun']],
+  '37': [['','All Jeonbuk'],['1','Jeonju'],['2','Gunsan'],['3','Iksan'],['4','Jeongeup'],['5','Namwon'],['6','Gimje'],['7','Wanju-gun'],['8','Jinan-gun'],['9','Muju-gun'],['10','Jangsu-gun'],['11','Imsil-gun'],['12','Sunchang-gun'],['13','Gochang-gun'],['14','Buan-gun']],
+  '38': [['','All Jeonnam'],['1','Mokpo'],['2','Yeosu'],['3','Suncheon'],['4','Naju'],['5','Gwangyang'],['6','Damyang-gun'],['7','Gokseong-gun'],['8','Gurye-gun'],['9','Goheung-gun'],['10','Boseong-gun'],['11','Hwasun-gun'],['12','Jangheung-gun'],['13','Gangjin-gun'],['14','Haenam-gun'],['15','Yeongam-gun'],['16','Muan-gun'],['17','Hampyeong-gun'],['18','Yeonggwang-gun'],['19','Jangseong-gun'],['20','Wando-gun'],['21','Jindo-gun'],['22','Sinan-gun']],
+  '39': [['','All Jeju'],['1','Jeju-si'],['2','Seogwipo-si']],
+};
+
+function updateSigunguSelect(regionCode) {
+  var row    = document.getElementById('exploreSigunguRow');
+  var sel    = document.getElementById('exploreSigunguSelect');
+  if (!row || !sel) return;
+  var list = SIGUNGU_MAP[regionCode];
+  if (!list) { row.style.display = 'none'; return; }
+  sel.innerHTML = '';
+  list.forEach(function(s) {
+    var opt = document.createElement('option');
+    opt.value = s[0]; opt.textContent = s[1];
+    sel.appendChild(opt);
+  });
+  row.style.display = 'flex';
+}
 </script>
 <!-- ══════════════════════════════════
      WEATHER DETAIL MODAL (Bottom Sheet)

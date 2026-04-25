@@ -11636,8 +11636,11 @@ async function loadExplore(reset) {
     var total = data?.response?.body?.totalCount  || 0;
     loading.style.display = 'none';
 
-    // 구 선택 시 addr1으로 클라이언트 필터링
+    // addr1 형식 확인용 로그
     var allItems = Array.isArray(items) ? items : (items ? [items] : []);
+    if (allItems.length > 0) {
+      console.log('[Explore] addr1 샘플:', allItems.slice(0,3).map(function(it){ return it.addr1; }));
+    }
     if (exploreRegion && exploreDistrict) {
       var filterKey = exploreRegion + '-' + exploreDistrict;
       var kuName = SIGUNGU_KR_NAMES[filterKey];

@@ -11636,11 +11636,7 @@ async function loadExplore(reset) {
     var total = data?.response?.body?.totalCount  || 0;
     loading.style.display = 'none';
 
-    // addr1 형식 확인용 로그
     var allItems = Array.isArray(items) ? items : (items ? [items] : []);
-    if (allItems.length > 0) {
-      console.log('[Explore] addr1 샘플:', allItems.slice(0,3).map(function(it){ return it.addr1; }));
-    }
     if (exploreRegion && exploreDistrict) {
       var filterKey = exploreRegion + '-' + exploreDistrict;
       var kuName = SIGUNGU_KR_NAMES[filterKey];
@@ -11911,22 +11907,22 @@ function updateSigunguSelect(regionCode) {
   row.style.display = 'flex';
 }
 
-// 영문 API는 sigunguCode를 무시 → addr1로 클라이언트 필터링
+// 영문 API addr1은 영문 구 이름 포함 → 영문명으로 매핑
 const SIGUNGU_KR_NAMES = {
-  '1-1':'종로구','1-2':'중구','1-3':'용산구','1-4':'성동구','1-5':'광진구',
-  '1-6':'동대문구','1-7':'중랑구','1-8':'성북구','1-9':'강북구','1-10':'도봉구',
-  '1-11':'노원구','1-12':'은평구','1-13':'서대문구','1-14':'마포구','1-15':'양천구',
-  '1-16':'강서구','1-17':'구로구','1-18':'금천구','1-19':'영등포구','1-20':'동작구',
-  '1-21':'관악구','1-22':'서초구','1-23':'강남구','1-24':'송파구','1-25':'강동구',
-  '2-1':'중구','2-2':'동구','2-3':'미추홀구','2-4':'연수구','2-5':'남동구',
-  '2-6':'부평구','2-7':'계양구','2-8':'서구',
-  '4-1':'중구','4-2':'동구','4-3':'서구','4-4':'남구','4-5':'북구','4-6':'수성구','4-7':'달서구',
-  '5-1':'동구','5-2':'서구','5-3':'남구','5-4':'북구','5-5':'광산구',
-  '6-1':'중구','6-2':'서구','6-3':'동구','6-4':'영도구','6-5':'부산진구',
-  '6-6':'동래구','6-7':'남구','6-8':'북구','6-9':'해운대구','6-10':'사하구',
-  '6-11':'금정구','6-12':'강서구','6-13':'연제구','6-14':'수영구','6-15':'사상구',
-  '7-1':'중구','7-2':'남구','7-3':'동구','7-4':'북구',
-  '39-1':'제주시','39-2':'서귀포시',
+  '1-1':'Jongno-gu','1-2':'Jung-gu','1-3':'Yongsan-gu','1-4':'Seongdong-gu','1-5':'Gwangjin-gu',
+  '1-6':'Dongdaemun-gu','1-7':'Jungnang-gu','1-8':'Seongbuk-gu','1-9':'Gangbuk-gu','1-10':'Dobong-gu',
+  '1-11':'Nowon-gu','1-12':'Eunpyeong-gu','1-13':'Seodaemun-gu','1-14':'Mapo-gu','1-15':'Yangcheon-gu',
+  '1-16':'Gangseo-gu','1-17':'Guro-gu','1-18':'Geumcheon-gu','1-19':'Yeongdeungpo-gu','1-20':'Dongjak-gu',
+  '1-21':'Gwanak-gu','1-22':'Seocho-gu','1-23':'Gangnam-gu','1-24':'Songpa-gu','1-25':'Gangdong-gu',
+  '2-1':'Jung-gu','2-2':'Dong-gu','2-3':'Michuhol-gu','2-4':'Yeonsu-gu','2-5':'Namdong-gu',
+  '2-6':'Bupyeong-gu','2-7':'Gyeyang-gu','2-8':'Seo-gu',
+  '4-1':'Jung-gu','4-2':'Dong-gu','4-3':'Seo-gu','4-4':'Nam-gu','4-5':'Buk-gu','4-6':'Suseong-gu','4-7':'Dalseo-gu',
+  '5-1':'Dong-gu','5-2':'Seo-gu','5-3':'Nam-gu','5-4':'Buk-gu','5-5':'Gwangsan-gu',
+  '6-1':'Jung-gu','6-2':'Seo-gu','6-3':'Dong-gu','6-4':'Yeongdo-gu','6-5':'Busanjin-gu',
+  '6-6':'Dongnae-gu','6-7':'Nam-gu','6-8':'Buk-gu','6-9':'Haeundae-gu','6-10':'Saha-gu',
+  '6-11':'Geumjeong-gu','6-12':'Gangseo-gu','6-13':'Yeonje-gu','6-14':'Suyeong-gu','6-15':'Sasang-gu',
+  '7-1':'Jung-gu','7-2':'Nam-gu','7-3':'Dong-gu','7-4':'Buk-gu',
+  '39-1':'Jeju-si','39-2':'Seogwipo-si',
 };
 </script>
 <!-- ══════════════════════════════════

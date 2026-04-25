@@ -11693,7 +11693,7 @@ function renderExploreItems(grid, items) {
     var emoji = EXPLORE_CAT_EMOJI[item.contenttypeid] || '📍';
     var card = document.createElement('div');
     card.className = 'explore-card';
-    card.onclick = function() { openExploreDetail(item); };
+    card.onclick = function() { console.log('[Card] contentid:', item.contentid, 'keys:', Object.keys(item).join(',')); openExploreDetail(item); };
     card.innerHTML =
       (item.firstimage
         ? '<img class="explore-card-img" src="' + item.firstimage + '" alt="" loading="lazy" onerror="this.style.display=&quot;none&quot;;this.nextElementSibling.style.display=&quot;flex&quot;">' +
@@ -11831,6 +11831,7 @@ window.openExploreDetail = function(item) {
 
 async function loadExploreDetailDesc(contentId, contentTypeId, el) {
   if (!contentId) { el.textContent = 'No description available.'; return; }
+  console.log('[DetailDesc] contentId:', contentId, 'type:', contentTypeId);
   try {
     var url = 'https://apis.data.go.kr/B551011/EngService2/detailCommon2?' +
       new URLSearchParams({
@@ -11842,8 +11843,6 @@ async function loadExploreDetailDesc(contentId, contentTypeId, el) {
         contentTypeId: String(contentTypeId || ''),
         overviewYN:    'Y',
         defaultYN:     'Y',
-        addrinfoYN:    'Y',
-        mapinfoYN:     'Y',
       }).toString();
     var res  = await fetch(url);
     var data = await res.json();

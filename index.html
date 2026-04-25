@@ -3780,7 +3780,6 @@
     <div class="tab-btn" onclick="window.setTab(this,'housing')">Housing</div>
     <div class="tab-btn" onclick="window.setTab(this,'tips')">Tips</div>
     <div class="tab-btn" onclick="window.setTab(this,'questions')">Questions</div>
-    <div class="tab-btn" onclick="window.setTab(this,'travel')">Travel</div>
     <div class="tab-btn" onclick="window.setTab(this,'beauty')">Beauty</div>
     <div class="tab-btn" onclick="window.setTab(this,'social')">Social</div>
     <div class="tab-btn explore-tab" onclick="openExplore()">🗺️ Explore</div>
@@ -4851,36 +4850,59 @@
     <div style="font-size:17px;font-weight:700;">🗺️ Explore Korea</div>
     <div style="margin-left:auto;font-size:11px;font-weight:700;background:var(--green-light);color:var(--green-dark);padding:3px 10px;border-radius:999px;">한국관광공사</div>
   </div>
-  <div style="padding:16px 16px 0;">
-    <div style="display:flex;gap:8px;margin-bottom:12px;">
-      <input type="text" id="exploreSearch" placeholder="Search attractions, food, events..."
-        style="flex:1;padding:11px 14px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:14px;outline:none;background:var(--surface);"
-        onkeydown="if(event.key==='Enter')searchExplore()"
-        onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border-mid)'">
-      <button onclick="searchExplore()" style="padding:11px 18px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">Search</button>
+  <!-- Places / Stories 스위처 -->
+  <div style="display:flex;gap:0;padding:12px 16px 0;border-bottom:1px solid var(--border);">
+    <button id="expSwitch-places" onclick="switchExploreSection('places')"
+      style="flex:1;padding:10px;background:none;border:none;border-bottom:2.5px solid var(--green);font-size:14px;font-weight:700;color:var(--green);cursor:pointer;font-family:var(--font);transition:all 0.15s;">
+      🏛️ Places
+    </button>
+    <button id="expSwitch-stories" onclick="switchExploreSection('stories')"
+      style="flex:1;padding:10px;background:none;border:none;border-bottom:2.5px solid transparent;font-size:14px;font-weight:500;color:var(--text-3);cursor:pointer;font-family:var(--font);transition:all 0.15s;">
+      💬 Stories
+    </button>
+  </div>
+
+  <!-- PLACES 섹션 -->
+  <div id="explorePlacesSection">
+    <div style="padding:12px 16px 0;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input type="text" id="exploreSearch" placeholder="Search attractions, food, events..."
+          style="flex:1;padding:11px 14px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:14px;outline:none;background:var(--surface);"
+          onkeydown="if(event.key==='Enter')searchExplore()"
+          onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border-mid)'">
+        <button onclick="searchExplore()" style="padding:11px 18px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">Search</button>
+      </div>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;">
+        <button class="exp-cat active" onclick="setExploreCat(this,'all')">All</button>
+        <button class="exp-cat" onclick="setExploreCat(this,'76')">🏛️ Attractions</button>
+        <button class="exp-cat" onclick="setExploreCat(this,'78')">🎭 Culture</button>
+        <button class="exp-cat" onclick="setExploreCat(this,'85')">🎪 Festivals</button>
+        <button class="exp-cat" onclick="setExploreCat(this,'82')">🏨 Stay</button>
+        <button class="exp-cat" onclick="setExploreCat(this,'79')">🛍️ Shopping</button>
+        <button class="exp-cat" onclick="setExploreCat(this,'80')">🏋️ Leisure</button>
+      </div>
     </div>
-    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;">
-      <button class="exp-cat active" onclick="setExploreCat(this,'all')">All</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'76')">🏛️ Attractions</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'78')">🏛️ Culture</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'85')">🎪 Festivals</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'82')">🏨 Stay</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'79')">🛍️ Shopping</button>
-      <button class="exp-cat" onclick="setExploreCat(this,'80')">🏋️ Leisure</button>
+    <div style="padding:0 16px 12px;display:flex;align-items:center;gap:10px;">
+      <div style="font-size:13px;color:var(--text-2);font-weight:500;">📍 Near me</div>
+      <div id="exploreNearbyToggle" onclick="toggleExploreNearby()" style="width:40px;height:22px;border-radius:11px;background:var(--border-mid);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;">
+        <div id="exploreNearbyKnob" style="position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-3)" id="exploreNearbyLabel">Show attractions near your location</div>
+    </div>
+    <div style="padding:0 16px 80px;">
+      <div id="exploreGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;"></div>
+      <div id="exploreLoading" style="text-align:center;padding:40px;color:var(--text-3);font-size:14px;display:none;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading...</div>
+      <div id="exploreEmpty" style="text-align:center;padding:48px 20px;color:var(--text-3);font-size:14px;display:none;"><div style="font-size:36px;margin-bottom:8px;">🗺️</div>No results found!</div>
+      <button id="exploreLoadMore" onclick="loadMoreExplore()" style="display:none;width:100%;margin-top:16px;padding:12px;background:var(--surface);border:1.5px solid var(--border-mid);border-radius:999px;font-size:14px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:var(--font);">Load more</button>
     </div>
   </div>
-  <div style="padding:0 16px 12px;display:flex;align-items:center;gap:10px;">
-    <div style="font-size:13px;color:var(--text-2);font-weight:500;">📍 Near me</div>
-    <div id="exploreNearbyToggle" onclick="toggleExploreNearby()" style="width:40px;height:22px;border-radius:11px;background:var(--border-mid);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;">
-      <div id="exploreNearbyKnob" style="position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+
+  <!-- STORIES 섹션 -->
+  <div id="exploreStoriesSection" style="display:none;padding:16px 16px 80px;">
+    <div id="exploreStoriesList"></div>
+    <div id="exploreStoriesLoading" style="text-align:center;padding:40px;color:var(--text-3);font-size:14px;">
+      <div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading travel stories...
     </div>
-    <div style="font-size:11px;color:var(--text-3)" id="exploreNearbyLabel">Show attractions near your location</div>
-  </div>
-  <div style="padding:0 16px 80px;">
-    <div id="exploreGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;"></div>
-    <div id="exploreLoading" style="text-align:center;padding:40px;color:var(--text-3);font-size:14px;display:none;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading...</div>
-    <div id="exploreEmpty" style="text-align:center;padding:48px 20px;color:var(--text-3);font-size:14px;display:none;"><div style="font-size:36px;margin-bottom:8px;">🗺️</div>No results found!</div>
-    <button id="exploreLoadMore" onclick="loadMoreExplore()" style="display:none;width:100%;margin-top:16px;padding:12px;background:var(--surface);border:1.5px solid var(--border-mid);border-radius:999px;font-size:14px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:var(--font);">Load more</button>
   </div>
 </div>
 
@@ -11206,6 +11228,85 @@ window.closeExplore = function() {
   var allTab = document.querySelector('.tab-btn[onclick*="setTab"][onclick*="all"]');
   if (allTab) allTab.classList.add('active');
 };
+
+// ── Places / Stories 섹션 스위처 ──
+let exploreSection = 'places';
+
+window.switchExploreSection = function(section) {
+  exploreSection = section;
+  var places  = document.getElementById('explorePlacesSection');
+  var stories = document.getElementById('exploreStoriesSection');
+  var btnP = document.getElementById('expSwitch-places');
+  var btnS = document.getElementById('expSwitch-stories');
+
+  if (section === 'places') {
+    places.style.display  = '';
+    stories.style.display = 'none';
+    btnP.style.borderBottomColor = 'var(--green)';
+    btnP.style.color = 'var(--green)';
+    btnP.style.fontWeight = '700';
+    btnS.style.borderBottomColor = 'transparent';
+    btnS.style.color = 'var(--text-3)';
+    btnS.style.fontWeight = '500';
+    if (!document.getElementById('exploreGrid').children.length) loadExplore(true);
+  } else {
+    places.style.display  = 'none';
+    stories.style.display = '';
+    btnS.style.borderBottomColor = 'var(--green)';
+    btnS.style.color = 'var(--green)';
+    btnS.style.fontWeight = '700';
+    btnP.style.borderBottomColor = 'transparent';
+    btnP.style.color = 'var(--text-3)';
+    btnP.style.fontWeight = '500';
+    loadExploreStories();
+  }
+};
+
+async function loadExploreStories() {
+  var list    = document.getElementById('exploreStoriesList');
+  var loading = document.getElementById('exploreStoriesLoading');
+  if (list.children.length > 0) { loading.style.display = 'none'; return; }
+  loading.style.display = '';
+
+  // POSTS에서 travel 태그 글 필터링
+  var travelPosts = POSTS.filter(function(p) {
+    return p.topic === 'travel' && !p.deleted;
+  }).sort(function(a, b) {
+    var ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+    var tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+    return tb - ta;
+  });
+
+  loading.style.display = 'none';
+
+  if (travelPosts.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text-3);font-size:14px;">' +
+      '<div style="font-size:36px;margin-bottom:8px;">✈️</div>' +
+      'No travel stories yet — be the first to share!</div>';
+    return;
+  }
+
+  list.innerHTML = travelPosts.map(function(p) {
+    var preview = (p.previewText || p.preview || '').replace(/<[^>]*>/g, '').slice(0, 120);
+    var imgHtml = p.imageURL
+      ? '<img src="' + p.imageURL + '" style="width:100%;height:160px;object-fit:cover;border-radius:12px 12px 0 0;" loading="lazy">'
+      : '';
+    return '<div onclick="openDetail('' + p.id + '')" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;cursor:pointer;transition:box-shadow 0.15s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">' +
+      imgHtml +
+      '<div style="padding:14px;">' +
+        '<div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:0.4px;text-transform:uppercase;margin-bottom:6px;">✈️ Travel</div>' +
+        '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.3;">' + (p.title || '—') + '</div>' +
+        '<div style="font-size:13px;color:var(--text-2);line-height:1.5;">' + preview + '</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:var(--text-3);">' +
+          '<span>' + (p.author || 'Anonymous') + '</span>' +
+          '<span>·</span>' +
+          '<span>' + (p.time || '') + '</span>' +
+          '<span style="margin-left:auto;">▲ ' + (p.votes || 0) + ' · 💬 ' + (p.commentCount || 0) + '</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
 
 window.setExploreCat = function(el, cat) {
   document.querySelectorAll('.exp-cat').forEach(c => c.classList.remove('active'));

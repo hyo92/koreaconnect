@@ -11941,10 +11941,7 @@ async function generateDescWithClaude(item) {
     var catLabel = catLabels[String(item.contenttypeid)] || 'place';
     var name = (item.title || '').replace(/\([^)]*\)/g,'').trim();
     var addr = item.addr1 || '';
-    var prompt = 'Write a 2-3 sentence English description for this Korean ' + catLabel + '.
-Name: ' + name + '
-Address: ' + addr + '
-Write naturally as if for a travel guide. Return only the description.';
+    var prompt = 'Write a 2-3 sentence English description for this Korean ' + catLabel + '. Name: ' + name + ', Address: ' + addr + '. Write naturally as if for a travel guide. Return only the description.';
 
     var res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

@@ -11838,19 +11838,25 @@ async function loadExploreDetailDesc(contentId, contentTypeId, el) {
         MobileOS:      'ETC',
         MobileApp:     'KoreaConnect',
         _type:         'json',
-        contentId:     contentId,
-        contentTypeId: contentTypeId || '',
+        contentId:     String(contentId),
+        contentTypeId: String(contentTypeId || ''),
         overviewYN:    'Y',
         defaultYN:     'Y',
+        addrinfoYN:    'Y',
+        mapinfoYN:     'Y',
       }).toString();
+    console.log('[DetailDesc] URL:', url.slice(0,120));
     var res  = await fetch(url);
     var data = await res.json();
+    console.log('[DetailDesc] 응답:', JSON.stringify(data?.response?.body?.items).slice(0,200));
     var item = data?.response?.body?.items?.item;
     if (Array.isArray(item)) item = item[0];
-    var overview = item?.overview || item?.homepage || '';
+    console.log('[DetailDesc] item:', JSON.stringify(item)?.slice(0,200));
+    var overview = item?.overview || '';
     overview = overview.replace(/<[^>]*>/g, '').trim();
     el.textContent = overview || 'No description available.';
   } catch(e) {
+    console.error('[DetailDesc] 에러:', e);
     el.textContent = 'Could not load description.';
   }
 }

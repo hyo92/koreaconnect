@@ -11865,33 +11865,28 @@ function buildExploreDescFromItem(item, el) {
 
 async function loadExploreDetailDesc(contentId, contentTypeId, el) {
   if (!contentId) { el.textContent = 'No description available.'; return; }
-  console.log('[DetailDesc] contentId:', contentId, 'type:', contentTypeId);
   try {
-    var url = 'https://apis.data.go.kr/B551011/EngService2/detailCommon2?' +
-      new URLSearchParams({
-        serviceKey:    VISITKOREA_KEY,
-        MobileOS:      'ETC',
-        MobileApp:     'KoreaConnect',
-        _type:         'json',
-        contentId:     String(contentId),
-        contentTypeId: String(contentTypeId || ''),
-        overviewYN:    'Y',
-        defaultYN:     'Y',
-      }).toString();
+    // URLSearchParams가 키를 이중 인코딩하는 문제 방지 — URL 직접 조합
+    var url = 'https://apis.data.go.kr/B551011/EngService2/detailCommon2' +
+      '?serviceKey=' + VISITKOREA_KEY +
+      '&MobileOS=ETC' +
+      '&MobileApp=KoreaConnect' +
+      '&_type=json' +
+      '&contentId=' + String(contentId) +
+      '&contentTypeId=' + String(contentTypeId || '') +
+      '&overviewYN=Y' +
+      '&defaultYN=Y';
+    console.log('[DetailDesc] URL:', url.slice(0,100));
     var res  = await fetch(url);
-    var data = await res.json();
-    var body = data?.response?.body;
-    var rawItem = body?.items?.item;
+    var text = await res.text();
+    var data = JSON.parse(text);
+    var body = data && data.response && data.response.body;
+    var rawItem = body && body.items && body.items.item;
     var item = Array.isArray(rawItem) ? rawItem[0] : (rawItem || null);
-    // 전체 응답 키 확인
-    console.log('[DetailDesc] item keys:', item ? Object.keys(item) : 'null');
-    console.log('[DetailDesc] overview:', item?.overview);
-    console.log('[DetailDesc] overviewinfo:', item?.overviewinfo);
-
-    // 여러 필드 시도
-    var overview = item?.overview || item?.overviewinfo || item?.summary || '';
-    overview = overview.replace(/<[^>]*>/g, '').trim();
-    el.textContent = overview || 'No description available for this location.';
+    console.log('[DetailDesc] item:', item ? JSON.stringify(item).slice(0,150) : 'null');
+    var overview = (item && (item.overview || item.overviewinfo || item.summary)) || '';
+    overview = overview.replace(/<[^>]*>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
+    el.textContent = overview || 'No description available.';
   } catch(e) {
     console.error('[DetailDesc] 에러:', e);
     el.textContent = 'Could not load description.';
@@ -11967,6 +11962,9 @@ const SIGUNGU_KR_NAMES = {
   '7-1':'Jung-gu','7-2':'Nam-gu','7-3':'Dong-gu','7-4':'Buk-gu',
   '39-1':'Jeju-si','39-2':'Seogwipo-si',
 };
+
+// ── HTML onclick 전역 노출 ──
+
 </script>
 <!-- ══════════════════════════════════
      WEATHER DETAIL MODAL (Bottom Sheet)

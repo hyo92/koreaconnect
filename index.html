@@ -3496,7 +3496,7 @@
   .explore-card-cat { font-size:10px;font-weight:700;color:var(--green);letter-spacing:0.4px;text-transform:uppercase;margin-bottom:4px; }
   .explore-card-name { font-size:13px;font-weight:600;color:var(--text);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
   .explore-card-addr { font-size:11px;color:var(--text-3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-  .explore-tab { color:var(--green) !important;font-weight:600 !important; }
+  .explore-tab.active { color:var(--green) !important;font-weight:600 !important; }
 </style>
 </head>
 <body>
@@ -3774,14 +3774,14 @@
 
     <!-- ③ Sticky 카테고리 탭 — 스크롤해도 화면 상단에 고정 -->
   <div class="tabs" id="feedTabs">
-    <div class="tab-btn active" onclick="window.setTab(this,'all')">All</div>
-    <div class="tab-btn" onclick="window.setTab(this,'visa')">Visa</div>
-    <div class="tab-btn" onclick="window.setTab(this,'jobs')">Jobs</div>
-    <div class="tab-btn" onclick="window.setTab(this,'housing')">Housing</div>
-    <div class="tab-btn" onclick="window.setTab(this,'tips')">Tips</div>
-    <div class="tab-btn" onclick="window.setTab(this,'questions')">Questions</div>
-    <div class="tab-btn" onclick="window.setTab(this,'beauty')">Beauty</div>
-    <div class="tab-btn" onclick="window.setTab(this,'social')">Social</div>
+    <div class="tab-btn active" onclick="window.setTab(this,'all')">🌏 All</div>
+    <div class="tab-btn" onclick="window.setTab(this,'visa')">📋 Visa</div>
+    <div class="tab-btn" onclick="window.setTab(this,'jobs')">💼 Jobs</div>
+    <div class="tab-btn" onclick="window.setTab(this,'housing')">🏠 Housing</div>
+    <div class="tab-btn" onclick="window.setTab(this,'tips')">💡 Tips</div>
+    <div class="tab-btn" onclick="window.setTab(this,'questions')">❓ Questions</div>
+    <div class="tab-btn" onclick="window.setTab(this,'beauty')">💄 Beauty</div>
+    <div class="tab-btn" onclick="window.setTab(this,'social')">🎉 Social</div>
     <div class="tab-btn explore-tab" onclick="if(window.openExplore)window.openExplore();else setTimeout(function(){window.openExplore&&window.openExplore();},500)">🗺️ Explore</div>
   </div>
 

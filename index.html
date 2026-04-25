@@ -11636,19 +11636,50 @@ async function loadExplore(reset) {
     var total = data?.response?.body?.totalCount  || 0;
     loading.style.display = 'none';
 
-    // 구 선택 시 addr1으로 클라이언트 필터링 (영문 API가 sigunguCode 무시)
+    // 구 선택 시 addr1으로 클라이언트 필터링
+    var allItems = Array.isArray(items) ? items : (items ? [items] : []);
     if (exploreRegion && exploreDistrict) {
       var filterKey = exploreRegion + '-' + exploreDistrict;
       var kuName = SIGUNGU_KR_NAMES[filterKey];
       if (kuName) {
-        items = (Array.isArray(items) ? items : [items]).filter(function(it) {
+        allItems = allItems.filter(function(it) {
           return it.addr1 && it.addr1.indexOf(kuName) !== -1;
         });
+        // 결과가 부족하면 다음 페이지에서 더 가져오기 (최대 5페이지)
+        if (allItems.length < 8 && explorePage <= 5) {
+          var nextPage = explorePage + 1;
+          var moreParams = new URLSearchParams(params);
+          moreParams.set('pageNo', String(nextPage));
+          try {
+            var moreRes  = await fetch(base + '/areaBasedList2?' + moreParams.toString());
+            var moreData = await moreRes.json();
+            var moreItems = moreData?.response?.body?.items?.item || [];
+            moreItems = Array.isArray(moreItems) ? moreItems : [moreItems];
+            var moreFiltered = moreItems.filter(function(it) {
+              return it.addr1 && it.addr1.indexOf(kuName) !== -1;
+            });
+            allItems = allItems.concat(moreFiltered);
+            // 부족하면 한 번 더
+            if (allItems.length < 8 && moreItems.length > 0) {
+              var more2Params = new URLSearchParams(params);
+              more2Params.set('pageNo', String(nextPage + 1));
+              try {
+                var more2Res  = await fetch(base + '/areaBasedList2?' + more2Params.toString());
+                var more2Data = await more2Res.json();
+                var more2Items = more2Data?.response?.body?.items?.item || [];
+                more2Items = Array.isArray(more2Items) ? more2Items : [more2Items];
+                allItems = allItems.concat(more2Items.filter(function(it) {
+                  return it.addr1 && it.addr1.indexOf(kuName) !== -1;
+                }));
+              } catch(e) {}
+            }
+          } catch(e) {}
+        }
       }
     }
 
-    if (!items.length && explorePage === 1) { empty.style.display = ''; return; }
-    renderExploreItems(grid, Array.isArray(items) ? items : [items]);
+    if (!allItems.length && explorePage === 1) { empty.style.display = ''; return; }
+    renderExploreItems(grid, allItems);
     document.getElementById('exploreLoadMore').style.display = (explorePage * 20 < total) ? '' : 'none';
   } catch(e) {
     console.error('[Explore]', e);

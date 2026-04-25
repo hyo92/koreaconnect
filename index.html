@@ -11867,7 +11867,6 @@ function buildExploreDescFromItem(item, el) {
 
 async function loadExploreDetailDesc(contentId, contentTypeId, el) {
   if (!contentId) { el.textContent = 'No description available.'; return; }
-  console.log('[Desc] 시작 contentId:', contentId);
   var cacheKey = 'explore_desc_' + contentId;
   try {
     // 1단계: Firestore 캐시 확인
@@ -11894,9 +11893,11 @@ async function loadExploreDetailDesc(contentId, contentTypeId, el) {
     var rawItem = body && body.items && body.items.item;
     var item = Array.isArray(rawItem) ? rawItem[0] : (rawItem || null);
     var overview = (item && item.overview) || '';
-    console.log('[Desc] 국문 overview 길이:', overview.length, overview.slice(0,50));
     overview = overview.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
-    if (!overview) { el.textContent = 'No description available.'; return; }
+    if (!overview) {
+      // 설명 없으면 buildExploreDescFromItem 결과 그대로 유지 (이미 표시됨)
+      return;
+    }
 
     // 3단계: Claude API로 영문 번역
     el.textContent = 'Translating...';

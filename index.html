@@ -11950,29 +11950,31 @@ async function loadFestivalDetail(contentId, festBox) {
     console.log('[FestivalDetail] item:', item ? JSON.stringify(item).slice(0, 300) : 'null');
     if (!item) return;
 
-    // 요금 정보 업데이트
-    var feeText = item.usetimefestival || item.usefee || item.discountinfofestival || '';
+    // 요금/운영시간
+    var feeText = item.discountinfofestival || item.usetimefestival || '';
+    var timeText = item.playtime || '';
     feeText = feeText.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').trim();
-    if (feeText) {
-      var feeEl = festBox.querySelector('[data-field="fee"]');
-      if (feeEl) {
-        feeEl.textContent = feeText;
-      } else {
-        var feeRow = document.createElement('div');
-        feeRow.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;';
-        feeRow.innerHTML = '<span style="font-size:13px;min-width:16px;">💰</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Admission</div><div style="font-size:13px;color:var(--text);font-weight:500;" data-field="fee">' + feeText + '</div></div>';
-        festBox.appendChild(feeRow);
-      }
-    }
+    timeText = timeText.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').trim();
+    var admissionText = [feeText, timeText ? 'Hours: ' + timeText : ''].filter(Boolean).join(' / ');
+    if (!admissionText) admissionText = 'Free';
+    var feeRow = document.createElement('div');
+    feeRow.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;';
+    feeRow.innerHTML = '<span style="font-size:13px;min-width:16px;">💰</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Admission</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + admissionText + '</div></div>';
+    festBox.appendChild(feeRow);
 
-    // 홈페이지/SNS
-    var homepage = item.homepage || '';
-    homepage = homepage.replace(/<[^>]*>/g,'').trim();
-    if (homepage) {
+    // 홈페이지/SNS — eventhomepage 필드 사용
+    var homepageRaw = item.eventhomepage || item.homepage || '';
+    homepageRaw = homepageRaw.replace(/&amp;/g,'&').trim();
+    // URL 추출
+    var urlMatches = homepageRaw.match(/https?:\/\/[^\s<>"]+/g) || [];
+    if (urlMatches.length > 0) {
       var infoRow = document.createElement('div');
       infoRow.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-top:4px;';
-      var links = '<a href="' + homepage + '" target="_blank" style="color:var(--green);text-decoration:none;font-size:13px;font-weight:600;margin-right:12px;">🌐 Website</a>';
-      infoRow.innerHTML = '<span style="font-size:13px;min-width:16px;">ℹ️</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Info</div>' + links + '</div>';
+      var links = urlMatches.map(function(link) {
+        var label = link.includes('instagram') ? '📸 Instagram' : link.includes('facebook') ? '📘 Facebook' : '🌐 Website';
+        return '<a href="' + link + '" target="_blank" style="color:var(--green);text-decoration:none;font-size:13px;font-weight:600;margin-right:12px;">' + label + '</a>';
+      }).join('');
+      infoRow.innerHTML = '<span style="font-size:13px;min-width:16px;">ℹ️</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Info</div><div>' + links + '</div></div>';
       festBox.appendChild(infoRow);
     }
   } catch(e) {

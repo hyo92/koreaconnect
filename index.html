@@ -11809,7 +11809,7 @@ window.openExploreDetail = function(item) {
 
   // 축제 전용 정보 박스
   var festBox = null;
-  if (item.contenttypeid === '85' || String(item.contenttypeid) === '85') {
+  if (String(item.contenttypeid) === '85') {
     festBox = document.createElement('div');
     festBox.style.cssText = 'background:var(--green-light);border:1px solid var(--green-mid);border-radius:12px;padding:14px;margin-bottom:14px;';
     var festRows = [];
@@ -11847,10 +11847,8 @@ window.openExploreDetail = function(item) {
       festRows.push('<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><span style="font-size:13px;min-width:16px;">ℹ️</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Info</div><div style="display:flex;gap:10px;flex-wrap:wrap;">' + infoLinks.join('') + '</div></div></div>');
     }
 
-    if (festRows.length > 0) {
-      festBox.innerHTML = festRows.join('');
-      body.appendChild(festBox);
-    }
+    festBox.innerHTML = festRows.join('');
+    body.appendChild(festBox);
   } else {
     // 일반 전화번호
     if (item.tel) {

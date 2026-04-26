@@ -11624,11 +11624,19 @@ async function loadExplore(reset) {
       if (exploreCat !== 'all') params.set('contentTypeId', exploreCat);
       url = base + '/locationBasedList2?' + params.toString();
     } else {
-      if (exploreRegion)   params.set('areaCode',    exploreRegion);
-      if (exploreCat !== 'all') params.set('contentTypeId', exploreCat);
-      params.set('arrange', 'A'); // 제목순 — 지역 필터 정확히 반영
-      url = base + '/areaBasedList2?' + params.toString();
-      console.log('[Explore] areaCode=' + exploreRegion + ' sigunguCode=' + exploreDistrict + ' URL=' + url.slice(0,120));
+      if (exploreCat === '85') {
+        // 축제는 searchFestival2 — 오늘 이후 행사만
+        var today = new Date().toISOString().slice(0,10).replace(/-/g,'');
+        params.set('eventStartDate', today);
+        if (exploreRegion) params.set('areaCode', exploreRegion);
+        params.delete('contentTypeId');
+        url = base + '/searchFestival2?' + params.toString();
+      } else {
+        if (exploreRegion) params.set('areaCode', exploreRegion);
+        if (exploreCat !== 'all') params.set('contentTypeId', exploreCat);
+        params.set('arrange', 'A');
+        url = base + '/areaBasedList2?' + params.toString();
+      }
     }
     var res   = await fetch(url);
     var data  = await res.json();
@@ -11637,6 +11645,17 @@ async function loadExplore(reset) {
     loading.style.display = 'none';
 
     var allItems = Array.isArray(items) ? items : (items ? [items] : []);
+
+    // 기간 지난 축제 필터링
+    var today = new Date().toISOString().slice(0,10).replace(/-/g,''); // YYYYMMDD
+    allItems = allItems.filter(function(it) {
+      if (it.contenttypeid === '85' || it.contenttypeid === 15) {
+        // eventEndDate 없으면 일단 표시
+        if (!it.eventenddate) return true;
+        return it.eventenddate >= today;
+      }
+      return true;
+    });
     if (exploreRegion && exploreDistrict) {
       var filterKey = exploreRegion + '-' + exploreDistrict;
       var kuName = SIGUNGU_KR_NAMES[filterKey];

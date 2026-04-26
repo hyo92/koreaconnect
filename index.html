@@ -11937,12 +11937,12 @@ function buildExploreDescFromItem(item, el) {
 async function loadFestivalDetail(contentId, festBox) {
   if (!contentId || !festBox) return;
   try {
-    var url = 'https://apis.data.go.kr/B551011/EngService2/detailCommon2' +
+    // 국문 API로 축제 상세 정보 가져오기 (영문 API에 없는 필드 포함)
+    var url = 'https://apis.data.go.kr/B551011/KorService2/detailIntro2' +
       '?serviceKey=' + VISITKOREA_KEY +
       '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
       '&contentId=' + String(contentId) +
-      '&contentTypeId=85' +
-      '&defaultYN=Y&firstImageYN=Y&addrinfoYN=Y&overviewYN=Y';
+      '&contentTypeId=15';
     var res  = await fetch(url);
     var data = await res.json();
     var raw  = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;

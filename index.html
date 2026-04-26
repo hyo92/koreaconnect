@@ -11807,47 +11807,51 @@ window.openExploreDetail = function(item) {
     body.appendChild(addr);
   }
 
-  // 축제 전용 정보 박스
+  // 축제 전용 정보 박스 (searchFestival2 필드 사용)
   var festBox = null;
   if (String(item.contenttypeid) === '85') {
     festBox = document.createElement('div');
     festBox.style.cssText = 'background:var(--green-light);border:1px solid var(--green-mid);border-radius:12px;padding:14px;margin-bottom:14px;';
-    var festRows = [];
+    var festHTML = '';
+
     // 날짜
-    if (item.eventstartdate || item.eventenddate) {
-      var startStr = item.eventstartdate ? item.eventstartdate.replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3') : '';
-      var endStr   = item.eventenddate   ? item.eventenddate.replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3')   : '';
-      festRows.push('<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><span style="font-size:13px;min-width:16px;">📅</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Date</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + startStr + (endStr && endStr !== startStr ? ' ~ ' + endStr : '') + '</div></div></div>');
-    }
-    // 장소
-    if (item.addr1) {
-      festRows.push('<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><span style="font-size:13px;min-width:16px;">📍</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Venue</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + item.addr1 + '</div></div></div>');
-    }
-    // 전화
-    if (item.tel) {
-      festRows.push('<div style="display:flex;gap:8px;align-items:flex-start;"><span style="font-size:13px;min-width:16px;">📞</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Contact</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + item.tel + '</div></div></div>');
-    }
-    // 요금
-    if (item.usetimefestival || item.playtime) {
-      festRows.push('<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><span style="font-size:13px;min-width:16px;">💰</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Admission</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + (item.usetimefestival || item.playtime) + '</div></div></div>');
-    }
-    // 홈페이지/SNS
-    var infoLinks = [];
-    if (item.homepage) {
-      var homepageClean = item.homepage.replace(/<[^>]*>/g, '').trim();
-      if (homepageClean) infoLinks.push('<a href="' + homepageClean + '" target="_blank" style="color:var(--green);text-decoration:none;font-size:13px;font-weight:600;">🌐 Website</a>');
-    }
-    if (item.infocenter) {
-      var snsList = item.infocenter.match(/https?:\/\/[^\s<>]+/g) || [];
-      snsList.forEach(function(link) {
-        if (link.includes('instagram')) infoLinks.push('<a href="' + link + '" target="_blank" style="color:var(--green);text-decoration:none;font-size:13px;font-weight:600;">📸 Instagram</a>');
-      });
-    }
-    if (infoLinks.length > 0) {
-      festRows.push('<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><span style="font-size:13px;min-width:16px;">ℹ️</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Info</div><div style="display:flex;gap:10px;flex-wrap:wrap;">' + infoLinks.join('') + '</div></div></div>');
+    var sd = item.eventstartdate || '';
+    var ed = item.eventenddate || '';
+    if (sd) {
+      var sdStr = sd.slice(0,4)+'.'+sd.slice(4,6)+'.'+sd.slice(6,8);
+      var edStr = ed ? ed.slice(0,4)+'.'+ed.slice(4,6)+'.'+ed.slice(6,8) : '';
+      festHTML += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;"><span>📅</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Date</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + sdStr + (edStr && edStr!==sdStr ? ' ~ '+edStr : '') + '</div></div></div>';
     }
 
-    festBox.innerHTML = festRows.join('');
+    // 장소 (eventplace 우선, 없으면 addr1)
+    var venue = item.eventplace || item.addr1 || '';
+    if (venue) {
+      festHTML += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;"><span>📍</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Venue</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + venue + '</div></div></div>';
+    }
+
+    // 요금 (playtime에 운영시간, discountinfofestival에 요금)
+    var admission = item.discountinfofestival || '';
+    var hours = item.playtime || '';
+    if (admission || hours) {
+      var admText = [admission, hours ? 'Hours: '+hours : ''].filter(Boolean).join(' · ');
+      festHTML += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;"><span>💰</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Admission</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + admText + '</div></div></div>';
+    }
+
+    // 홈페이지 (eventhomepage)
+    var homepage = item.eventhomepage || item.homepage || '';
+    homepage = homepage.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').trim();
+    if (homepage) {
+      var urls = homepage.match(/https?:\/\/[^\s]+/g) || (homepage.startsWith('http') ? [homepage] : []);
+      if (urls.length > 0) {
+        var linkHTML = urls.map(function(u) {
+          var label = u.includes('instagram') ? '📸 Instagram' : u.includes('facebook') ? '📘 Facebook' : '🌐 Website';
+          return '<a href="'+u+'" target="_blank" style="color:var(--green);text-decoration:none;font-size:13px;font-weight:600;margin-right:10px;">'+label+'</a>';
+        }).join('');
+        festHTML += '<div style="display:flex;gap:8px;align-items:flex-start;"><span>ℹ️</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Info</div><div style="margin-top:3px;">'+linkHTML+'</div></div></div>';
+      }
+    }
+
+    festBox.innerHTML = festHTML;
     body.appendChild(festBox);
   } else {
     // 일반 전화번호

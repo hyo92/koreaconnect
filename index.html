@@ -11888,6 +11888,7 @@ window.openExploreDetail = function(item) {
     body.appendChild(webLink);
   }
   // 코스 추천 섹션 (축제 제외)
+  console.log('[Course] contenttypeid:', item.contenttypeid, typeof item.contenttypeid);
   var courseDiv = null;
   if (String(item.contenttypeid) !== '85') {
     var courseSection = document.createElement('div');

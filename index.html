@@ -11888,12 +11888,18 @@ window.openExploreDetail = function(item) {
     body.appendChild(webLink);
   }
   // 코스 추천 섹션 (축제 제외)
+  var courseDiv = null;
   if (String(item.contenttypeid) !== '85') {
     var courseSection = document.createElement('div');
     courseSection.style.cssText = 'margin-top:16px;';
-    courseSection.innerHTML =
-      '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">✨ Recommended Course</div>' +
-      '<div id="exploreCourseDiv" style="font-size:13px;color:var(--text-2);padding:12px;background:var(--bg);border-radius:10px;line-height:1.7;">Generating course...</div>';
+    var courseTitle = document.createElement('div');
+    courseTitle.style.cssText = 'font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;';
+    courseTitle.textContent = '✨ Recommended Course';
+    courseDiv = document.createElement('div');
+    courseDiv.style.cssText = 'font-size:13px;color:var(--text-2);padding:12px;background:var(--bg);border-radius:10px;line-height:1.7;';
+    courseDiv.textContent = 'Generating course...';
+    courseSection.appendChild(courseTitle);
+    courseSection.appendChild(courseDiv);
     body.appendChild(courseSection);
   }
 
@@ -11934,9 +11940,8 @@ window.openExploreDetail = function(item) {
   // 3) detailCommon2로 overview 비동기 로드 (있으면 교체)
   loadExploreDetailDesc(item.contentid, item.contenttypeid, descDiv, item);
   // 4) 코스 추천 (축제 제외)
-  if (String(item.contenttypeid) !== '85') {
-    var courseDiv = document.getElementById('exploreCourseDiv');
-    if (courseDiv) loadCourseRecommendation(item, courseDiv);
+  if (String(item.contenttypeid) !== '85' && courseDiv) {
+    loadCourseRecommendation(item, courseDiv);
   }
 };
 

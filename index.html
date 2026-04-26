@@ -11823,19 +11823,17 @@ window.openExploreDetail = function(item) {
       festHTML += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;"><span>📅</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Date</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + sdStr + (edStr && edStr!==sdStr ? ' ~ '+edStr : '') + '</div></div></div>';
     }
 
-    // 장소 (eventplace 우선, 없으면 addr1)
-    var venue = item.eventplace || item.addr1 || '';
+    // 장소 — eventplace만 사용 (addr1은 이미 상단에 표시됨)
+    var venue = (item.eventplace || '').replace(/<[^>]*>/g,'').trim();
     if (venue) {
       festHTML += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;"><span>📍</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Venue</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + venue + '</div></div></div>';
     }
 
-    // 요금 (playtime에 운영시간, discountinfofestival에 요금)
-    var admission = item.discountinfofestival || '';
-    var hours = item.playtime || '';
-    if (admission || hours) {
-      var admText = [admission, hours ? 'Hours: '+hours : ''].filter(Boolean).join(' · ');
-      festHTML += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;"><span>💰</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Admission</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + admText + '</div></div></div>';
-    }
+    // 요금 (없으면 Free 표시)
+    var admission = (item.discountinfofestival || '').replace(/<[^>]*>/g,'').trim();
+    var hours = (item.playtime || '').replace(/<[^>]*>/g,'').trim();
+    var admText = admission || (hours ? 'Hours: '+hours : 'Free');
+    festHTML += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;"><span>💰</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Admission</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + admText + '</div></div></div>';
 
     // 홈페이지 (eventhomepage)
     var homepage = item.eventhomepage || item.homepage || '';

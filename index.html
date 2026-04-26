@@ -11894,10 +11894,10 @@ window.openExploreDetail = function(item) {
     courseSection.style.cssText = 'margin-top:16px;';
     var courseTitle = document.createElement('div');
     courseTitle.style.cssText = 'font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;';
-    courseTitle.textContent = '✨ Recommended Course';
+    courseTitle.textContent = '📍 Nearby Places';
     courseDiv = document.createElement('div');
     courseDiv.style.cssText = 'font-size:13px;color:var(--text-2);padding:12px;background:var(--bg);border-radius:10px;line-height:1.7;';
-    courseDiv.textContent = 'Generating course...';
+    courseDiv.textContent = 'Loading nearby places...';
     courseSection.appendChild(courseTitle);
     courseSection.appendChild(courseDiv);
     body.appendChild(courseSection);
@@ -12046,23 +12046,8 @@ async function loadExploreDetailDesc(contentId, contentTypeId, el, itemData) {
     var overview = (item && item.overview) || '';
     overview = overview.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
     if (!overview) {
-      // 설명 없으면 이름+주소로 Claude가 설명 생성
-      if (itemData) {
-        el.textContent = 'Generating description...';
-        var generated = await generateDescWithClaude(itemData);
-        el.textContent = generated;
-        // Firestore에 캐시
-        if (firebaseOk && generated !== 'No description available.') {
-          try {
-            await setDoc(doc(db, 'explore_cache', String(contentId)), {
-              overview: generated,
-              contentId: String(contentId),
-              translatedAt: new Date().toISOString(),
-              generated: true,
-            });
-          } catch(e) {}
-        }
-      }
+      // overview 없으면 그냥 숨김 처리
+      el.style.display = 'none';
       return;
     }
 
@@ -12190,67 +12175,114 @@ const SIGUNGU_KR_NAMES = {
 
 async function loadCourseRecommendation(item, el) {
   if (!item || !el) return;
+
+  // mapx/mapy 없으면 표시 불가
+  var mapX = parseFloat(item.mapx);
+  var mapY = parseFloat(item.mapy);
+  if (!mapX || !mapY) {
+    el.style.display = 'none';
+    el.previousElementSibling && (el.previousElementSibling.style.display = 'none');
+    return;
+  }
+
   var cacheId = 'course_' + (item.contentid || '');
 
   // Firestore 캐시 확인
   if (firebaseOk && item.contentid) {
     try {
       var snap = await getDoc(doc(db, 'explore_cache', cacheId));
-      if (snap.exists() && snap.data().course) {
-        renderCourse(el, snap.data().course);
+      if (snap.exists() && snap.data().nearbyPlaces) {
+        renderCourse(el, snap.data().nearbyPlaces);
         return;
       }
     } catch(e) {}
   }
 
-  // Cohere로 코스 생성
-  var name = (item.title || '').replace(/\([^)]*\)/g, '').trim();
-  var addr = item.addr1 || '';
-  var catLabels = {'76':'tourist attraction','78':'cultural facility','79':'shopping destination','80':'leisure spot','82':'accommodation'};
-  var cat = catLabels[String(item.contenttypeid)] || 'place';
+  el.textContent = 'Finding nearby places...';
 
   try {
-    var res = await fetch('https://us-central1-koreaconnect-81f3b.cloudfunctions.net/claudeTranslate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'course',
-        name: name,
-        addr: addr,
-        cat: cat
-      })
-    });
-    var data = await res.json();
-    var course = data.result || '';
-    if (!course) { el.textContent = 'No course available.'; return; }
+    // VisitKorea locationBasedList2 — 반경 500m 실제 장소
+    var url = 'https://apis.data.go.kr/B551011/EngService2/locationBasedList2' +
+      '?serviceKey=' + VISITKOREA_KEY +
+      '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
+      '&mapX=' + mapX +
+      '&mapY=' + mapY +
+      '&radius=500' +
+      '&numOfRows=6' +
+      '&arrange=S';  // S = 거리순
 
-    renderCourse(el, course);
+    var res  = await fetch(url);
+    var data = await res.json();
+    var rawItems = (data && data.response && data.response.body && data.response.body.items && data.response.body.items.item) || [];
+    var places = Array.isArray(rawItems) ? rawItems : [rawItems];
+
+    // 현재 장소 자신 제외
+    places = places.filter(function(p) {
+      return String(p.contentid) !== String(item.contentid);
+    }).slice(0, 5);
+
+    if (!places.length) {
+      el.style.display = 'none';
+      el.previousElementSibling && (el.previousElementSibling.style.display = 'none');
+      return;
+    }
 
     // Firestore 캐시 저장
     if (firebaseOk && item.contentid) {
       try {
         await setDoc(doc(db, 'explore_cache', cacheId), {
-          course: course,
+          nearbyPlaces: places,
           contentId: String(item.contentid),
           createdAt: new Date().toISOString()
         });
       } catch(e) {}
     }
+
+    renderCourse(el, places);
   } catch(e) {
-    el.textContent = 'Could not load course.';
+    el.style.display = 'none';
+    el.previousElementSibling && (el.previousElementSibling.style.display = 'none');
   }
 }
 
-function renderCourse(el, courseText) {
-  // "1. 장소 → 2. 장소" 형태로 파싱해서 카드형으로 표시
-  var lines = courseText.split(/\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+function renderCourse(el, places) {
+  var CAT_EMOJI = {'76':'🏛️','78':'🎨','79':'🛍️','80':'🎡','82':'🍽️','85':'🎉'};
   el.innerHTML = '';
-  lines.forEach(function(line) {
-    var div = document.createElement('div');
-    div.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;';
-    div.innerHTML = '<span style="color:var(--green);font-weight:700;flex-shrink:0;">→</span><span style="font-size:13px;color:var(--text);line-height:1.6;">' + line + '</span>';
-    el.appendChild(div);
-  });
+
+  // places가 배열(새 방식)이면 카드 렌더링
+  if (Array.isArray(places)) {
+    places.forEach(function(p, i) {
+      var dist = p.dist ? (parseFloat(p.dist) < 1000 ? Math.round(p.dist) + 'm' : (parseFloat(p.dist)/1000).toFixed(1) + 'km') : '';
+      var emoji = CAT_EMOJI[String(p.contenttypeid)] || '📍';
+      var name  = (p.title || '').replace(/\([^)]*\)/g,'').trim();
+
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;' + (i < places.length - 1 ? 'border-bottom:1px solid var(--border);' : '');
+
+      var numBadge = document.createElement('div');
+      numBadge.style.cssText = 'width:22px;height:22px;border-radius:50%;background:var(--green-light);color:var(--green-deeper);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+      numBadge.textContent = i + 1;
+
+      var info = document.createElement('div');
+      info.style.cssText = 'flex:1;min-width:0;';
+      info.innerHTML =
+        '<div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + emoji + ' ' + name + '</div>' +
+        (dist ? '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">📍 ' + dist + ' away</div>' : '');
+
+      row.appendChild(numBadge);
+      row.appendChild(info);
+      el.appendChild(row);
+    });
+  } else {
+    // 구형 텍스트 방식 fallback
+    var lines = String(places).split(/\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+    lines.forEach(function(line) {
+      var div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;';
+      div.innerHTML = '<span style="color:var(--green);font-weight:700;flex-shrink:0;">→</span><span style="font-size:13px;color:var(--text);line-height:1.6;">' + line + '</span>';
+      el.appendChild(div);
+    });
+  }
 }
 </script>
 <!-- ══════════════════════════════════

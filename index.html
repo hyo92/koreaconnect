@@ -11835,11 +11835,11 @@ window.openExploreDetail = function(item) {
       festHTML += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;"><span>📞</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Contact</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + tel + '</div></div></div>';
     }
 
-    // 요금 (없으면 Free 표시)
-    var admission = (item.discountinfofestival || '').replace(/<[^>]*>/g,'').trim();
+    // 운영시간 (playtime 있을 때만 표시)
     var hours = (item.playtime || '').replace(/<[^>]*>/g,'').trim();
-    var admText = admission || (hours ? 'Hours: '+hours : 'Free');
-    festHTML += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;"><span>💰</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Admission</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + admText + '</div></div></div>';
+    if (hours) {
+      festHTML += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;"><span>🕐</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Hours</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + hours + '</div></div></div>';
+    }
 
     // 홈페이지 (eventhomepage)
     var homepage = item.eventhomepage || item.homepage || '';
@@ -11974,17 +11974,7 @@ async function loadFestivalDetail(contentId, festBox) {
     var item = Array.isArray(raw) ? raw[0] : (raw || null);
     if (!item) return;
 
-    // 요금/운영시간
-    var feeText = item.discountinfofestival || item.usetimefestival || '';
-    var timeText = item.playtime || '';
-    feeText = feeText.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').trim();
-    timeText = timeText.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').trim();
-    var admissionText = [feeText, timeText ? 'Hours: ' + timeText : ''].filter(Boolean).join(' / ');
-    if (!admissionText) admissionText = 'Free';
-    var feeRow = document.createElement('div');
-    feeRow.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;';
-    feeRow.innerHTML = '<span style="font-size:13px;min-width:16px;">💰</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Admission</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + admissionText + '</div></div>';
-    festBox.appendChild(feeRow);
+    // Admission 제거됨
 
     // 홈페이지/SNS — eventhomepage 필드 사용
     var homepageRaw = item.eventhomepage || item.homepage || '';

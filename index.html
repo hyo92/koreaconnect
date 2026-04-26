@@ -11887,6 +11887,16 @@ window.openExploreDetail = function(item) {
     webLink.textContent = 'Visit Website →';
     body.appendChild(webLink);
   }
+  // 코스 추천 섹션 (축제 제외)
+  if (String(item.contenttypeid) !== '85') {
+    var courseSection = document.createElement('div');
+    courseSection.style.cssText = 'margin-top:16px;';
+    courseSection.innerHTML =
+      '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">✨ Recommended Course</div>' +
+      '<div id="exploreCourseDiv" style="font-size:13px;color:var(--text-2);padding:12px;background:var(--bg);border-radius:10px;line-height:1.7;">Generating course...</div>';
+    body.appendChild(courseSection);
+  }
+
   // 하단 버튼 영역 — 설명글 아래
   var btnWrap = document.createElement('div');
   btnWrap.style.cssText = 'margin-top:16px;display:flex;flex-direction:column;gap:8px;';
@@ -11923,6 +11933,11 @@ window.openExploreDetail = function(item) {
   }
   // 3) detailCommon2로 overview 비동기 로드 (있으면 교체)
   loadExploreDetailDesc(item.contentid, item.contenttypeid, descDiv, item);
+  // 4) 코스 추천 (축제 제외)
+  if (String(item.contenttypeid) !== '85') {
+    var courseDiv = document.getElementById('exploreCourseDiv');
+    if (courseDiv) loadCourseRecommendation(item, courseDiv);
+  }
 };
 
 function buildExploreDescFromItem(item, el) {
@@ -12167,6 +12182,71 @@ const SIGUNGU_KR_NAMES = {
 
 // ── HTML onclick 전역 노출 ──
 
+
+async function loadCourseRecommendation(item, el) {
+  if (!item || !el) return;
+  var cacheId = 'course_' + (item.contentid || '');
+
+  // Firestore 캐시 확인
+  if (firebaseOk && item.contentid) {
+    try {
+      var snap = await getDoc(doc(db, 'explore_cache', cacheId));
+      if (snap.exists() && snap.data().course) {
+        renderCourse(el, snap.data().course);
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // Cohere로 코스 생성
+  var name = (item.title || '').replace(/\([^)]*\)/g, '').trim();
+  var addr = item.addr1 || '';
+  var catLabels = {'76':'tourist attraction','78':'cultural facility','79':'shopping destination','80':'leisure spot','82':'accommodation'};
+  var cat = catLabels[String(item.contenttypeid)] || 'place';
+
+  try {
+    var res = await fetch('https://us-central1-koreaconnect-81f3b.cloudfunctions.net/claudeTranslate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'course',
+        name: name,
+        addr: addr,
+        cat: cat
+      })
+    });
+    var data = await res.json();
+    var course = data.result || '';
+    if (!course) { el.textContent = 'No course available.'; return; }
+
+    renderCourse(el, course);
+
+    // Firestore 캐시 저장
+    if (firebaseOk && item.contentid) {
+      try {
+        await setDoc(doc(db, 'explore_cache', cacheId), {
+          course: course,
+          contentId: String(item.contentid),
+          createdAt: new Date().toISOString()
+        });
+      } catch(e) {}
+    }
+  } catch(e) {
+    el.textContent = 'Could not load course.';
+  }
+}
+
+function renderCourse(el, courseText) {
+  // "1. 장소 → 2. 장소" 형태로 파싱해서 카드형으로 표시
+  var lines = courseText.split(/\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+  el.innerHTML = '';
+  lines.forEach(function(line) {
+    var div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;';
+    div.innerHTML = '<span style="color:var(--green);font-weight:700;flex-shrink:0;">→</span><span style="font-size:13px;color:var(--text);line-height:1.6;">' + line + '</span>';
+    el.appendChild(div);
+  });
+}
 </script>
 <!-- ══════════════════════════════════
      WEATHER DETAIL MODAL (Bottom Sheet)

@@ -11937,11 +11937,12 @@ function buildExploreDescFromItem(item, el) {
 async function loadFestivalDetail(contentId, festBox) {
   if (!contentId || !festBox) return;
   try {
-    var url = 'https://apis.data.go.kr/B551011/EngService2/detailIntro2' +
+    var url = 'https://apis.data.go.kr/B551011/EngService2/detailCommon2' +
       '?serviceKey=' + VISITKOREA_KEY +
       '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
       '&contentId=' + String(contentId) +
-      '&contentTypeId=85';
+      '&contentTypeId=85' +
+      '&defaultYN=Y&firstImageYN=Y&addrinfoYN=Y&overviewYN=Y';
     var res  = await fetch(url);
     var data = await res.json();
     var raw  = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;

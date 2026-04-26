@@ -11947,6 +11947,8 @@ async function loadFestivalDetail(contentId, festBox) {
     var data = await res.json();
     var raw  = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;
     var item = Array.isArray(raw) ? raw[0] : (raw || null);
+    console.log('[FestivalDetail] URL:', url);
+    console.log('[FestivalDetail] 전체 응답:', JSON.stringify(data).slice(0, 400));
     console.log('[FestivalDetail] item:', item ? JSON.stringify(item).slice(0, 300) : 'null');
     if (!item) return;
 

@@ -11946,6 +11946,7 @@ async function loadFestivalDetail(contentId, festBox) {
     var data = await res.json();
     var raw  = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;
     var item = Array.isArray(raw) ? raw[0] : (raw || null);
+    console.log('[FestivalDetail] item:', item ? JSON.stringify(item).slice(0, 300) : 'null');
     if (!item) return;
 
     // 요금 정보 업데이트

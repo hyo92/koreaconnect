@@ -4795,6 +4795,21 @@
     <div id="fePmError" style="display:none;color:#E53935;font-size:12px;text-align:center;margin-top:-4px">
       Please select a topic to continue.
     </div>
+    <!-- 장소 태깅 — travel 선택 시 표시 -->
+    <div id="fePmPlaceTagWrap" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:14px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">📍 Tag a Place <span style="font-weight:400;color:var(--text-3);">(optional)</span></div>
+      <div style="position:relative;">
+        <input id="fePmPlaceInput" type="text" placeholder="Search for a place in Korea..."
+          style="width:100%;padding:10px 14px;border:1.5px solid var(--border-mid);border-radius:10px;font-family:var(--font);font-size:13px;outline:none;background:var(--bg);"
+          oninput="fePmSearchPlace(this.value)"
+          onfocus="this.style.borderColor='var(--green)'" onblur="setTimeout(function(){var d=document.getElementById('fePmPlaceResults');if(d)d.style.display='none';},200)">
+        <div id="fePmPlaceResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border-mid);border-radius:10px;margin-top:4px;max-height:180px;overflow-y:auto;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.1);"></div>
+      </div>
+      <div id="fePmPlaceSelected" style="display:none;margin-top:8px;display:none;align-items:center;gap:8px;padding:8px 12px;background:var(--green-light);border-radius:8px;">
+        <span style="font-size:13px;font-weight:600;color:var(--green-deeper);" id="fePmPlaceSelectedName"></span>
+        <button onclick="fePmClearPlace()" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-3);line-height:1;">×</button>
+      </div>
+    </div>
     <div class="fe-pm-actions">
       <button class="fe-pm-cancel" onclick="feClosePublishModal()">Cancel</button>
       <button class="fe-pm-confirm" id="fePmConfirmBtn" onclick="feConfirmPublish()">
@@ -9025,6 +9040,7 @@ window.feInsertDivider = function(event) {
 
 // ── Publish 모달 ──
 let fePmTopic = null;
+let fePmPlaceTag = null; // { placeId, placeName }
 
 window.feOpenPublishModal = function() {
   if (!currentUser) { openLoginGate(); return; }
@@ -9071,7 +9087,68 @@ window.fePmPickTopic = function(el, topic) {
   if (btn) btn.classList.add('ready');
   const errEl = document.getElementById('fePmError');
   if (errEl) errEl.style.display = 'none';
+  // travel 선택 시 장소 태깅 UI 표시
+  var placeWrap = document.getElementById('fePmPlaceTagWrap');
+  if (placeWrap) placeWrap.style.display = topic === 'travel' ? 'block' : 'none';
+  if (topic !== 'travel') fePmClearPlace();
 }
+
+// ── 장소 태깅: 검색 ──
+var fePmPlaceSearchTimer = null;
+window.fePmSearchPlace = function(val) {
+  var results = document.getElementById('fePmPlaceResults');
+  if (!val || val.trim().length < 2) { if (results) results.style.display = 'none'; return; }
+  clearTimeout(fePmPlaceSearchTimer);
+  fePmPlaceSearchTimer = setTimeout(async function() {
+    try {
+      var url = 'https://apis.data.go.kr/B551011/EngService2/searchKeyword2' +
+        '?serviceKey=' + VISITKOREA_KEY +
+        '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
+        '&keyword=' + encodeURIComponent(val.trim()) +
+        '&numOfRows=5';
+      var res  = await fetch(url);
+      var data = await res.json();
+      var raw  = (data && data.response && data.response.body && data.response.body.items && data.response.body.items.item) || [];
+      var items = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+      if (!results) return;
+      if (!items.length) { results.style.display = 'none'; return; }
+      results.innerHTML = '';
+      items.forEach(function(p) {
+        var name = (p.title || '').replace(/<[^>]*>/g, '').trim();
+        var addr = (p.addr1 || '').trim();
+        var row  = document.createElement('div');
+        row.style.cssText = 'padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;';
+        row.innerHTML = '<div style="font-weight:600;color:var(--text);">📍 ' + name + '</div>' +
+          (addr ? '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">' + addr + '</div>' : '');
+        row.onmousedown = function() { fePmSelectPlace(p.contentid, name); };
+        results.appendChild(row);
+      });
+      results.style.display = 'block';
+    } catch(e) { }
+  }, 350);
+};
+
+// ── 장소 태깅: 선택 ──
+window.fePmSelectPlace = function(placeId, placeName) {
+  fePmPlaceTag = { placeId: String(placeId), placeName: placeName };
+  var input    = document.getElementById('fePmPlaceInput');
+  var results  = document.getElementById('fePmPlaceResults');
+  var selected = document.getElementById('fePmPlaceSelected');
+  var nameEl   = document.getElementById('fePmPlaceSelectedName');
+  if (input)    input.value = '';
+  if (results)  results.style.display = 'none';
+  if (nameEl)   nameEl.textContent = '📍 ' + placeName;
+  if (selected) selected.style.display = 'flex';
+};
+
+// ── 장소 태깅: 초기화 ──
+window.fePmClearPlace = function() {
+  fePmPlaceTag = null;
+  var input    = document.getElementById('fePmPlaceInput');
+  var selected = document.getElementById('fePmPlaceSelected');
+  if (input)    input.value = '';
+  if (selected) selected.style.display = 'none';
+};
 
 window.feConfirmPublish = async function() {
   if (!fePmTopic) {
@@ -9219,6 +9296,7 @@ window.publishFromEditor = async function() {
     ...(locationStr  ? { location: locationStr }  : {}),
     ...(imageURL     ? { imageURL }               : {}),
     ...(imageURLs.length > 1 ? { imageURLs }      : {}),
+    ...(fePmPlaceTag ? { placeId: fePmPlaceTag.placeId, placeName: fePmPlaceTag.placeName } : {}),
   };
 
   if (firebaseOk) {
@@ -9251,7 +9329,7 @@ function feResetEditor() {
   if (lc) lc.textContent = '0';
   document.querySelectorAll('.fe-chip').forEach(c => c.classList.remove('selected'));
   feImages.forEach(img => URL.revokeObjectURL(img.localUrl));
-  feImages = []; feTopic = null; selectedFlair = null;
+  feImages = []; feTopic = null; selectedFlair = null; fePmPlaceTag = null;
   const btn = document.getElementById('fePublishBtn');
   if (btn) { btn.textContent = 'Publish'; btn.classList.remove('ready'); }
   const lbl = document.getElementById('feAutosaveLabel');
@@ -11422,7 +11500,7 @@ function buildExploreInline() {
 // ── Places / Stories 섹션 스위처 ──
 let exploreSection = 'places';
 
-window.switchExploreSection = function(section) {
+window.switchExploreSection = function(section, filterPlaceId) {
   exploreSection = section;
   var places  = document.getElementById('explorePlacesSection');
   var stories = document.getElementById('exploreStoriesSection');
@@ -11448,19 +11526,24 @@ window.switchExploreSection = function(section) {
     btnP.style.borderBottomColor = 'transparent';
     btnP.style.color = 'var(--text-3)';
     btnP.style.fontWeight = '500';
-    loadExploreStories();
+    // 장소 필터 초기화 후 로드
+    var list = document.getElementById('exploreStoriesList');
+    if (list) list.innerHTML = '';
+    loadExploreStories(filterPlaceId || null);
   }
 };
 
-async function loadExploreStories() {
+async function loadExploreStories(filterPlaceId) {
   var list    = document.getElementById('exploreStoriesList');
   var loading = document.getElementById('exploreStoriesLoading');
-  if (list.children.length > 0) { loading.style.display = 'none'; return; }
+  if (!filterPlaceId && list.children.length > 0) { loading.style.display = 'none'; return; }
   loading.style.display = '';
 
   // POSTS에서 travel 태그 글 필터링
   var travelPosts = POSTS.filter(function(p) {
-    return p.topic === 'travel' && !p.deleted;
+    if (p.topic !== 'travel' || p.deleted) return false;
+    if (filterPlaceId) return p.placeId === String(filterPlaceId);
+    return true;
   }).sort(function(a, b) {
     var ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
     var tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
@@ -11480,8 +11563,8 @@ async function loadExploreStories() {
       '</svg>' +
     '</div>' +
     '<div>' +
-      '<div class="ib-title planning">Travel Stories</div>' +
-      '<div class="ib-sub planning">Day trips, destinations, and tourist tips around Korea.</div>' +
+      '<div class="ib-title planning">' + (filterPlaceId ? 'Stories about this place' : 'Travel Stories') + '</div>' +
+      '<div class="ib-sub planning">' + (filterPlaceId ? 'Real experiences from the community.' : 'Day trips, destinations, and tourist tips around Korea.') + '</div>' +
     '</div>';
   list.appendChild(banner);
 
@@ -11506,7 +11589,7 @@ async function loadExploreStories() {
     return '<div onclick="window.openDetail(&quot;' + p.id + '&quot;)" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;cursor:pointer;transition:box-shadow 0.15s;">' +
       imgHtml +
       '<div style="padding:14px;">' +
-        '<div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:0.4px;text-transform:uppercase;margin-bottom:6px;">✈️ Travel</div>' +
+        '<div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:0.4px;text-transform:uppercase;margin-bottom:6px;">✈️ Travel' + (p.placeName ? ' · <span style="color:var(--purple);font-weight:600;">📍 ' + p.placeName + '</span>' : '') + '</div>' +
         '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.3;">' + (p.title || '—') + '</div>' +
         '<div style="font-size:13px;color:var(--text-2);line-height:1.5;">' + preview + '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:var(--text-3);">' +
@@ -11927,6 +12010,15 @@ window.openExploreDetail = function(item) {
 
   body.appendChild(btnWrap);
 
+  // ── Stories 미리보기 섹션 (축제 제외) ──
+  if (String(item.contenttypeid) !== '85' && item.contentid) {
+    var storiesSection = document.createElement('div');
+    storiesSection.style.cssText = 'margin-top:20px;border-top:1px solid var(--border);padding-top:16px;';
+    storiesSection.id = 'detailStoriesSection';
+    body.appendChild(storiesSection);
+    loadDetailStories(item, storiesSection);
+  }
+
   sheet.appendChild(body);
   popup.appendChild(sheet);
   document.body.appendChild(popup);
@@ -12015,6 +12107,94 @@ async function loadFestivalDetail(contentId, festBox) {
     console.warn('[FestivalDetail]', e.message);
   }
 }
+
+async function loadDetailStories(item, container) {
+  var contentId = String(item.contentid);
+  var placeName = (item.title || '').replace(/\([^)]*\)/g, '').trim();
+
+  // placeId 또는 placeName으로 Stories 필터링
+  var matched = POSTS.filter(function(p) {
+    if (p.topic !== 'travel' || p.deleted) return false;
+    if (p.placeId && p.placeId === contentId) return true;
+    return false;
+  }).sort(function(a, b) {
+    var ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+    var tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+    return tb - ta;
+  });
+
+  // 헤더
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;';
+  header.innerHTML =
+    '<div style="font-size:13px;font-weight:700;color:var(--text);">💬 Stories' +
+    (matched.length ? ' <span style="color:var(--text-3);font-weight:500;">(' + matched.length + ')</span>' : '') +
+    '</div>';
+  container.appendChild(header);
+
+  if (!matched.length) {
+    // 스토리 없을 때 — 글쓰기 유도
+    var empty = document.createElement('div');
+    empty.style.cssText = 'text-align:center;padding:20px;background:var(--bg);border-radius:12px;';
+    empty.innerHTML =
+      '<div style="font-size:22px;margin-bottom:6px;">✍️</div>' +
+      '<div style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Be the first to share your experience!</div>' +
+      '<button style="padding:9px 22px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);" ' +
+      'onclick="fePmOpenWithPlace(\'' + contentId + '\',\'' + placeName.replace(/'/g, "\\'") + '\')">Write a Story</button>';
+    container.appendChild(empty);
+    return;
+  }
+
+  // 최신 2개 미리보기
+  var preview2 = matched.slice(0, 2);
+  preview2.forEach(function(p) {
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--bg);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;';
+    card.onclick = function() { window.openDetail && window.openDetail(p.id); };
+    var txt = (p.previewText || p.preview || '').replace(/<[^>]*>/g, '').slice(0, 80);
+    card.innerHTML =
+      '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.3;">' + (p.title || '—') + '</div>' +
+      (txt ? '<div style="font-size:12px;color:var(--text-2);line-height:1.5;">' + txt + (txt.length >= 80 ? '...' : '') + '</div>' : '') +
+      '<div style="font-size:11px;color:var(--text-3);margin-top:6px;">' + (p.author || 'Anonymous') + ' · ' + (p.time || '') + '</div>';
+    container.appendChild(card);
+  });
+
+  // View all 버튼 (3개 이상일 때)
+  if (matched.length > 2) {
+    var viewAll = document.createElement('button');
+    viewAll.style.cssText = 'width:100%;padding:10px;background:none;border:1px solid var(--border-mid);border-radius:999px;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:var(--font);margin-bottom:8px;';
+    viewAll.textContent = 'View all ' + matched.length + ' stories →';
+    viewAll.onclick = function() {
+      var popup = document.getElementById('exploreDetailPopup');
+      if (popup) popup.remove();
+      window.switchExploreSection && window.switchExploreSection('stories', contentId);
+    };
+    container.appendChild(viewAll);
+  }
+
+  // Write 버튼
+  var writeBtn = document.createElement('button');
+  writeBtn.style.cssText = 'width:100%;padding:10px;background:var(--green-light);border:none;border-radius:999px;font-size:13px;font-weight:700;color:var(--green-deeper);cursor:pointer;font-family:var(--font);';
+  writeBtn.textContent = '✍️ Write a Story';
+  writeBtn.onclick = function() { fePmOpenWithPlace(contentId, placeName); };
+  container.appendChild(writeBtn);
+}
+
+// 장소 태깅된 상태로 글쓰기 모달 열기
+window.fePmOpenWithPlace = function(placeId, placeName) {
+  var popup = document.getElementById('exploreDetailPopup');
+  if (popup) popup.remove();
+  window.goTo && window.goTo('write');
+  setTimeout(function() {
+    // publish modal 열고 travel 자동 선택
+    window.feOpenPublishModal && window.feOpenPublishModal();
+    setTimeout(function() {
+      var travelChip = document.querySelector('.fe-pm-chip[onclick*="travel"]');
+      if (travelChip) window.fePmPickTopic(travelChip, 'travel');
+      window.fePmSelectPlace(placeId, placeName);
+    }, 100);
+  }, 300);
+};
 
 async function loadExploreDetailDesc(contentId, contentTypeId, el, itemData) {
   if (!contentId) { el.textContent = 'No description available.'; return; }

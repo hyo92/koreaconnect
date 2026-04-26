@@ -11807,12 +11807,58 @@ window.openExploreDetail = function(item) {
     body.appendChild(addr);
   }
 
-  // 전화번호
-  if (item.tel) {
-    var tel = document.createElement('div');
-    tel.style.cssText = 'font-size:13px;color:var(--text-2);margin-bottom:12px;display:flex;align-items:center;gap:4px;';
-    tel.innerHTML = '📞 ' + item.tel;
-    body.appendChild(tel);
+  // 축제 전용 정보 박스
+  var festBox = null;
+  if (item.contenttypeid === '85' || String(item.contenttypeid) === '85') {
+    festBox = document.createElement('div');
+    festBox.style.cssText = 'background:var(--green-light);border:1px solid var(--green-mid);border-radius:12px;padding:14px;margin-bottom:14px;';
+    var festRows = [];
+    // 날짜
+    if (item.eventstartdate || item.eventenddate) {
+      var startStr = item.eventstartdate ? item.eventstartdate.replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3') : '';
+      var endStr   = item.eventenddate   ? item.eventenddate.replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3')   : '';
+      festRows.push('<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><span style="font-size:13px;min-width:16px;">📅</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Date</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + startStr + (endStr && endStr !== startStr ? ' ~ ' + endStr : '') + '</div></div></div>');
+    }
+    // 장소
+    if (item.addr1) {
+      festRows.push('<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><span style="font-size:13px;min-width:16px;">📍</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Venue</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + item.addr1 + '</div></div></div>');
+    }
+    // 전화
+    if (item.tel) {
+      festRows.push('<div style="display:flex;gap:8px;align-items:flex-start;"><span style="font-size:13px;min-width:16px;">📞</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Contact</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + item.tel + '</div></div></div>');
+    }
+    // 요금
+    if (item.usetimefestival || item.playtime) {
+      festRows.push('<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><span style="font-size:13px;min-width:16px;">💰</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Admission</div><div style="font-size:13px;color:var(--text);font-weight:500;">' + (item.usetimefestival || item.playtime) + '</div></div></div>');
+    }
+    // 홈페이지/SNS
+    var infoLinks = [];
+    if (item.homepage) {
+      var homepageClean = item.homepage.replace(/<[^>]*>/g, '').trim();
+      if (homepageClean) infoLinks.push('<a href="' + homepageClean + '" target="_blank" style="color:var(--green);text-decoration:none;font-size:13px;font-weight:600;">🌐 Website</a>');
+    }
+    if (item.infocenter) {
+      var snsList = item.infocenter.match(/https?:\/\/[^\s<>]+/g) || [];
+      snsList.forEach(function(link) {
+        if (link.includes('instagram')) infoLinks.push('<a href="' + link + '" target="_blank" style="color:var(--green);text-decoration:none;font-size:13px;font-weight:600;">📸 Instagram</a>');
+      });
+    }
+    if (infoLinks.length > 0) {
+      festRows.push('<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><span style="font-size:13px;min-width:16px;">ℹ️</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Info</div><div style="display:flex;gap:10px;flex-wrap:wrap;">' + infoLinks.join('') + '</div></div></div>');
+    }
+
+    if (festRows.length > 0) {
+      festBox.innerHTML = festRows.join('');
+      body.appendChild(festBox);
+    }
+  } else {
+    // 일반 전화번호
+    if (item.tel) {
+      var tel = document.createElement('div');
+      tel.style.cssText = 'font-size:13px;color:var(--text-2);margin-bottom:12px;display:flex;align-items:center;gap:4px;';
+      tel.innerHTML = '📞 ' + item.tel;
+      body.appendChild(tel);
+    }
   }
 
   // 설명 로딩 placeholder
@@ -11846,7 +11892,11 @@ window.openExploreDetail = function(item) {
 
   // 1) item 기본 정보 즉시 표시
   buildExploreDescFromItem(item, descDiv);
-  // 2) detailCommon2로 overview 비동기 로드 (있으면 교체)
+  // 2) 축제면 detailIntro2로 요금/운영시간 로드
+  if (String(item.contenttypeid) === '85' && item.contentid) {
+    loadFestivalDetail(item.contentid, festBox);
+  }
+  // 3) detailCommon2로 overview 비동기 로드 (있으면 교체)
   loadExploreDetailDesc(item.contentid, item.contenttypeid, descDiv, item);
 };
 
@@ -11881,6 +11931,50 @@ function buildExploreDescFromItem(item, el) {
       '85': 'Festival or event — check dates before visiting.',
     };
     el.textContent = catMsg[String(item.contenttypeid)] || 'Explore this location in Korea.';
+  }
+}
+
+async function loadFestivalDetail(contentId, festBox) {
+  if (!contentId || !festBox) return;
+  try {
+    var url = 'https://apis.data.go.kr/B551011/EngService2/detailIntro2' +
+      '?serviceKey=' + VISITKOREA_KEY +
+      '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
+      '&contentId=' + String(contentId) +
+      '&contentTypeId=15';
+    var res  = await fetch(url);
+    var data = await res.json();
+    var raw  = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;
+    var item = Array.isArray(raw) ? raw[0] : (raw || null);
+    if (!item) return;
+
+    // 요금 정보 업데이트
+    var feeText = item.usetimefestival || item.usefee || item.discountinfofestival || '';
+    feeText = feeText.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').trim();
+    if (feeText) {
+      var feeEl = festBox.querySelector('[data-field="fee"]');
+      if (feeEl) {
+        feeEl.textContent = feeText;
+      } else {
+        var feeRow = document.createElement('div');
+        feeRow.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;';
+        feeRow.innerHTML = '<span style="font-size:13px;min-width:16px;">💰</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px;">Admission</div><div style="font-size:13px;color:var(--text);font-weight:500;" data-field="fee">' + feeText + '</div></div>';
+        festBox.appendChild(feeRow);
+      }
+    }
+
+    // 홈페이지/SNS
+    var homepage = item.homepage || '';
+    homepage = homepage.replace(/<[^>]*>/g,'').trim();
+    if (homepage) {
+      var infoRow = document.createElement('div');
+      infoRow.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-top:4px;';
+      var links = '<a href="' + homepage + '" target="_blank" style="color:var(--green);text-decoration:none;font-size:13px;font-weight:600;margin-right:12px;">🌐 Website</a>';
+      infoRow.innerHTML = '<span style="font-size:13px;min-width:16px;">ℹ️</span><div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Info</div>' + links + '</div>';
+      festBox.appendChild(infoRow);
+    }
+  } catch(e) {
+    console.warn('[FestivalDetail]', e.message);
   }
 }
 

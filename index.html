@@ -4877,7 +4877,6 @@
         <button class="exp-cat" onclick="setExploreCat(this,'76')">🏛️ Attractions</button>
         <button class="exp-cat" onclick="setExploreCat(this,'78')">🎭 Culture</button>
         <button class="exp-cat" onclick="setExploreCat(this,'85')">🎪 Festivals</button>
-        <button class="exp-cat" onclick="setExploreCat(this,'82')">🏨 Stay</button>
         <button class="exp-cat" onclick="setExploreCat(this,'79')">🛍️ Shopping</button>
         <button class="exp-cat" onclick="setExploreCat(this,'80')">🏋️ Leisure</button>
       </div>
@@ -4937,7 +4936,7 @@
       <button class="deals-tab" id="deals-tab-food"
               onclick="switchDealsTab('food')">🍜 Food</button>
       <button class="deals-tab" id="deals-tab-stay"
-              onclick="switchDealsTab('stay')">🏨 Stay</button>
+              onclick="switchDealsTab('stay')">🍽️ Dining</button>
       <button class="deals-tab" id="deals-tab-goods"
               onclick="switchDealsTab('goods')">🛍️ Goods</button>
     </div>
@@ -11214,8 +11213,8 @@ const VISITKOREA_KEY = 'e40ebfa9e37fa69a20c7fb7cefc1bd3fb5e871a9ee85eb17b82ec3eb
 let exploreCat = 'all', exploreNearby = false, explorePage = 1;
 let exploreKeyword = '', exploreUserLat = null, exploreUserLon = null, exploreRegion = '', exploreDistrict = '';
 
-const EXPLORE_CAT_LABELS = { '76':'Attraction','78':'Culture','85':'Festival','82':'Stay','79':'Shopping','80':'Leisure','75':'Travel' };
-const EXPLORE_CAT_EMOJI  = { '76':'🏛️','78':'🎭','85':'🎪','82':'🏨','79':'🛍️','80':'🏋️','75':'🗺️' };
+const EXPLORE_CAT_LABELS = { '76':'Attraction','78':'Culture','85':'Festival','79':'Shopping','80':'Leisure','75':'Travel' };
+const EXPLORE_CAT_EMOJI  = { '76':'🏛️','78':'🎭','85':'🎪','79':'🛍️','80':'🏋️','75':'🗺️' };
 
 // HTML onclick에서 접근 가능하도록 즉시 window에 노출
 window.openExplore = function() {
@@ -11294,7 +11293,7 @@ function buildExploreInline() {
   catBar.style.cssText = 'display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;';
   var cats = [
     ['all','All'], ['76','🏛️ Attractions'], ['78','🎭 Culture'],
-    ['85','🎪 Festivals'], ['82','🏨 Stay'], ['79','🛍️ Shopping'], ['80','🏋️ Leisure']
+    ['85','🎪 Festivals'], ['79','🛍️ Shopping'], ['80','🏋️ Leisure']
   ];
   cats.forEach(function(c, i) {
     var btn = document.createElement('button');
@@ -11973,7 +11972,7 @@ function buildExploreDescFromItem(item, el) {
       '78': 'Cultural facility — museums, galleries, and cultural centers.',
       '79': 'Shopping destination — malls, markets, and retail areas.',
       '80': 'Leisure & sports — recreational activities and outdoor fun.',
-      '82': 'Accommodation — hotels, guesthouses, and lodging.',
+      '82': 'Dining — restaurants, cafes, and eateries.',
       '85': 'Festival or event — check dates before visiting.',
     };
     el.textContent = catMsg[String(item.contenttypeid)] || 'Explore this location in Korea.';

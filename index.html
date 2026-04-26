@@ -11941,7 +11941,7 @@ async function loadFestivalDetail(contentId, festBox) {
       '?serviceKey=' + VISITKOREA_KEY +
       '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
       '&contentId=' + String(contentId) +
-      '&contentTypeId=15';
+      '&contentTypeId=85';
     var res  = await fetch(url);
     var data = await res.json();
     var raw  = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;

@@ -11858,7 +11858,17 @@ window.openExploreDetail = function(item) {
     festBox.innerHTML = festHTML;
     body.appendChild(festBox);
 
-    // 구글 검색 버튼 (홈페이지/인스타 없을 때 대안)
+    // VisitKorea 공식 페이지 버튼
+    if (item.contentid) {
+      var visitBtn = document.createElement('a');
+      visitBtn.href = 'https://english.visitkorea.or.kr/enu/ATR/SI_EN_3_1_1_1.jsp?cid=' + item.contentid;
+      visitBtn.target = '_blank';
+      visitBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:var(--green);color:#fff;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:8px;';
+      visitBtn.innerHTML = '🇰🇷 View on VisitKorea';
+      body.appendChild(visitBtn);
+    }
+
+    // 구글 검색 버튼
     var festTitle = (item.title || '').replace(/\([^)]*\)/g,'').trim();
     var googleBtn = document.createElement('a');
     googleBtn.href = 'https://www.google.com/search?q=' + encodeURIComponent(festTitle);
@@ -11892,6 +11902,16 @@ window.openExploreDetail = function(item) {
     webLink.textContent = 'Visit Website →';
     body.appendChild(webLink);
   }
+  // VisitKorea 링크 (축제 제외 — 축제는 위에서 이미 추가)
+  if (item.contentid && String(item.contenttypeid) !== '85') {
+    var vkBtn = document.createElement('a');
+    vkBtn.href = 'https://english.visitkorea.or.kr/enu/ATR/SI_EN_3_1_1_1.jsp?cid=' + item.contentid;
+    vkBtn.target = '_blank';
+    vkBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:var(--green);color:#fff;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:8px;';
+    vkBtn.innerHTML = '🇰🇷 View on VisitKorea';
+    body.appendChild(vkBtn);
+  }
+
   if (item.mapx && item.mapy) {
     var mapLink = document.createElement('a');
     mapLink.href = 'https://maps.google.com/?q=' + item.mapy + ',' + item.mapx;

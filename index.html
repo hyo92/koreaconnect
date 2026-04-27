@@ -4622,7 +4622,7 @@
 
   <!-- ① 헤더 바 -->
   <div class="fe-topbar">
-    <button class="fe-cancel-btn" onclick="var fe=window._openedFromExplore;window._openedFromExplore=false;closeFullEditor();if(fe){var l=document.getElementById('exploreStoriesList');if(l)l.innerHTML='';window.switchExploreSection&&window.switchExploreSection('stories');}">
+    <button class="fe-cancel-btn" onclick="window._openedFromExplore=false;fePmPlaceTag=null;closeFullEditor()">
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
         <path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
@@ -9364,13 +9364,6 @@ window.publishFromEditor = async function() {
   var fromExplore = window._openedFromExplore;
   window._openedFromExplore = false;
   closeFullEditor();
-
-  // Explore에서 왔으면 Stories 탭으로 복귀
-  if (fromExplore) {
-    var list = document.getElementById('exploreStoriesList');
-    if (list) list.innerHTML = '';
-    window.switchExploreSection && window.switchExploreSection('stories');
-  }
 
   renderFeed();
   showToast('Post published! 🎉', 'success');

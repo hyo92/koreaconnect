@@ -4622,7 +4622,7 @@
 
   <!-- ① 헤더 바 -->
   <div class="fe-topbar">
-    <button class="fe-cancel-btn" onclick="var fe=window._openedFromExplore;window._openedFromExplore=false;closeFullEditor(fe);if(fe){var l=document.getElementById('exploreStoriesList');if(l)l.innerHTML='';window.switchExploreSection&&window.switchExploreSection('stories');}">
+    <button class="fe-cancel-btn" onclick="var fe=window._openedFromExplore;window._openedFromExplore=false;closeFullEditor();if(fe){var l=document.getElementById('exploreStoriesList');if(l)l.innerHTML='';window.switchExploreSection&&window.switchExploreSection('stories');}">
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
         <path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
@@ -8787,7 +8787,7 @@ window.openFullEditor = function() {
 }
 
 // ── 닫기 ──
-window.closeFullEditor = function(returnToExplore) {
+window.closeFullEditor = function() {
   editingFeaturedId = null;
   const overlay = document.getElementById('fullEditorOverlay');
   if (overlay) {
@@ -8803,12 +8803,6 @@ window.closeFullEditor = function(returnToExplore) {
   const navbar = document.querySelector('.navbar');
   if (navbar) navbar.style.display = '';
   clearTimeout(feAutosaveTimer);
-
-  // Explore가 열려있었으면 복원
-  if (returnToExplore) {
-    var exploreEl = document.getElementById('screen-explore');
-    if (exploreEl) exploreEl.style.display = 'flex';
-  }
 }
 
 // ── Topic 선택 ──
@@ -9351,7 +9345,7 @@ window.publishFromEditor = async function() {
 
   var fromExplore = window._openedFromExplore;
   window._openedFromExplore = false;
-  closeFullEditor(fromExplore);
+  closeFullEditor();
 
   // Explore에서 왔으면 Stories 탭으로 복귀
   if (fromExplore) {

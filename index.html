@@ -7050,6 +7050,9 @@ function renderFeed() {
       </div>
     </div>` : '';
 
+  // Explore 탭이면 feedList를 덮어쓰지 않음 — exploreInline DOM 보존
+  if (currentTab === 'explore') return;
+
   list.innerHTML = bannerHtml + hotDealsHtml + featuredHtml + postsHtml;
 }
 

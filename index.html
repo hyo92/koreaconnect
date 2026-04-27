@@ -11589,7 +11589,7 @@ window.switchExploreSection = function(section, filterPlaceId) {
 async function loadExploreStories(filterPlaceId) {
   var list    = document.getElementById('exploreStoriesList');
   var loading = document.getElementById('exploreStoriesLoading');
-  if (!filterPlaceId && list.children.length > 0) { loading.style.display = 'none'; return; }
+  list.innerHTML = ''; // 항상 새로 렌더링
   loading.style.display = '';
 
   // POSTS에서 travel 태그 글 필터링
@@ -11654,6 +11654,11 @@ async function loadExploreStories(filterPlaceId) {
       '</div>' +
     '</div>';
   }).join('');
+
+  // 글 목록을 list에 실제로 추가
+  var postsWrap = document.createElement('div');
+  postsWrap.innerHTML = postsHtml;
+  list.appendChild(postsWrap);
 }
 
 window.setExploreCat = function(el, cat) {

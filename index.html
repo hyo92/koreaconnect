@@ -4629,7 +4629,7 @@
       Back
     </button>
     <span class="fe-topbar-title">Write a Post</span>
-    <button class="fe-publish-btn" id="fePublishBtn" onclick="feOpenPublishModal()">Publish</button>
+    <button class="fe-publish-btn" id="fePublishBtn" onclick="feOpenPublishModal(!!window._openedFromExplore)">Publish</button>
   </div>
 
   <!-- ② 툴바 (헤더 바로 아래 — 스크롤해도 고정) -->
@@ -9073,9 +9073,27 @@ window.feOpenPublishModal = function(storyMode) {
   });
   if (storyNotice) storyNotice.style.display = storyMode ? 'block' : 'none';
 
-  // 장소 태깅 UI 초기화
+  // 장소 태깅 UI
   var placeWrap = document.getElementById('fePmPlaceTagWrap');
   if (placeWrap) placeWrap.style.display = storyMode ? 'block' : 'none';
+
+  // storyMode: travel 칩 자동 선택
+  if (storyMode) {
+    var travelChip = document.querySelector('#fePublishOverlay .fe-pm-chip[onclick*="travel"]');
+    if (travelChip) {
+      travelChip.classList.add('selected');
+      fePmTopic = 'travel';
+      var confirmBtn2 = document.getElementById('fePmConfirmBtn');
+      if (confirmBtn2) confirmBtn2.classList.add('ready');
+    }
+    // 저장된 장소 태그 복원
+    if (fePmPlaceTag) {
+      var nameEl = document.getElementById('fePmPlaceSelectedName');
+      var selEl  = document.getElementById('fePmPlaceSelected');
+      if (nameEl) nameEl.textContent = '📍 ' + fePmPlaceTag.placeName;
+      if (selEl)  selEl.style.display = 'flex';
+    }
+  }
 
   // 오너면 Featured 토글 표시
   isFeaturedMode = false;
@@ -12223,17 +12241,10 @@ async function loadDetailStories(item, container) {
 window.fePmOpenWithPlace = function(placeId, placeName) {
   var popup = document.getElementById('exploreDetailPopup');
   if (popup) popup.remove();
-  // Explore에서 왔다는 플래그 저장
+  // 장소 태그 미리 저장 — 모달 열릴 때 복원
+  fePmPlaceTag = placeId ? { placeId: String(placeId), placeName: placeName } : null;
   window._openedFromExplore = true;
   window.goTo && window.goTo('write');
-  setTimeout(function() {
-    window.feOpenPublishModal && window.feOpenPublishModal(true);
-    setTimeout(function() {
-      var travelChip = document.querySelector('#fePublishOverlay .fe-pm-chip[onclick*="travel"]');
-      if (travelChip) window.fePmPickTopic(travelChip, 'travel');
-      if (placeId) window.fePmSelectPlace(placeId, placeName);
-    }, 200);
-  }, 400);
 };
 
 async function loadExploreDetailDesc(contentId, contentTypeId, el, itemData) {

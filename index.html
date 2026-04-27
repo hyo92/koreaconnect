@@ -9179,6 +9179,13 @@ window.fePmClearPlace = function() {
 };
 
 window.feConfirmPublish = async function() {
+  // storyMode일 때 travel 강제 세팅
+  var storyNotice = document.getElementById('fePmStoryNotice');
+  var isStoryMode = storyNotice && storyNotice.style.display !== 'none';
+  if (isStoryMode && !fePmTopic) {
+    fePmTopic = 'travel';
+  }
+
   if (!fePmTopic) {
     const errEl = document.getElementById('fePmError');
     if (errEl) errEl.style.display = 'block';
@@ -12231,8 +12238,8 @@ window.fePmOpenWithPlace = function(placeId, placeName) {
       var travelChip = document.querySelector('#fePublishOverlay .fe-pm-chip[onclick*="travel"]');
       if (travelChip) window.fePmPickTopic(travelChip, 'travel');
       if (placeId) window.fePmSelectPlace(placeId, placeName);
-    }, 100);
-  }, 300);
+    }, 200);
+  }, 400);
 };
 
 async function loadExploreDetailDesc(contentId, contentTypeId, el, itemData) {

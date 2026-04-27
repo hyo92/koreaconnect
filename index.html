@@ -11994,7 +11994,7 @@ window.openExploreDetail = function(item) {
   popup.id = 'exploreDetailPopup';
   // 가운데 정렬
   popup.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;';
-  popup.onclick = function(e) { if (e.target === popup) popup.remove(); };
+  popup.onclick = null;
 
   var sheet = document.createElement('div');
   sheet.style.cssText = 'background:var(--surface);border-radius:24px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;animation:slideUp 0.2s ease;';

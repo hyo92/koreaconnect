@@ -4859,70 +4859,8 @@
      goTo('deals') 시 fixed 오버레이로 전체 덮음
 ══════════════════════════════════ -->
 
-<!-- ── EXPLORE KOREA 전용 페이지 ── -->
-<div id="screen-explore" style="display:none;position:fixed;inset:0;z-index:300;background:var(--bg);overflow-y:auto;flex-direction:column;">
-  <div style="position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:56px;display:flex;align-items:center;gap:12px;">
-    <button onclick="closeExplore()" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--text-2);display:flex;align-items:center;gap:6px;font-size:14px;font-weight:500;font-family:var(--font);">
-      <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Back
-    </button>
-    <div style="font-size:17px;font-weight:700;">🗺️ Explore Korea</div>
-    <div style="margin-left:auto;font-size:11px;font-weight:700;background:var(--green-light);color:var(--green-dark);padding:3px 10px;border-radius:999px;">한국관광공사</div>
-  </div>
-  <!-- Places / Stories 스위처 -->
-  <div style="display:flex;gap:0;padding:12px 16px 0;border-bottom:1px solid var(--border);">
-    <button id="expSwitch-places" onclick="switchExploreSection('places')"
-      style="flex:1;padding:10px;background:none;border:none;border-bottom:2.5px solid var(--green);font-size:14px;font-weight:700;color:var(--green);cursor:pointer;font-family:var(--font);transition:all 0.15s;">
-      🏛️ Places
-    </button>
-    <button id="expSwitch-stories" onclick="switchExploreSection('stories')"
-      style="flex:1;padding:10px;background:none;border:none;border-bottom:2.5px solid transparent;font-size:14px;font-weight:500;color:var(--text-3);cursor:pointer;font-family:var(--font);transition:all 0.15s;">
-      💬 Stories
-    </button>
-  </div>
-
-  <!-- PLACES 섹션 -->
-  <div id="explorePlacesSection">
-    <div style="padding:12px 16px 0;">
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <input type="text" id="exploreSearch" placeholder="Search attractions, food, events..."
-          style="flex:1;padding:11px 14px;border:1.5px solid var(--border-mid);border-radius:999px;font-family:var(--font);font-size:14px;outline:none;background:var(--surface);"
-          onkeydown="if(event.key==='Enter')searchExplore()"
-          onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border-mid)'">
-        <button onclick="searchExplore()" style="padding:11px 18px;background:var(--green);color:#fff;border:none;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">Search</button>
-      </div>
-      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;">
-        <button class="exp-cat active" onclick="setExploreCat(this,'all')">All</button>
-        <button class="exp-cat" onclick="setExploreCat(this,'76')">🏛️ Attractions</button>
-        <button class="exp-cat" onclick="setExploreCat(this,'78')">🎭 Culture</button>
-        <button class="exp-cat" onclick="setExploreCat(this,'85')">🎪 Festivals</button>
-        <button class="exp-cat" onclick="setExploreCat(this,'79')">🛍️ Shopping</button>
-        <button class="exp-cat" onclick="setExploreCat(this,'80')">🏋️ Leisure</button>
-      </div>
-    </div>
-    <div style="padding:0 16px 12px;display:flex;align-items:center;gap:10px;">
-      <div style="font-size:13px;color:var(--text-2);font-weight:500;">📍 Near me</div>
-      <div id="exploreNearbyToggle" onclick="toggleExploreNearby()" style="width:40px;height:22px;border-radius:11px;background:var(--border-mid);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;">
-        <div id="exploreNearbyKnob" style="position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
-      </div>
-      <div style="font-size:11px;color:var(--text-3)" id="exploreNearbyLabel">Show attractions near your location</div>
-    </div>
-    <div style="padding:0 16px 80px;">
-      <div id="exploreGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;"></div>
-      <div id="exploreLoading" style="text-align:center;padding:40px;color:var(--text-3);font-size:14px;display:none;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading...</div>
-      <div id="exploreEmpty" style="text-align:center;padding:48px 20px;color:var(--text-3);font-size:14px;display:none;"><div style="font-size:36px;margin-bottom:8px;">🗺️</div>No results found!</div>
-      <button id="exploreLoadMore" onclick="loadMoreExplore()" style="display:none;width:100%;margin-top:16px;padding:12px;background:var(--surface);border:1.5px solid var(--border-mid);border-radius:999px;font-size:14px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:var(--font);">Load more</button>
-    </div>
-  </div>
-
-  <!-- STORIES 섹션 -->
-  <div id="exploreStoriesSection" style="display:none;padding:16px 16px 80px;">
-    <div id="exploreStoriesList"></div>
-    <div id="exploreStoriesLoading" style="text-align:center;padding:40px;color:var(--text-3);font-size:14px;">
-      <div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading travel stories...
-    </div>
-  </div>
-</div>
+<!-- ── EXPLORE KOREA 전용 페이지 (인라인 방식으로 대체됨 — ID 충돌 방지용 빈 div) ── -->
+<div id="screen-explore" style="display:none;"></div>
 
 <div id="screen-deals" style="
   display:none; position:fixed; inset:0; z-index:200;
@@ -11660,6 +11598,18 @@ async function loadExploreStories(filterPlaceId) {
   });
 
   loading.style.display = 'none';
+
+  // 장소 필터 뱃지
+  if (filterPlaceId) {
+    var badge = document.createElement('div');
+    badge.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--green-light);border-radius:999px;margin-bottom:12px;width:fit-content;';
+    var cachedName = EXPLORE_ITEM_CACHE[String(filterPlaceId)];
+    var badgeName = cachedName ? (cachedName.title||'').replace(/\([^)]*\)/g,'').trim() : 'This place';
+    badge.innerHTML =
+      '<span style="font-size:12px;font-weight:700;color:var(--green-deeper);">📍 ' + badgeName + '</span>' +
+      '<button onclick="window.switchExploreSection(\'stories\')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-3);line-height:1;padding:0 2px;" title="Clear filter">×</button>';
+    list.appendChild(badge);
+  }
 
   // 배너 — info-banner 스타일로 통일
   var banner = document.createElement('div');

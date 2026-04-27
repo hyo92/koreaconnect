@@ -11531,6 +11531,21 @@ function buildExploreInline() {
   var stories = document.createElement('div');
   stories.id = 'exploreStoriesSection';
   stories.style.cssText = 'display:none;padding-top:16px;';
+
+  // 장소 필터 검색창
+  var filterWrap = document.createElement('div');
+  filterWrap.style.cssText = 'padding:0 0 12px;position:relative;';
+  filterWrap.innerHTML =
+    '<div style="display:flex;align-items:center;gap:8px;padding:9px 14px;border:1.5px solid var(--border-mid);border-radius:999px;background:var(--surface);cursor:text;" onclick="document.getElementById(\'storiesPlaceFilterInput\').focus()">' +
+      '<span style="font-size:14px;">📍</span>' +
+      '<input id="storiesPlaceFilterInput" type="text" placeholder="Filter by place..." ' +
+        'style="flex:1;border:none;outline:none;background:transparent;font-family:var(--font);font-size:13px;color:var(--text);" ' +
+        'oninput="storiesPlaceFilterSearch(this.value)">' +
+      '<button id="storiesPlaceFilterClear" onclick="storiesPlaceFilterClear()" style="display:none;background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-3);padding:0;">×</button>' +
+    '</div>' +
+    '<div id="storiesPlaceFilterResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border-mid);border-radius:12px;margin-top:4px;max-height:180px;overflow-y:auto;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,0.1);"></div>';
+  stories.appendChild(filterWrap);
+
   var storiesList = document.createElement('div');
   storiesList.id = 'exploreStoriesList';
   var storiesLoading = document.createElement('div');
@@ -11546,6 +11561,58 @@ function buildExploreInline() {
 
 // ── Places / Stories 섹션 스위처 ──
 let exploreSection = 'places';
+
+// ── Stories 장소 필터 ──
+var _storiesFilterTimer = null;
+window.storiesPlaceFilterSearch = function(val) {
+  var results = document.getElementById('storiesPlaceFilterResults');
+  var clearBtn = document.getElementById('storiesPlaceFilterClear');
+  if (clearBtn) clearBtn.style.display = val ? '' : 'none';
+  if (!val || val.trim().length < 2) { if (results) results.style.display = 'none'; return; }
+  clearTimeout(_storiesFilterTimer);
+  _storiesFilterTimer = setTimeout(async function() {
+    try {
+      var url = 'https://apis.data.go.kr/B551011/EngService2/searchKeyword2' +
+        '?serviceKey=' + VISITKOREA_KEY +
+        '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
+        '&keyword=' + encodeURIComponent(val.trim()) + '&numOfRows=5';
+      var res  = await fetch(url);
+      var data = await res.json();
+      var raw  = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;
+      var items = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+      if (!results) return;
+      if (!items.length) { results.style.display = 'none'; return; }
+      results.innerHTML = '';
+      items.forEach(function(p) {
+        var name = (p.title || '').replace(/<[^>]*>/g, '').trim();
+        var row  = document.createElement('div');
+        row.style.cssText = 'padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;';
+        row.innerHTML = '<div style="font-weight:600;color:var(--text);">📍 ' + name + '</div>' +
+          (p.addr1 ? '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">' + p.addr1 + '</div>' : '');
+        row.onmousedown = function() {
+          if (p.contentid) EXPLORE_ITEM_CACHE[String(p.contentid)] = p;
+          var input = document.getElementById('storiesPlaceFilterInput');
+          if (input) input.value = name;
+          if (results) results.style.display = 'none';
+          if (clearBtn) clearBtn.style.display = '';
+          window.switchExploreSection('stories', p.contentid);
+        };
+        results.appendChild(row);
+      });
+      results.style.display = 'block';
+    } catch(e) {}
+  }, 350);
+};
+
+window.storiesPlaceFilterClear = function() {
+  var input   = document.getElementById('storiesPlaceFilterInput');
+  var results = document.getElementById('storiesPlaceFilterResults');
+  var clearBtn = document.getElementById('storiesPlaceFilterClear');
+  if (input)   input.value = '';
+  if (results) results.style.display = 'none';
+  if (clearBtn) clearBtn.style.display = 'none';
+  window.switchExploreSection('stories');
+};
 
 window.switchExploreSection = function(section, filterPlaceId) {
   exploreSection = section;
@@ -11576,6 +11643,18 @@ window.switchExploreSection = function(section, filterPlaceId) {
     // 장소 필터 초기화 후 로드
     var list = document.getElementById('exploreStoriesList');
     if (list) list.innerHTML = '';
+    // 필터 입력창 동기화
+    var filterInput = document.getElementById('storiesPlaceFilterInput');
+    var clearBtn    = document.getElementById('storiesPlaceFilterClear');
+    if (filterInput) {
+      if (filterPlaceId && EXPLORE_ITEM_CACHE[String(filterPlaceId)]) {
+        filterInput.value = (EXPLORE_ITEM_CACHE[String(filterPlaceId)].title || '').replace(/\([^)]*\)/g,'').trim();
+        if (clearBtn) clearBtn.style.display = '';
+      } else if (!filterPlaceId) {
+        filterInput.value = '';
+        if (clearBtn) clearBtn.style.display = 'none';
+      }
+    }
     loadExploreStories(filterPlaceId || null);
   }
 };

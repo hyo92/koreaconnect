@@ -7203,6 +7203,39 @@ window.openFeaturedDetail = async function(featuredId) {
   document.body.style.overflow = 'hidden';
 };
 
+window.openDetailPlace = async function(placeId, placeName) {
+  // 글 상세 닫기
+  var overlay = document.getElementById('postDetailOverlay');
+  if (overlay) overlay.classList.remove('open');
+
+  // Explore 탭으로 이동
+  if (currentTab !== 'explore') {
+    window.openExplore && window.openExplore();
+    await new Promise(function(r) { setTimeout(r, 300); });
+  }
+
+  // TourAPI로 장소 정보 가져오기
+  try {
+    var url = 'https://apis.data.go.kr/B551011/EngService2/detailCommon2' +
+      '?serviceKey=' + VISITKOREA_KEY +
+      '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
+      '&contentId=' + placeId +
+      '&defaultYN=Y&firstImageYN=Y&addrinfoYN=Y&mapinfoYN=Y&overviewYN=Y';
+    var res  = await fetch(url);
+    var data = await res.json();
+    var item = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;
+    if (Array.isArray(item)) item = item[0];
+    if (item) {
+      window.openExploreDetail(item);
+    } else {
+      // fallback: 이름만 있는 최소 item으로 열기
+      window.openExploreDetail({ contentid: placeId, title: placeName, addr1: '', contenttypeid: '76' });
+    }
+  } catch(e) {
+    window.openExploreDetail({ contentid: placeId, title: placeName, addr1: '', contenttypeid: '76' });
+  }
+};
+
 window.openDetail = async function(postId) {
   let post = POSTS.find(p => String(p.id) === String(postId));
   if (!post && firebaseOk && !String(postId).startsWith('seed_') && !String(postId).startsWith('local_')) {
@@ -7242,6 +7275,18 @@ window.openDetail = async function(postId) {
     <div class="pd-category">
       <span class="tag tag-${post.topic}" style="font-size:12px">${capTopic(post.topic)}</span>
     </div>
+
+    <!-- ① 장소 링크 (travel + placeId 있을 때) -->
+    ${post.placeId && post.placeName ? `
+    <div onclick="openDetailPlace('${post.placeId}','${(post.placeName||'').replace(/'/g,"\\'")}')"
+         style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--green-light);border-radius:10px;margin-bottom:12px;cursor:pointer;">
+      <span style="font-size:18px;">📍</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;color:var(--green-dark);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Tagged Place</div>
+        <div style="font-size:13px;font-weight:700;color:var(--green-deeper);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${post.placeName}</div>
+      </div>
+      <span style="font-size:12px;color:var(--green-dark);">View →</span>
+    </div>` : ''}
 
     <!-- ② 제목 -->
     <h1 class="pd-title">${post.title}</h1>

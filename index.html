@@ -4774,6 +4774,10 @@
       <div class="fe-pm-title">Where would you like to post?</div>
       <div class="fe-pm-sub">Choose the topic that best fits your content</div>
     </div>
+    <!-- Story 모드 안내 — storyMode일 때만 표시 -->
+    <div id="fePmStoryNotice" style="display:none;margin-bottom:10px;padding:8px 12px;background:var(--purple-light);border-radius:8px;font-size:12px;color:var(--purple);font-weight:600;">
+      ✈️ This post will be published as a Travel Story
+    </div>
     <!-- Featured 토글 — 오너만 표시 -->
     <div id="fePmFeaturedWrap" style="display:none;margin:0 0 14px;background:var(--green-light);border:1px solid var(--green-mid);border-radius:10px;padding:10px 14px;align-items:center;gap:10px;flex-direction:row">
       <div style="flex:1">
@@ -9042,7 +9046,7 @@ window.feInsertDivider = function(event) {
 let fePmTopic = null;
 let fePmPlaceTag = null; // { placeId, placeName }
 
-window.feOpenPublishModal = function() {
+window.feOpenPublishModal = function(storyMode) {
   if (!currentUser) { openLoginGate(); return; }
   const title = (document.getElementById('feTitleInput')?.value || '').trim();
   const editor = document.getElementById('feEditor');
@@ -9061,6 +9065,19 @@ window.feOpenPublishModal = function() {
   const errEl = document.getElementById('fePmError');
   if (errEl) errEl.style.display = 'none';
 
+  // storyMode: Travel만 표시, 나머지 토픽 숨김
+  var topicsWrap = document.getElementById('fePmTopicsWrap');
+  var storyNotice = document.getElementById('fePmStoryNotice');
+  document.querySelectorAll('#fePublishOverlay .fe-pm-chip').forEach(function(c) {
+    var isTravel = c.getAttribute('onclick') && c.getAttribute('onclick').includes('travel');
+    c.style.display = storyMode ? (isTravel ? '' : 'none') : '';
+  });
+  if (storyNotice) storyNotice.style.display = storyMode ? 'block' : 'none';
+
+  // 장소 태깅 UI 초기화
+  var placeWrap = document.getElementById('fePmPlaceTagWrap');
+  if (placeWrap) placeWrap.style.display = storyMode ? 'block' : 'none';
+
   // 오너면 Featured 토글 표시
   isFeaturedMode = false;
   const featWrap = document.getElementById('fePmFeaturedWrap');
@@ -9077,6 +9094,12 @@ window.feOpenPublishModal = function() {
 window.feClosePublishModal = function(e) {
   if (e && e.target !== document.getElementById('fePublishOverlay')) return;
   document.getElementById('fePublishOverlay')?.classList.remove('open');
+  // storyMode 초기화 — 다음 일반 글쓰기 시 전체 토픽 다시 표시
+  document.querySelectorAll('#fePublishOverlay .fe-pm-chip').forEach(function(c) { c.style.display = ''; });
+  var storyNotice = document.getElementById('fePmStoryNotice');
+  if (storyNotice) storyNotice.style.display = 'none';
+  var placeWrap = document.getElementById('fePmPlaceTagWrap');
+  if (placeWrap) placeWrap.style.display = 'none';
 }
 
 window.fePmPickTopic = function(el, topic) {
@@ -12186,12 +12209,12 @@ window.fePmOpenWithPlace = function(placeId, placeName) {
   if (popup) popup.remove();
   window.goTo && window.goTo('write');
   setTimeout(function() {
-    // publish modal 열고 travel 자동 선택
-    window.feOpenPublishModal && window.feOpenPublishModal();
+    // storyMode=true 로 모달 열기 → Travel만 표시
+    window.feOpenPublishModal && window.feOpenPublishModal(true);
     setTimeout(function() {
-      var travelChip = document.querySelector('.fe-pm-chip[onclick*="travel"]');
+      var travelChip = document.querySelector('#fePublishOverlay .fe-pm-chip[onclick*="travel"]');
       if (travelChip) window.fePmPickTopic(travelChip, 'travel');
-      window.fePmSelectPlace(placeId, placeName);
+      if (placeId) window.fePmSelectPlace(placeId, placeName);
     }, 100);
   }, 300);
 };

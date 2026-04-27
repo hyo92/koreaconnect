@@ -6280,16 +6280,19 @@ window.setTab = async function(el, tab) {
   currentTab = tab;
   isHomeMode = false;
   setSideNav('home');
+
+  // Explore 인라인 DOM 제거 — 다른 탭으로 이동 시
+  var exploreInline = document.getElementById('exploreInline');
+  if (exploreInline) exploreInline.remove();
+
   POSTS = [];
   dbPostIds = new Set();
   lastVisible = null;
   hasMore = true;
   setLoading(true);
   setupInfiniteScroll();
-  // pinned 먼저 로드 → 이후 renderFeed (내부 포함) 에서도 항상 표시됨
   await loadPinnedPosts();
   await loadNextPage(true);
-  // pinned/admin 글을 맨 앞으로 재정렬
   const pinned = POSTS.filter(p => p.isPinned || p.role === 'admin');
   const normal = POSTS.filter(p => !p.isPinned && p.role !== 'admin');
   POSTS = [...pinned, ...normal];
@@ -9876,25 +9879,25 @@ function renderDealsGrid(tab) {
 
 window.goHome = function() {
   sessionStorage.removeItem('kc_on_deals');
-  // 딜 오버레이 닫기
   const dealsEl = document.getElementById('screen-deals');
   if (dealsEl) dealsEl.style.cssText = 'display:none;';
 
-  // screen-feed 복구
   const feedEl = document.getElementById('screen-feed');
   if (feedEl) feedEl.style.display = '';
+
+  // Explore 인라인 DOM 제거
+  var exploreInline = document.getElementById('exploreInline');
+  if (exploreInline) exploreInline.remove();
 
   goTo('feed');
   setSideNav('home');
   isHomeMode = true;
   currentTab = 'all';
 
-  // All 탭 UI 활성화
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
   const tabEl = document.querySelector('.tab-btn[onclick*="\'all\'"]');
   if (tabEl) tabEl.classList.add('active');
 
-  // 피드 리셋 + 로드
   POSTS = [];
   dbPostIds = new Set();
   lastVisible = null;

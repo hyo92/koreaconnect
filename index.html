@@ -12594,10 +12594,16 @@ function renderCourse(el, places) {
       numBadge.style.cssText = 'width:22px;height:22px;border-radius:50%;background:var(--green-light);color:var(--green-deeper);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
       numBadge.textContent = i + 1;
 
+      var CAT_LABELS = {'76':'Attraction','78':'Culture','79':'Shopping','80':'Leisure','82':'Dining','85':'Festival'};
+      var catLabel = CAT_LABELS[String(p.contenttypeid)] || 'Place';
+
       var info = document.createElement('div');
       info.style.cssText = 'flex:1;min-width:0;';
       info.innerHTML =
-        '<div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + emoji + ' ' + name + '</div>' +
+        '<div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+          emoji + ' ' + name +
+          ' <span style="font-size:11px;font-weight:400;color:var(--text-3);">— ' + catLabel + '</span>' +
+        '</div>' +
         (dist ? '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">📍 ' + dist + ' away</div>' : '');
 
       row.appendChild(numBadge);

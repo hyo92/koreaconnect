@@ -7051,7 +7051,7 @@ function renderFeed() {
     </div>` : '';
 
   // Explore 탭이면 feedList를 덮어쓰지 않음 — exploreInline DOM 보존
-  if (currentTab === 'explore') return;
+  if (currentTab === 'explore' || document.getElementById('exploreInline')) return;
 
   list.innerHTML = bannerHtml + hotDealsHtml + featuredHtml + postsHtml;
 }

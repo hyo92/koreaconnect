@@ -7214,8 +7214,8 @@ window.openDetailPlace = async function(placeId, placeName) {
     await new Promise(function(r) { setTimeout(r, 300); });
   }
 
-  // TourAPI로 장소 정보 가져오기
   try {
+    // 1) contentId 기반 직접 조회 — 이미지/좌표 포함
     var url = 'https://apis.data.go.kr/B551011/EngService2/detailCommon2' +
       '?serviceKey=' + VISITKOREA_KEY +
       '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
@@ -7225,10 +7225,33 @@ window.openDetailPlace = async function(placeId, placeName) {
     var data = await res.json();
     var item = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;
     if (Array.isArray(item)) item = item[0];
+
+    // 2) 이미지나 좌표가 없으면 searchKeyword2로 보강
+    if (item && (!item.firstimage || !item.mapx)) {
+      try {
+        var surl = 'https://apis.data.go.kr/B551011/EngService2/searchKeyword2' +
+          '?serviceKey=' + VISITKOREA_KEY +
+          '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
+          '&keyword=' + encodeURIComponent(placeName) +
+          '&numOfRows=5';
+        var sres  = await fetch(surl);
+        var sdata = await sres.json();
+        var raw   = sdata && sdata.response && sdata.response.body && sdata.response.body.items && sdata.response.body.items.item;
+        var sitems = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+        var match  = sitems.find(function(s) { return String(s.contentid) === String(placeId); }) || sitems[0];
+        if (match) {
+          // 이미지·좌표 보강
+          item.firstimage = item.firstimage || match.firstimage || match.firstimage2 || '';
+          item.mapx       = item.mapx       || match.mapx  || '';
+          item.mapy       = item.mapy       || match.mapy  || '';
+          item.addr1      = item.addr1      || match.addr1 || '';
+        }
+      } catch(e) {}
+    }
+
     if (item) {
       window.openExploreDetail(item);
     } else {
-      // fallback: 이름만 있는 최소 item으로 열기
       window.openExploreDetail({ contentid: placeId, title: placeName, addr1: '', contenttypeid: '76' });
     }
   } catch(e) {

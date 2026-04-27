@@ -12671,5 +12671,59 @@ function renderCourse(el, places) {
   <div class="lightbox-counter" id="lbCounter"></div>
 </div>
 
+<script>
+// ── 브라우저 뒤로가기 가로채기 ──
+// 앱을 벗어나지 않고 내부 레이어를 순서대로 닫음
+
+(function() {
+  // 초기 state 푸시 — 히스토리 스택 확보
+  history.pushState({ kc: true }, '');
+
+  window.addEventListener('popstate', function(e) {
+    // 닫을 수 있는 레이어를 우선순위 순으로 확인
+    var closed = tryCloseTopLayer();
+    if (closed) {
+      // 레이어를 닫았으면 다시 state를 푸시해서 스택 유지
+      history.pushState({ kc: true }, '');
+    }
+    // 아무것도 없으면 그냥 홈 피드 상태 유지 (앱 안 벗어남)
+  });
+
+  function tryCloseTopLayer() {
+    // 1) Lightbox
+    var lb = document.getElementById('lightboxOverlay');
+    if (lb && lb.classList.contains('open')) { window.closeLightbox && closeLightbox(); return true; }
+
+    // 2) 장소 카드 팝업
+    var placePopup = document.getElementById('exploreDetailPopup');
+    if (placePopup) { placePopup.remove(); return true; }
+
+    // 3) 글 상세
+    var postDetail = document.getElementById('postDetailOverlay');
+    if (postDetail && postDetail.classList.contains('open')) { postDetail.classList.remove('open'); return true; }
+
+    // 4) 전체화면 에디터
+    var editor = document.getElementById('fullEditorOverlay');
+    if (editor && editor.classList.contains('open')) { window.closeFullEditor && closeFullEditor(); return true; }
+
+    // 5) Publish 모달
+    var publishModal = document.getElementById('fePublishOverlay');
+    if (publishModal && publishModal.classList.contains('open')) { publishModal.classList.remove('open'); return true; }
+
+    // 6) 검색 오버레이
+    var search = document.getElementById('searchOverlay');
+    if (search && search.classList.contains('open')) { search.classList.remove('open'); return true; }
+
+    // 7) Explore 탭 → 피드로
+    if (typeof currentTab !== 'undefined' && currentTab === 'explore') {
+      window.goHome && goHome();
+      return true;
+    }
+
+    return false;
+  }
+})();
+</script>
+
 </body>
 </html>

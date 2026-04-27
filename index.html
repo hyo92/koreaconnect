@@ -4622,7 +4622,7 @@
 
   <!-- ① 헤더 바 -->
   <div class="fe-topbar">
-    <button class="fe-cancel-btn" onclick="closeFullEditor()">
+    <button class="fe-cancel-btn" onclick="var fe=window._openedFromExplore;window._openedFromExplore=false;closeFullEditor(fe);if(fe){var l=document.getElementById('exploreStoriesList');if(l)l.innerHTML='';window.switchExploreSection&&window.switchExploreSection('stories');}">
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
         <path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
@@ -8787,23 +8787,28 @@ window.openFullEditor = function() {
 }
 
 // ── 닫기 ──
-window.closeFullEditor = function() {
+window.closeFullEditor = function(returnToExplore) {
   editingFeaturedId = null;
   const overlay = document.getElementById('fullEditorOverlay');
   if (overlay) {
     overlay.classList.remove('open');
-    // Visual Viewport 리스너 해제 + 스타일 초기화
     if (window.visualViewport && window._feVVHandler) {
       window.visualViewport.removeEventListener('resize', window._feVVHandler);
       window.visualViewport.removeEventListener('scroll', window._feVVHandler);
       window._feVVHandler = null;
     }
-    overlay.style.cssText = ''; // 인라인 스타일 초기화
+    overlay.style.cssText = '';
   }
   document.body.style.overflow = '';
   const navbar = document.querySelector('.navbar');
   if (navbar) navbar.style.display = '';
   clearTimeout(feAutosaveTimer);
+
+  // Explore가 열려있었으면 복원
+  if (returnToExplore) {
+    var exploreEl = document.getElementById('screen-explore');
+    if (exploreEl) exploreEl.style.display = 'flex';
+  }
 }
 
 // ── Topic 선택 ──
@@ -9336,7 +9341,17 @@ window.publishFromEditor = async function() {
   // 임시저장 삭제
   localStorage.removeItem(FE_DRAFT_KEY);
   feResetEditor();
-  closeFullEditor();
+
+  var fromExplore = window._openedFromExplore;
+  window._openedFromExplore = false;
+  closeFullEditor(fromExplore);
+
+  // Explore에서 왔으면 Stories 탭으로 복귀
+  if (fromExplore) {
+    var list = document.getElementById('exploreStoriesList');
+    if (list) list.innerHTML = '';
+    window.switchExploreSection && window.switchExploreSection('stories');
+  }
 
   renderFeed();
   showToast('Post published! 🎉', 'success');
@@ -12207,9 +12222,10 @@ async function loadDetailStories(item, container) {
 window.fePmOpenWithPlace = function(placeId, placeName) {
   var popup = document.getElementById('exploreDetailPopup');
   if (popup) popup.remove();
+  // Explore에서 왔다는 플래그 저장
+  window._openedFromExplore = true;
   window.goTo && window.goTo('write');
   setTimeout(function() {
-    // storyMode=true 로 모달 열기 → Travel만 표시
     window.feOpenPublishModal && window.feOpenPublishModal(true);
     setTimeout(function() {
       var travelChip = document.querySelector('#fePublishOverlay .fe-pm-chip[onclick*="travel"]');

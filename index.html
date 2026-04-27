@@ -7208,48 +7208,36 @@ window.openDetailPlace = async function(placeId, placeName) {
   var overlay = document.getElementById('postDetailOverlay');
   if (overlay) overlay.classList.remove('open');
 
-  // Explore 탭으로 이동
+  // 1) 캐시에 있으면 바로 열기
+  var cached = EXPLORE_ITEM_CACHE[String(placeId)];
+  if (cached) {
+    if (currentTab !== 'explore') {
+      window.openExplore && window.openExplore();
+      await new Promise(function(r) { setTimeout(r, 300); });
+    }
+    window.openExploreDetail(cached);
+    return;
+  }
+
+  // 2) 캐시 없으면 Explore 탭 이동 후 API 호출
   if (currentTab !== 'explore') {
     window.openExplore && window.openExplore();
-    await new Promise(function(r) { setTimeout(r, 300); });
+    await new Promise(function(r) { setTimeout(r, 400); });
   }
 
   try {
-    // 1) contentId 기반 직접 조회 — 이미지/좌표 포함
-    var url = 'https://apis.data.go.kr/B551011/EngService2/detailCommon2' +
+    var url = 'https://apis.data.go.kr/B551011/EngService2/searchKeyword2' +
       '?serviceKey=' + VISITKOREA_KEY +
       '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
-      '&contentId=' + placeId +
-      '&defaultYN=Y&firstImageYN=Y&addrinfoYN=Y&mapinfoYN=Y&overviewYN=Y';
-    var res  = await fetch(url);
-    var data = await res.json();
-    var item = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;
-    if (Array.isArray(item)) item = item[0];
-
-    // 2) 이미지나 좌표가 없으면 searchKeyword2로 보강
-    if (item && (!item.firstimage || !item.mapx)) {
-      try {
-        var surl = 'https://apis.data.go.kr/B551011/EngService2/searchKeyword2' +
-          '?serviceKey=' + VISITKOREA_KEY +
-          '&MobileOS=ETC&MobileApp=KoreaConnect&_type=json' +
-          '&keyword=' + encodeURIComponent(placeName) +
-          '&numOfRows=5';
-        var sres  = await fetch(surl);
-        var sdata = await sres.json();
-        var raw   = sdata && sdata.response && sdata.response.body && sdata.response.body.items && sdata.response.body.items.item;
-        var sitems = Array.isArray(raw) ? raw : (raw ? [raw] : []);
-        var match  = sitems.find(function(s) { return String(s.contentid) === String(placeId); }) || sitems[0];
-        if (match) {
-          // 이미지·좌표 보강
-          item.firstimage = item.firstimage || match.firstimage || match.firstimage2 || '';
-          item.mapx       = item.mapx       || match.mapx  || '';
-          item.mapy       = item.mapy       || match.mapy  || '';
-          item.addr1      = item.addr1      || match.addr1 || '';
-        }
-      } catch(e) {}
-    }
-
+      '&keyword=' + encodeURIComponent(placeName) +
+      '&numOfRows=5';
+    var res   = await fetch(url);
+    var data  = await res.json();
+    var raw   = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;
+    var sitems = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+    var item   = sitems.find(function(s) { return String(s.contentid) === String(placeId); }) || sitems[0];
     if (item) {
+      EXPLORE_ITEM_CACHE[String(item.contentid)] = item;
       window.openExploreDetail(item);
     } else {
       window.openExploreDetail({ contentid: placeId, title: placeName, addr1: '', contenttypeid: '76' });
@@ -11914,8 +11902,13 @@ async function loadExplore(reset) {
   }
 }
 
+var EXPLORE_ITEM_CACHE = {}; // contentid → item
+
 function renderExploreItems(grid, items) {
   items.forEach(function(item) {
+    // 전역 캐시에 저장
+    if (item.contentid) EXPLORE_ITEM_CACHE[String(item.contentid)] = item;
+
     var cat = EXPLORE_CAT_LABELS[item.contenttypeid] || 'Attraction';
     var emoji = EXPLORE_CAT_EMOJI[item.contenttypeid] || '📍';
     var card = document.createElement('div');

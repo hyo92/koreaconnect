@@ -5388,7 +5388,7 @@ window.saveCountry = async function() {
   if (!country) { showToast('Please select your country', 'error'); return; }
 
   try {
-    await setDoc(doc(db, 'users', currentUser.uid), {
+    await window._setDoc(window._doc(window._db, 'users', currentUser.uid), {
       country: country,
       displayName: currentUser.displayName || '',
       email: currentUser.email || '',
@@ -5400,6 +5400,7 @@ window.saveCountry = async function() {
     if (overlay) overlay.style.display = 'none';
     showToast('Thanks! Welcome to KoreaConnect 🎉', 'success');
   } catch(e) {
+    console.error('saveCountry error:', e);
     showToast('Something went wrong. Try again.', 'error');
   }
 };
@@ -5458,6 +5459,11 @@ const db  = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
+
+// 국가 선택 팝업에서 접근할 수 있도록 전역 노출
+window._db = db;
+window._doc = doc;
+window._setDoc = setDoc;
 
 // ── SAMPLE SEED POSTS (로컬 fallback + 첫 방문 seed) ──
 // SEED_POSTS 제거 — 실제 DB 데이터만 사용

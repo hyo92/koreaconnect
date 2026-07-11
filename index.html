@@ -5157,6 +5157,112 @@ window.closeAbout = function() {
 };
 </script>
 
+<!-- ══════════════════════════════════
+     국가 선택 팝업
+══════════════════════════════════ -->
+<div id="countryPickerOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;padding:20px;" onclick="event.stopPropagation()">
+  <div style="background:var(--surface);border-radius:20px;padding:28px 24px;max-width:400px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:28px;margin-bottom:8px;">🌍</div>
+      <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;">Where are you from?</div>
+      <div style="font-size:13px;color:var(--text-3);">Help us understand our community better</div>
+    </div>
+    <select id="countrySelect" style="
+      width:100%;padding:12px 14px;border:1.5px solid var(--border-mid);
+      border-radius:12px;font-family:var(--font);font-size:14px;
+      color:var(--text);background:var(--bg);outline:none;
+      appearance:none;cursor:pointer;margin-bottom:16px;
+    ">
+      <option value="">Select your country...</option>
+      <option value="US">🇺🇸 United States</option>
+      <option value="CA">🇨🇦 Canada</option>
+      <option value="GB">🇬🇧 United Kingdom</option>
+      <option value="AU">🇦🇺 Australia</option>
+      <option value="NZ">🇳🇿 New Zealand</option>
+      <option value="IE">🇮🇪 Ireland</option>
+      <option value="ZA">🇿🇦 South Africa</option>
+      <option value="IN">🇮🇳 India</option>
+      <option value="PH">🇵🇭 Philippines</option>
+      <option value="SG">🇸🇬 Singapore</option>
+      <option value="MY">🇲🇾 Malaysia</option>
+      <option value="TH">🇹🇭 Thailand</option>
+      <option value="VN">🇻🇳 Vietnam</option>
+      <option value="ID">🇮🇩 Indonesia</option>
+      <option value="CN">🇨🇳 China</option>
+      <option value="JP">🇯🇵 Japan</option>
+      <option value="TW">🇹🇼 Taiwan</option>
+      <option value="HK">🇭🇰 Hong Kong</option>
+      <option value="FR">🇫🇷 France</option>
+      <option value="DE">🇩🇪 Germany</option>
+      <option value="ES">🇪🇸 Spain</option>
+      <option value="IT">🇮🇹 Italy</option>
+      <option value="NL">🇳🇱 Netherlands</option>
+      <option value="SE">🇸🇪 Sweden</option>
+      <option value="NO">🇳🇴 Norway</option>
+      <option value="DK">🇩🇰 Denmark</option>
+      <option value="RU">🇷🇺 Russia</option>
+      <option value="BR">🇧🇷 Brazil</option>
+      <option value="MX">🇲🇽 Mexico</option>
+      <option value="AR">🇦🇷 Argentina</option>
+      <option value="CO">🇨🇴 Colombia</option>
+      <option value="TR">🇹🇷 Turkey</option>
+      <option value="SA">🇸🇦 Saudi Arabia</option>
+      <option value="AE">🇦🇪 UAE</option>
+      <option value="NG">🇳🇬 Nigeria</option>
+      <option value="OTHER">🌐 Other</option>
+    </select>
+    <button onclick="saveCountry()" style="
+      width:100%;padding:13px;background:var(--green);color:#fff;
+      border:none;border-radius:12px;font-size:15px;font-weight:700;
+      cursor:pointer;font-family:var(--font);
+    ">Continue →</button>
+  </div>
+</div>
+
+<script>
+window.openCountryPicker = function() {
+  var overlay = document.getElementById('countryPickerOverlay');
+  if (overlay) overlay.style.display = 'flex';
+};
+
+window.saveCountry = async function() {
+  var select = document.getElementById('countrySelect');
+  var country = select ? select.value : '';
+  if (!country) { showToast('Please select your country', 'error'); return; }
+
+  try {
+    await setDoc(doc(db, 'users', currentUser.uid), {
+      country: country,
+      displayName: currentUser.displayName || '',
+      email: currentUser.email || '',
+      photoURL: currentUser.photoURL || '',
+      joinedAt: new Date().toISOString(),
+      uid: currentUser.uid
+    }, { merge: true });
+    var overlay = document.getElementById('countryPickerOverlay');
+    if (overlay) overlay.style.display = 'none';
+    showToast('Thanks! Welcome to KoreaConnect 🎉', 'success');
+  } catch(e) {
+    showToast('Something went wrong. Try again.', 'error');
+  }
+};
+
+window.skipCountry = async function() {
+  // 스킵해도 기본 유저 정보는 저장 (country 없이)
+  try {
+    await setDoc(doc(db, 'users', currentUser.uid), {
+      displayName: currentUser.displayName || '',
+      email: currentUser.email || '',
+      photoURL: currentUser.photoURL || '',
+      joinedAt: new Date().toISOString(),
+      uid: currentUser.uid
+    }, { merge: true });
+  } catch(e) {}
+  var overlay = document.getElementById('countryPickerOverlay');
+  if (overlay) overlay.style.display = 'none';
+};
+</script>
+
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -5450,7 +5556,7 @@ function updateWriteScreen(user) {
 }
 
 // Auth state listener — fires on login/logout/page load
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   currentUser = user;
   updateTopbarAvatar(user);
   updateProfileScreen(user);
@@ -5458,6 +5564,15 @@ onAuthStateChanged(auth, (user) => {
 
   if (user) {
     initNotificationsListener();
+
+    // 국가 선택 여부 확인 — 처음 로그인한 유저만
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (!userDoc.exists() || !userDoc.data().country) {
+        // 약간 딜레이 후 팝업 (로그인 토스트 후 표시)
+        setTimeout(function() { openCountryPicker(); }, 800);
+      }
+    } catch(e) {}
   } else {
     if (notifUnsubscribe) { notifUnsubscribe(); notifUnsubscribe = null; }
     updateNotifBadge(0);

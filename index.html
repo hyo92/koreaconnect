@@ -395,13 +395,8 @@
     .widget-join-btn.joined { background: var(--green-light); border-color: var(--green-mid); color: var(--green-deeper); }
 
     .widget-write-btn {
-      display: block; width: calc(100% - 32px); margin: 10px 16px 14px;
-      background: var(--green); color: #fff; border: none;
-      border-radius: var(--radius-sm); padding: 10px;
-      font-size: 13px; font-weight: 600; cursor: pointer;
-      font-family: var(--font); transition: background 0.15s; text-align: center;
+      display: none !important;
     }
-    .widget-write-btn:hover { background: var(--green-dark); }
 
     .widget-stat-row {
       display: flex; justify-content: space-between; align-items: center;
@@ -604,7 +599,11 @@
     cursor: pointer; flex-shrink: 0;
   }
 
-  /* ── NAV BAR ── */
+  /* ── NAV BAR (모바일 전용) ── */
+  .navbar {
+    display: none; /* PC에서 기본 숨김 */
+  }
+  @media (max-width: 1023px) {
   .navbar {
     position: fixed; bottom: 0; left: 0; right: 0;
     width: 100%;
@@ -615,6 +614,7 @@
     z-index: 100;
     padding-bottom: env(safe-area-inset-bottom);
     box-sizing: border-box;
+  }
   }
   .nav-item {
     flex: 1; display: flex; flex-direction: column;

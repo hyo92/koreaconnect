@@ -4490,7 +4490,7 @@
            Bad/Worst 상태일 때 JS에서 .show 클래스 추가
            예: 쿠팡 KF94 마스크, 다이슨 공기청정기 등
            ═══════════════════════════════════════════════════ -->
-      <div class="tlw-promo-slot" id="tlwAqiPromoSlot" style="margin:8px 0 0;border-radius:8px">
+      <div class="tlw-promo-slot" id="tlwAqiPromoSlot" style="display:none;margin:8px 0 0;border-radius:8px">
         <a class="tlw-promo-link" id="tlwAqiPromoLink"
            href="https://www.coupang.com/np/search?q=KF94+mask"
            target="_blank" rel="noopener sponsored"
@@ -12636,15 +12636,10 @@ function renderCourse(el, places) {
         </div>
       </div>
 
-      <!-- ═══ MONETIZATION: 추천 아이템 카드 ═══
-           날씨/AQI 상태에 따라 showWeatherModal()에서 동적으로 채워짐
-           각 카드 href를 파트너 링크로 교체 (쿠팡/Creatrip/Klook)
-           ═══════════════════════════════════════════ -->
-      <div class="wx-section" id="wxProductSection">
+      <!-- ═══ MONETIZATION: 추천 아이템 카드 숨김처리 ═══ -->
+      <div class="wx-section" id="wxProductSection" style="display:none;">
         <div class="wx-section-title">Recommended for Today</div>
-        <div class="wx-product-grid" id="wxProductGrid">
-          <!-- JS로 채워짐 -->
-        </div>
+        <div class="wx-product-grid" id="wxProductGrid"></div>
       </div>
       <!-- ═══ /MONETIZATION ═══ -->
 

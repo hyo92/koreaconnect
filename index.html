@@ -3715,7 +3715,7 @@
   </div>
 
   <!-- 핫딜 가로 스크롤 슬라이더 (모바일 전용) -->
-  <div class="mobile-deals-section">
+  <div class="mobile-deals-section" style="display:none;">
     <div class="mobile-deals-header">
       <span class="mobile-deals-title">🔥 Hot Deals</span>
       <span class="mobile-deals-more" onclick="goDeals('all')">See all →</span>
@@ -3779,7 +3779,7 @@
     <div class="tab-btn" onclick="window.setTab(this,'jobs')">💼 Jobs</div>
     <div class="tab-btn" onclick="window.setTab(this,'housing')">🏠 Housing</div>
     <div class="tab-btn explore-tab" onclick="if(window.openExplore)window.openExplore();else setTimeout(function(){window.openExplore&&window.openExplore();},500)">🗺️ Explore</div>
-    <div class="tab-btn" onclick="window.setTab(this,'beauty')">💄 Beauty</div>
+    <div class="tab-btn" onclick="window.setTab(this,'beauty')" style="display:none;">💄 Beauty</div>
     <div class="tab-btn" onclick="window.setTab(this,'social')">🎉 Social</div>
     <div class="tab-btn" onclick="window.setTab(this,'tips')">💡 Tips</div>
     <div class="tab-btn" onclick="window.setTab(this,'questions')">❓ Questions</div>
@@ -4512,15 +4512,9 @@
     </div>
   </div>
 
-  <!-- ═══ MONETIZATION: Hot Deals Widget (우측 사이드바) ═══
-       제휴 마케팅 딜 카드 위젯
-       href를 실제 Klook/Creatrip 파트너 링크로 교체하세요
-       ═══════════════════════════════════════════════════ -->
-  <div class="widget-card">
-    <div class="widget-title" style="display:flex;align-items:center;gap:6px">
-      <span style="font-size:14px">🔥</span> Hot Deals
-      <span style="margin-left:auto;font-size:10px;font-weight:700;color:#E91E63;background:#FCE4EC;border-radius:4px;padding:2px 7px">PARTNER</span>
-    </div>
+  <!-- ═══ MONETIZATION: Hot Deals Widget 숨김처리 ═══ -->
+  <!-- <div class="widget-card"> ... </div> -->
+  <!-- ═══ /MONETIZATION ═══ -->
 
     <!-- Deal 1: Klook 피부과 -->
     <a class="widget-deal-item" href="https://www.klook.com/en-US/activity/20974-dermatology-treatment-seoul/" target="_blank" rel="noopener sponsored">
@@ -4566,10 +4560,6 @@
       </div>
     </a>
 
-    <a class="widget-see-all" href="#" onclick="goDeals('all');return false">
-      See all deals →
-    </a>
-  </div>
   <!-- ═══ /MONETIZATION ═══ -->
 
   <!-- Local Info 위젯 -->
@@ -6860,7 +6850,7 @@ function renderFeed() {
   // ═══════════════════════════════════════════════
   const _dealsTab = 'all';
   const hotDealsHtml = (isHomeMode || currentTab === 'beauty' || currentTab === 'travel') ? `
-    <div class="hot-deals-section">
+    <div class="hot-deals-section" style="display:none!important;">
       <div class="hot-deals-header">
         <div class="hot-deals-title">
           <div class="hot-deals-fire">🔥</div>
@@ -11279,7 +11269,8 @@ setTimeout(function() {
   loadBusinessesFromFirestore();
 }, 800);
 if (sessionStorage.getItem('kc_on_deals') === '1') {
-  setTimeout(function() { window.goDeals('all'); }, 600);
+  // Hot Deals 숨김 처리 — 추후 오픈 시 복구
+  // setTimeout(function() { window.goDeals('all'); }, 600);
 }
 // Featured는 약간 딜레이 후 로드 (Firestore 연결 안정화 후)
 setTimeout(function() { loadFeaturedFromFirestore(); }, 800);

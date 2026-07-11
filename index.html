@@ -5387,14 +5387,17 @@ window.saveCountry = async function() {
   var country = select ? select.value : '';
   if (!country) { showToast('Please select your country', 'error'); return; }
 
+  var user = window.currentUser;
+  if (!user) { showToast('Please sign in first', 'error'); return; }
+
   try {
-    await window._setDoc(window._doc(window._db, 'users', currentUser.uid), {
+    await window._setDoc(window._doc(window._db, 'users', user.uid), {
       country: country,
-      displayName: currentUser.displayName || '',
-      email: currentUser.email || '',
-      photoURL: currentUser.photoURL || '',
+      displayName: user.displayName || '',
+      email: user.email || '',
+      photoURL: user.photoURL || '',
       joinedAt: new Date().toISOString(),
-      uid: currentUser.uid
+      uid: user.uid
     }, { merge: true });
     var overlay = document.getElementById('countryPickerOverlay');
     if (overlay) overlay.style.display = 'none';
@@ -5511,6 +5514,7 @@ let editingPostId = null;      // 글 수정용
 let commentUnsubscribe = null;
 let postDocUnsubscribe = null;
 let currentUser = null;
+window.currentUser = null;
 let selectedImageFile = null;   // 하위 호환용
 let selectedImageURL  = null;
 let selectedImages    = [];     // [{ file, url }] 다중 이미지
@@ -5721,6 +5725,7 @@ function updateWriteScreen(user) {
 // Auth state listener — fires on login/logout/page load
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
+  window.currentUser = user;
   updateTopbarAvatar(user);
   updateProfileScreen(user);
   updateWriteScreen(user);

@@ -3660,6 +3660,40 @@
 <div class="desktop-center">
 
 <!-- ══════════════════════════════════
+     SPLASH SCREEN
+══════════════════════════════════ -->
+<div id="splashScreen" style="
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:20px;
+  transition:opacity 0.5s ease;
+">
+  <!-- 로고 -->
+  <div style="text-align:center;">
+    <div style="font-size:32px;font-weight:800;color:var(--green);letter-spacing:-0.5px;font-family:var(--font);">Korea<span style="color:var(--text);">Connect</span></div>
+    <div style="font-size:13px;color:var(--text-3);margin-top:4px;font-family:var(--font);">Your guide to life in Korea</div>
+  </div>
+  <!-- 날씨 로딩 표시 -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+    <div style="
+      width:44px;height:44px;border-radius:50%;
+      border:3px solid var(--border-mid);
+      border-top-color:var(--green);
+      animation:splashSpin 0.8s linear infinite;
+    "></div>
+    <div style="font-size:13px;color:var(--text-3);font-family:var(--font);">🌤️ Getting your weather...</div>
+  </div>
+</div>
+
+<style>
+@keyframes splashSpin {
+  to { transform: rotate(360deg); }
+}
+</style>
+
+<!-- ══════════════════════════════════
      SCREEN: FEED
 ══════════════════════════════════ -->
 <div class="screen active" id="screen-feed">
@@ -10758,6 +10792,9 @@ window.loadTodaysLook = async function(weatherData, aqiData) {
     } catch(e) {
       weatherData = MOCK_WEATHER;
       aqiData     = MOCK_AQI;
+      // 에러 시에도 스플래시 숨기기
+      var splash = document.getElementById('splashScreen');
+      if (splash) { splash.style.opacity = '0'; setTimeout(function() { splash.style.display = 'none'; }, 500); }
     }
   }
   aqiData = aqiData || MOCK_AQI;
@@ -10869,6 +10906,13 @@ window.loadTodaysLook = async function(weatherData, aqiData) {
 
   // ── 모바일 Info Bar 동기화 ──
   updateMobileInfoBar(guide, aqiLevel);
+
+  // ── 스플래시 화면 숨기기 ──
+  var splash = document.getElementById('splashScreen');
+  if (splash) {
+    splash.style.opacity = '0';
+    setTimeout(function() { splash.style.display = 'none'; }, 500);
+  }
 }
 
 // 모바일 Info Bar 업데이트 — loadTodaysLook 완료 후 호출
@@ -12659,6 +12703,15 @@ function renderCourse(el, places) {
 </div>
 
 <script>
+// 스플래시 최대 5초 후 강제 숨김 (날씨 API 지연 대비)
+setTimeout(function() {
+  var splash = document.getElementById('splashScreen');
+  if (splash && splash.style.display !== 'none') {
+    splash.style.opacity = '0';
+    setTimeout(function() { splash.style.display = 'none'; }, 500);
+  }
+}, 5000);
+
 // ── 브라우저 뒤로가기 가로채기 ──
 // 앱을 벗어나지 않고 내부 레이어를 순서대로 닫음
 
